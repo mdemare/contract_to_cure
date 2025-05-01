@@ -2,9 +2,14 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>Pandemic Map City Representation</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pandemic: Global Disease Control</title>
   <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
   <script src="all.js"></script>
+  <script src="events.js"></script>
   <script>
     // Define global variables for map management
     let globalMapOffset = 200; // Initial offset
@@ -28,6 +33,10 @@
           // Render the cities with an initial offset
           renderPandemicCities(renderableMap, globalMapOffset);
 
+          // Make sure drag scrolling is explicitly enabled
+          const mapContainer = document.querySelector('.map-container');
+          enableDragScroll(mapContainer);
+
           // Add event listener for scroll control with arrow keys
           document.addEventListener('keydown', function(e) {
             const SCROLL_AMOUNT = 10;
@@ -37,18 +46,181 @@
               updateMapOffset(globalMapOffset - SCROLL_AMOUNT);
             }
           });
+
+          // Setup zoom controls
+          document.getElementById('zoom-in').addEventListener('click', function() {
+            zoomMap(1.1);
+          });
+
+          document.getElementById('zoom-out').addEventListener('click', function() {
+            zoomMap(0.9);
+          });
+
+          document.getElementById('reset-view').addEventListener('click', function() {
+            resetMapView();
+          });
         }
       } catch (error) {
         console.error('Error initializing map:', error);
         document.querySelector('.map-container').innerHTML =
           `<div class="error-message">Failed to initialize map: ${error.message}</div>`;
       }
+
+      // Update game status panel with sample data
+      updateGameStatus({
+        currentTurn: 1,
+        outbreaks: 0,
+        cures: { blue: false, yellow: false, black: false, red: false },
+        playerDeck: 35,
+        infectionDeck: 42
+      });
     });
+
+    // Function to zoom the map
+    function zoomMap(factor) {
+      const mapInner = document.querySelector('.map-inner');
+      if (!mapInner) return;
+
+      const currentScale = parseFloat(mapInner.dataset.scale || 1);
+      const newScale = currentScale * factor;
+
+      // Limit scale to reasonable bounds
+      if (newScale >= 0.5 && newScale <= 2) {
+        mapInner.style.transform = `scale(${newScale})`;
+        mapInner.dataset.scale = newScale;
+      }
+    }
+
+    // Function to reset map view
+    function resetMapView() {
+      const mapInner = document.querySelector('.map-inner');
+      if (!mapInner) return;
+
+      mapInner.style.transform = 'scale(1)';
+      mapInner.dataset.scale = 1;
+      updateMapOffset(200);
+    }
+
+    // Function to update game status panel
+    function updateGameStatus(status) {
+      document.getElementById('turn-counter').textContent = status.currentTurn;
+      document.getElementById('outbreak-counter').textContent = status.outbreaks;
+
+      // Update cure status
+      const cureElements = {
+        blue: document.getElementById('blue-cure'),
+        yellow: document.getElementById('yellow-cure'),
+        black: document.getElementById('black-cure'),
+        red: document.getElementById('red-cure')
+      };
+
+      for (const [color, cured] of Object.entries(status.cures)) {
+        const element = cureElements[color];
+        if (element) {
+          element.classList.toggle('cured', cured);
+          element.textContent = cured ? 'CURED' : 'Not Cured';
+        }
+      }
+
+      // Update card counts
+      document.getElementById('player-cards').textContent = status.playerDeck;
+      document.getElementById('infection-cards').textContent = status.infectionDeck;
+    }
   </script>
 </head>
 <body>
-  <div class="map-container">
-    <svg class="connections-layer" width="100%" height="100%"></svg>
+  <div class="game-header">
+    <div class="logo-container">
+      <h1>PANDEMIC</h1>
+      <h2>Global Disease Control</h2>
+    </div>
+
+    <div class="controls">
+      <button id="zoom-in" class="control-btn" title="Zoom In">+</button>
+      <button id="zoom-out" class="control-btn" title="Zoom Out">-</button>
+      <button id="reset-view" class="control-btn" title="Reset View">⟲</button>
+    </div>
+  </div>
+
+  <div class="game-interface">
+    <div class="game-status">
+      <div class="status-panel">
+        <h3>Game Status</h3>
+        <div class="status-item">
+          <span>Turn:</span>
+          <span id="turn-counter">1</span>
+        </div>
+        <div class="status-item">
+          <span>Outbreaks:</span>
+          <span id="outbreak-counter">0</span>
+        </div>
+        <div class="status-item">
+          <span>Player Cards:</span>
+          <span id="player-cards">35</span>
+        </div>
+        <div class="status-item">
+          <span>Infection Cards:</span>
+          <span id="infection-cards">42</span>
+        </div>
+      </div>
+
+      <div class="cure-status">
+        <h3>Disease Status</h3>
+        <div class="cure-grid">
+          <div class="cure-item blue">
+            <div class="cure-color"></div>
+            <div id="blue-cure" class="cure-label">Not Cured</div>
+          </div>
+          <div class="cure-item yellow">
+            <div class="cure-color"></div>
+            <div id="yellow-cure" class="cure-label">Not Cured</div>
+          </div>
+          <div class="cure-item black">
+            <div class="cure-color"></div>
+            <div id="black-cure" class="cure-label">Not Cured</div>
+          </div>
+          <div class="cure-item red">
+            <div class="cure-color"></div>
+            <div id="red-cure" class="cure-label">Not Cured</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="legend">
+        <h3>Map Legend</h3>
+        <div class="legend-item">
+          <div class="legend-dot blue"></div>
+          <span>Blue Cities</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot yellow"></div>
+          <span>Yellow Cities</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot black"></div>
+          <span>Black Cities</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-dot red"></div>
+          <span>Red Cities</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-station">🧪</div>
+          <span>Research Station</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="map-wrapper">
+      <div class="map-container">
+        <svg class="connections-layer" width="100%" height="100%"></svg>
+      </div>
+    </div>
+  </div>
+
+  <div class="game-footer">
+    <p>Drag to move map • Arrow keys for fine control • Zoom controls in top-right</p>
+    <p class="copyright">Based on the Pandemic board game • Digital implementation for educational purposes</p>
   </div>
 </body>
 </html>

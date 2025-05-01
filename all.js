@@ -125,41 +125,6 @@ function renderPandemicCities(pandemicMap, offset = 0) {
   renderConnections(pandemicMap, globalMapOffset);
 }
 
-// Add mouse drag scrolling functionality
-function enableDragScroll(element) {
-  let isDown = false;
-  let startX;
-  let scrollLeft;
-
-  element.addEventListener('mousedown', (e) => {
-    isDown = true;
-    element.classList.add('grabbing');
-    startX = e.pageX - element.offsetLeft;
-    scrollLeft = element.scrollLeft;
-
-    // Prevent text selection during drag
-    e.preventDefault();
-  });
-
-  element.addEventListener('mouseleave', () => {
-    isDown = false;
-    element.classList.remove('grabbing');
-  });
-
-  element.addEventListener('mouseup', () => {
-    isDown = false;
-    element.classList.remove('grabbing');
-  });
-
-  element.addEventListener('mousemove', (e) => {
-    if (!isDown) return;
-    e.preventDefault();
-    const x = e.pageX - element.offsetLeft;
-    const walk = (x - startX) * 1.5; // Scroll speed multiplier
-    element.scrollLeft = scrollLeft - walk;
-  });
-}
-
 // Prepare the raw city data for rendering by adding default properties
 function prepareMapForRendering(rawMap) {
   const fullMap = {};
@@ -178,6 +143,7 @@ function prepareMapForRendering(rawMap) {
 
 // Global function to update the map offset
 function updateMapOffset(newOffset) {
+  console.log("updateOffset(" + newOffset + ")");
   globalMapOffset = newOffset;
 
   const MAP_WIDTH = 1300;
