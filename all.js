@@ -46,7 +46,7 @@ function renderPandemicCities(pandemicMap, offset = 0) {
   // Optional optimization: clone cities that are close to the edge
   // This helps visually with the wrap-around effect
   const enhancedMap = JSON.parse(JSON.stringify(pandemicMap));
-  const MAP_WIDTH = 1200;
+  const MAP_WIDTH = 1300;
   const CLONE_THRESHOLD = 200; // Cities this close to the edge get cloned
 
   // Track which cities we've rendered to avoid duplicates
@@ -118,15 +118,27 @@ function renderPandemicCities(pandemicMap, offset = 0) {
   // Now handle transpacific connections by creating clone cities
   for (const [cityName, cityData] of Object.entries(pandemicMap)) {
     // Create western clone for cities near eastern edge
+    // These should appear on the left side of the map
     if (cityData.x > MAP_WIDTH - CLONE_THRESHOLD) {
       const clone = createCityClone(cityName, cityData, offset, -MAP_WIDTH, 'clone-west');
-      mapInner.appendChild(clone);
+
+      // Make sure the clone is actually positioned on the left edge
+      const cloneX = mod(cityData.x - MAP_WIDTH + offset, MAP_WIDTH);
+      if (cloneX < CLONE_THRESHOLD) {
+        mapInner.appendChild(clone);
+      }
     }
 
     // Create eastern clone for cities near western edge
+    // These should appear on the right side of the map
     if (cityData.x < CLONE_THRESHOLD) {
       const clone = createCityClone(cityName, cityData, offset, MAP_WIDTH, 'clone-east');
-      mapInner.appendChild(clone);
+
+      // Make sure the clone is actually positioned on the right edge
+      const cloneX = mod(cityData.x + MAP_WIDTH + offset, MAP_WIDTH);
+      if (cloneX > MAP_WIDTH - CLONE_THRESHOLD) {
+        mapInner.appendChild(clone);
+      }
     }
   }
 
@@ -142,13 +154,15 @@ function renderPandemicCities(pandemicMap, offset = 0) {
 
 // Helper function to create a clone of a city for better visual representation
 function createCityClone(cityName, cityData, offset, xOffset, cloneClass) {
-  const MAP_WIDTH = 1200;
+  const MAP_WIDTH = 1300;
   const mod = (n, m) => ((n % m) + m) % m;
 
   const clone = document.createElement('div');
-  clone.classList.add('city', cityData.color, cloneClass);
+  clone.classList.add('city', cityData.color, cloneClass, 'clone');
 
   // Apply offset to the clone
+  // For west clones (clones that appear on the left side), we subtract MAP_WIDTH
+  // For east clones (clones that appear on the right side), we add MAP_WIDTH
   const adjustedX = mod(cityData.x + xOffset + offset, MAP_WIDTH);
   clone.style.left = `${adjustedX}px`;
   clone.style.top = `${cityData.y}px`;
@@ -156,6 +170,7 @@ function createCityClone(cityName, cityData, offset, xOffset, cloneClass) {
   // Mark as clone and store original city name
   clone.dataset.cityName = cityName;
   clone.dataset.isClone = "true";
+  clone.dataset.originalX = cityData.x; // Store original position for debugging
 
   // City dot (slightly transparent to indicate it's a clone)
   const dot = document.createElement('div');
@@ -164,8 +179,26 @@ function createCityClone(cityName, cityData, offset, xOffset, cloneClass) {
   dot.style.opacity = "0.7";
   clone.appendChild(dot);
 
-  // We could add cubes, pawns, and research stations too,
-  // but for simplicity we'll just show the dot for clones
+  // For clones, we'll add a label but make it semi-transparent
+  const label = document.createElement('div');
+  label.classList.add('city-label');
+  label.textContent = cityName;
+  label.style.opacity = "0.5";
+  clone.appendChild(label);
+
+  // Debug marker - add a small indicator to show it's a clone
+  // This will help identify if clones are incorrectly showing up
+  const debugMarker = document.createElement('div');
+  debugMarker.style.position = 'absolute';
+  debugMarker.style.top = '-10px';
+  debugMarker.style.left = '0';
+  debugMarker.style.fontSize = '8px';
+  debugMarker.style.color = 'white';
+  debugMarker.style.background = 'rgba(255,0,0,0.5)';
+  debugMarker.style.padding = '2px';
+  debugMarker.style.borderRadius = '2px';
+  debugMarker.textContent = cloneClass === 'clone-west' ? 'W' : 'E';
+  clone.appendChild(debugMarker);
 
   return clone;
 }
@@ -225,30 +258,52 @@ function prepareMapForRendering(rawMap) {
 function updateMapOffset(newOffset) {
   globalMapOffset = newOffset;
 
-  const MAP_WIDTH = 1200;
+  const MAP_WIDTH = 1300;
+  const CLONE_THRESHOLD = 200;
   const mod = (n, m) => ((n % m) + m) % m;
 
-  // Update position of all cities (original and clones)
-  const allCities = document.querySelectorAll('.city');
-  allCities.forEach(cityElement => {
+  // First, remove all existing clones
+  document.querySelectorAll('.city.clone').forEach(clone => {
+    clone.remove();
+  });
+
+  // Update position of original cities
+  const allOriginalCities = document.querySelectorAll('.city:not(.clone)');
+  allOriginalCities.forEach(cityElement => {
     const cityName = cityElement.dataset.cityName;
     const cityData = pandemicMapData[cityName];
 
     if (!cityData) return; // Skip if we can't find data
 
-    let adjustedX;
-
-    // If this is a clone, apply the appropriate offset
-    if (cityElement.classList.contains('clone-west')) {
-      adjustedX = mod(cityData.x + newOffset - MAP_WIDTH, MAP_WIDTH);
-    } else if (cityElement.classList.contains('clone-east')) {
-      adjustedX = mod(cityData.x + newOffset + MAP_WIDTH, MAP_WIDTH);
-    } else {
-      adjustedX = mod(cityData.x + newOffset, MAP_WIDTH);
-    }
-
+    // Update original city position
+    const adjustedX = mod(cityData.x + newOffset, MAP_WIDTH);
     cityElement.style.left = `${adjustedX}px`;
   });
+
+  // Re-create necessary clones based on new offset
+  const mapInner = document.querySelector('.map-inner');
+
+  for (const [cityName, cityData] of Object.entries(pandemicMapData)) {
+    // Create western clone for cities near eastern edge
+    if (cityData.x > MAP_WIDTH - CLONE_THRESHOLD) {
+      const adjustedX = mod(cityData.x + newOffset, MAP_WIDTH);
+      // Only create clone if original is near the right edge
+      if (adjustedX > MAP_WIDTH - CLONE_THRESHOLD) {
+        const clone = createCityClone(cityName, cityData, newOffset, -MAP_WIDTH, 'clone-west');
+        mapInner.appendChild(clone);
+      }
+    }
+
+    // Create eastern clone for cities near western edge
+    if (cityData.x < CLONE_THRESHOLD) {
+      const adjustedX = mod(cityData.x + newOffset, MAP_WIDTH);
+      // Only create clone if original is near the left edge
+      if (adjustedX < CLONE_THRESHOLD) {
+        const clone = createCityClone(cityName, cityData, newOffset, MAP_WIDTH, 'clone-east');
+        mapInner.appendChild(clone);
+      }
+    }
+  }
 
   // Update connections
   renderConnections(pandemicMapData, globalMapOffset);
@@ -271,7 +326,22 @@ function renderConnections(map, currentOffset = 0) {
   const mod = (n, m) => ((n % m) + m) % m;
 
   // Map width used for modular arithmetic
-  const MAP_WIDTH = 1200;
+  const MAP_WIDTH = 1300;
+
+  // Helper function to calculate where a line would intersect the map edge
+  // For wrap-around connections, we need to adjust the target city's position
+  function calculateEdgeIntersection(x1, y1, x2, y2, edgeX, isWrapAround = false) {
+    // If the line is vertical, there's no well-defined intersection
+    if (x2 === x1) {
+      return y1;
+    }
+
+    // When creating wrap-around connections, we need to adjust x2
+    // The incoming x2 should already be adjusted for wrap-around if isWrapAround is true
+
+    // Now calculate the y value at the specified edge x
+    return y1 + (y2 - y1) / (x2 - x1) * (edgeX - x1);
+  }
 
   for (const [city, data] of Object.entries(map)) {
     const { connections } = data;
@@ -304,47 +374,66 @@ function renderConnections(map, currentOffset = 0) {
       if (shouldWrap) {
         // Draw two line segments for wrap-around connection
 
-        // First segment - from city to edge
-        const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
         if (x1 < x2) {
           // City is on left, target on right - draw to left edge
+          const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
           line1.setAttribute('x1', x1);
           line1.setAttribute('y1', y1);
-          line1.setAttribute('x2', 0);
-          line1.setAttribute('y2', y1 + (y2 - y1) * (0 - x1) / (MAP_WIDTH + (0 - x2)));
+          line1.setAttribute('x2', 0); // Left edge
+
+          // Calculate where the line intersects the left edge
+          // For wrap-around, we need to adjust x2 by subtracting MAP_WIDTH
+          const leftEdgeY = calculateEdgeIntersection(x1, y1, x2 - MAP_WIDTH, y2, 0);
+          line1.setAttribute('y2', leftEdgeY);
+
+          line1.setAttribute('stroke', '#aaa');
+          line1.setAttribute('stroke-width', '2');
+          line1.setAttribute('stroke-dasharray', '5,3');
+          line1.setAttribute('stroke-linecap', 'round');
+          svg.appendChild(line1);
+
+          // Second segment - from right edge to target
+          const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line2.setAttribute('x1', MAP_WIDTH); // Right edge
+          line2.setAttribute('y1', leftEdgeY); // Same Y as left edge (continuous line)
+          line2.setAttribute('x2', x2);
+          line2.setAttribute('y2', y2);
+          line2.setAttribute('stroke', '#aaa');
+          line2.setAttribute('stroke-width', '2');
+          line2.setAttribute('stroke-dasharray', '5,3');
+          line2.setAttribute('stroke-linecap', 'round');
+          svg.appendChild(line2);
+
         } else {
           // City is on right, target on left - draw to right edge
+          const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
           line1.setAttribute('x1', x1);
           line1.setAttribute('y1', y1);
-          line1.setAttribute('x2', MAP_WIDTH);
-          line1.setAttribute('y2', y1 + (y2 - y1) * (MAP_WIDTH - x1) / (0 - x2 + MAP_WIDTH));
-        }
-        line1.setAttribute('stroke', '#aaa');
-        line1.setAttribute('stroke-width', '2');
-        line1.setAttribute('stroke-dasharray', '5,3');
-        line1.setAttribute('stroke-linecap', 'round');
-        svg.appendChild(line1);
+          line1.setAttribute('x2', MAP_WIDTH); // Right edge
 
-        // Second segment - from other edge to target
-        const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        if (x1 < x2) {
-          // Target is on right, wrap to its left edge
-          line2.setAttribute('x1', MAP_WIDTH);
-          line2.setAttribute('y1', y1 + (y2 - y1) * (MAP_WIDTH - x1) / (0 - x2 + MAP_WIDTH));
+          // Calculate where the line intersects the right edge
+          // For wrap-around, we need to adjust x2 by adding MAP_WIDTH
+          const rightEdgeY = calculateEdgeIntersection(x1, y1, x2 + MAP_WIDTH, y2, MAP_WIDTH);
+          line1.setAttribute('y2', rightEdgeY);
+
+          line1.setAttribute('stroke', '#aaa');
+          line1.setAttribute('stroke-width', '2');
+          line1.setAttribute('stroke-dasharray', '5,3');
+          line1.setAttribute('stroke-linecap', 'round');
+          svg.appendChild(line1);
+
+          // Second segment - from left edge to target
+          const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+          line2.setAttribute('x1', 0); // Left edge
+          line2.setAttribute('y1', rightEdgeY); // Same Y as right edge (continuous line)
           line2.setAttribute('x2', x2);
           line2.setAttribute('y2', y2);
-        } else {
-          // Target is on left, wrap to its right edge
-          line2.setAttribute('x1', 0);
-          line2.setAttribute('y1', y1 + (y2 - y1) * (0 - x1) / (MAP_WIDTH + (0 - x2)));
-          line2.setAttribute('x2', x2);
-          line2.setAttribute('y2', y2);
+          line2.setAttribute('stroke', '#aaa');
+          line2.setAttribute('stroke-width', '2');
+          line2.setAttribute('stroke-dasharray', '5,3');
+          line2.setAttribute('stroke-linecap', 'round');
+          svg.appendChild(line2);
         }
-        line2.setAttribute('stroke', '#aaa');
-        line2.setAttribute('stroke-width', '2');
-        line2.setAttribute('stroke-dasharray', '5,3');
-        line2.setAttribute('stroke-linecap', 'round');
-        svg.appendChild(line2);
       } else {
         // Draw direct connection (no wrap needed)
         const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');

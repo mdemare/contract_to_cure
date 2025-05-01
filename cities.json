@@ -278,7 +278,7 @@
   "Manila": {
     "color": "red",
     "x": 950,
-    "y": 450,
+    "y": 440,
     "connections": ["Taipei", "Hong Kong", "Ho Chi Minh City", "San Francisco", "Sydney"]
   },
   "Sydney": {

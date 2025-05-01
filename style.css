@@ -12,8 +12,10 @@ body {
   white-space: nowrap;
   cursor: grab;
   user-select: none;
-  background-image: url('pandemic-board.jpg'); /* Optional: Use actual board image */
+  /* Optional: Use actual board image */
+  /* background-image: url('pandemic-board.jpg');  */
   background-size: cover;
+  background-color: blanchedalmond;
 }
 
 .map-container.grabbing {
@@ -32,7 +34,8 @@ body {
   width: 1200px; /* Match the modulo width */
   height: 100%;
   margin-left: 200px; /* Add left margin to the inner container */
-  padding-right: 200px; /* Add right padding to maintain scrollable area */
+  background-color: white;
+  overflow: hidden;
 }
 
 .city {
