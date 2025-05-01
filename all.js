@@ -1,6 +1,5 @@
-
-// Load cities from JSON file and render the map
-  async function loadCities(jsonUrl) {
+// Load cities from JSON file
+async function loadCities(jsonUrl) {
   try {
     // Fetch the JSON file
     const response = await fetch(jsonUrl);
@@ -20,7 +19,11 @@
   }
 }
 
+// Updated render function using the global offset variable
 function renderPandemicCities(pandemicMap, offset = 0) {
+  // Update global offset value
+  globalMapOffset = offset;
+
   const container = document.querySelector('.map-container');
 
   // Clear previous content
@@ -40,20 +43,39 @@ function renderPandemicCities(pandemicMap, offset = 0) {
   // Modular arithmetic helper function that doesn't return negative values
   const mod = (n, m) => ((n % m) + m) % m;
 
+  // Optional optimization: clone cities that are close to the edge
+  // This helps visually with the wrap-around effect
+  const enhancedMap = JSON.parse(JSON.stringify(pandemicMap));
+  const MAP_WIDTH = 1200;
+  const CLONE_THRESHOLD = 200; // Cities this close to the edge get cloned
+
+  // Track which cities we've rendered to avoid duplicates
+  const renderedCities = new Set();
+
+  // First, render all the base cities
   for (const [cityName, cityData] of Object.entries(pandemicMap)) {
     const city = document.createElement('div');
     city.classList.add('city', cityData.color);
 
     // Apply modular arithmetic to x position
-    const adjustedX = mod(cityData.x + offset, 1200);
+    const adjustedX = mod(cityData.x + offset, MAP_WIDTH);
     city.style.left = `${adjustedX}px`;
     city.style.top = `${cityData.y}px`;
+
+    // Add data attribute for city name (useful for debugging)
+    city.dataset.cityName = cityName;
 
     // City dot
     const dot = document.createElement('div');
     dot.classList.add('dot');
     dot.title = cityName;
     city.appendChild(dot);
+
+    // City label
+    const label = document.createElement('div');
+    label.classList.add('city-label');
+    label.textContent = cityName;
+    city.appendChild(label);
 
     // Disease cubes (if any)
     if (cityData.cubes) {
@@ -90,24 +112,100 @@ function renderPandemicCities(pandemicMap, offset = 0) {
     }
 
     mapInner.appendChild(city);
+    renderedCities.add(cityName);
+  }
+
+  // Now handle transpacific connections by creating clone cities
+  for (const [cityName, cityData] of Object.entries(pandemicMap)) {
+    // Create western clone for cities near eastern edge
+    if (cityData.x > MAP_WIDTH - CLONE_THRESHOLD) {
+      const clone = createCityClone(cityName, cityData, offset, -MAP_WIDTH, 'clone-west');
+      mapInner.appendChild(clone);
+    }
+
+    // Create eastern clone for cities near western edge
+    if (cityData.x < CLONE_THRESHOLD) {
+      const clone = createCityClone(cityName, cityData, offset, MAP_WIDTH, 'clone-east');
+      mapInner.appendChild(clone);
+    }
   }
 
   // Append the inner container to the scrollable container
   container.appendChild(mapInner);
 
-  return {
-    // Return an update function that can be used to adjust the offset
-    updateOffset: (newOffset) => {
-      for (const city of mapInner.querySelectorAll('.city')) {
-        const cityName = city.querySelector('.dot').title;
-        const cityData = pandemicMap[cityName];
-        const adjustedX = mod(cityData.x + newOffset, 1200);
-        city.style.left = `${adjustedX}px`;
-      }
-    }
-  };
+  // Enable drag scrolling
+  enableDragScroll(container);
+
+  // Render the connections after creating all cities
+  renderConnections(pandemicMap, globalMapOffset);
 }
 
+// Helper function to create a clone of a city for better visual representation
+function createCityClone(cityName, cityData, offset, xOffset, cloneClass) {
+  const MAP_WIDTH = 1200;
+  const mod = (n, m) => ((n % m) + m) % m;
+
+  const clone = document.createElement('div');
+  clone.classList.add('city', cityData.color, cloneClass);
+
+  // Apply offset to the clone
+  const adjustedX = mod(cityData.x + xOffset + offset, MAP_WIDTH);
+  clone.style.left = `${adjustedX}px`;
+  clone.style.top = `${cityData.y}px`;
+
+  // Mark as clone and store original city name
+  clone.dataset.cityName = cityName;
+  clone.dataset.isClone = "true";
+
+  // City dot (slightly transparent to indicate it's a clone)
+  const dot = document.createElement('div');
+  dot.classList.add('dot');
+  dot.title = `${cityName} (clone)`;
+  dot.style.opacity = "0.7";
+  clone.appendChild(dot);
+
+  // We could add cubes, pawns, and research stations too,
+  // but for simplicity we'll just show the dot for clones
+
+  return clone;
+}
+
+// Add mouse drag scrolling functionality
+function enableDragScroll(element) {
+  let isDown = false;
+  let startX;
+  let scrollLeft;
+
+  element.addEventListener('mousedown', (e) => {
+    isDown = true;
+    element.classList.add('grabbing');
+    startX = e.pageX - element.offsetLeft;
+    scrollLeft = element.scrollLeft;
+
+    // Prevent text selection during drag
+    e.preventDefault();
+  });
+
+  element.addEventListener('mouseleave', () => {
+    isDown = false;
+    element.classList.remove('grabbing');
+  });
+
+  element.addEventListener('mouseup', () => {
+    isDown = false;
+    element.classList.remove('grabbing');
+  });
+
+  element.addEventListener('mousemove', (e) => {
+    if (!isDown) return;
+    e.preventDefault();
+    const x = e.pageX - element.offsetLeft;
+    const walk = (x - startX) * 1.5; // Scroll speed multiplier
+    element.scrollLeft = scrollLeft - walk;
+  });
+}
+
+// Prepare the raw city data for rendering by adding default properties
 function prepareMapForRendering(rawMap) {
   const fullMap = {};
 
@@ -123,30 +221,142 @@ function prepareMapForRendering(rawMap) {
   return fullMap;
 }
 
-function renderConnections(map) {
+// Global function to update the map offset
+function updateMapOffset(newOffset) {
+  globalMapOffset = newOffset;
+
+  const MAP_WIDTH = 1200;
+  const mod = (n, m) => ((n % m) + m) % m;
+
+  // Update position of all cities (original and clones)
+  const allCities = document.querySelectorAll('.city');
+  allCities.forEach(cityElement => {
+    const cityName = cityElement.dataset.cityName;
+    const cityData = pandemicMapData[cityName];
+
+    if (!cityData) return; // Skip if we can't find data
+
+    let adjustedX;
+
+    // If this is a clone, apply the appropriate offset
+    if (cityElement.classList.contains('clone-west')) {
+      adjustedX = mod(cityData.x + newOffset - MAP_WIDTH, MAP_WIDTH);
+    } else if (cityElement.classList.contains('clone-east')) {
+      adjustedX = mod(cityData.x + newOffset + MAP_WIDTH, MAP_WIDTH);
+    } else {
+      adjustedX = mod(cityData.x + newOffset, MAP_WIDTH);
+    }
+
+    cityElement.style.left = `${adjustedX}px`;
+  });
+
+  // Update connections
+  renderConnections(pandemicMapData, globalMapOffset);
+}
+
+// Improved renderConnections function that handles wrap-around connections properly
+function renderConnections(map, currentOffset = 0) {
   const svg = document.querySelector('.connections-layer');
+  if (!svg) {
+    console.error('SVG layer not found');
+    return;
+  }
+
+  // Clear existing connections
+  while (svg.firstChild) {
+    svg.removeChild(svg.firstChild);
+  }
+
+  // Modular arithmetic helper function that doesn't return negative values
+  const mod = (n, m) => ((n % m) + m) % m;
+
+  // Map width used for modular arithmetic
+  const MAP_WIDTH = 1200;
 
   for (const [city, data] of Object.entries(map)) {
-    const { x, y, connections } = data;
+    const { connections } = data;
+    if (!connections) continue;
+
+    // Get the current adjusted position with modular arithmetic
+    const x1 = mod(data.x + currentOffset, MAP_WIDTH);
+    const y1 = data.y;
 
     connections.forEach(connectedCity => {
       const target = map[connectedCity];
 
-      // Avoid duplicate lines by only drawing one direction
+      // Skip if connected city doesn't exist
       if (!target) return;
+
+      // Avoid duplicate connections by only drawing from one direction
       if (city > connectedCity) return;
-      if (Math.abs(x - target.x) > 500) return;
 
-      const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-      line.setAttribute('x1', x);
-      line.setAttribute('y1', y);
-      line.setAttribute('x2', target.x);
-      line.setAttribute('y2', target.y);
-      line.setAttribute('stroke', '#aaa');
-      line.setAttribute('stroke-width', '2');
-      line.setAttribute('stroke-linecap', 'round');
+      // Get the target's adjusted position
+      const x2 = mod(target.x + currentOffset, MAP_WIDTH);
+      const y2 = target.y;
 
-      svg.appendChild(line);
+      // Calculate the direct distance and the wrap-around distance
+      const directDistance = Math.abs(x2 - x1);
+      const wrapDistance = MAP_WIDTH - directDistance;
+
+      // Determine if we should draw direct or wrap-around connection
+      const shouldWrap = directDistance > wrapDistance;
+
+      if (shouldWrap) {
+        // Draw two line segments for wrap-around connection
+
+        // First segment - from city to edge
+        const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        if (x1 < x2) {
+          // City is on left, target on right - draw to left edge
+          line1.setAttribute('x1', x1);
+          line1.setAttribute('y1', y1);
+          line1.setAttribute('x2', 0);
+          line1.setAttribute('y2', y1 + (y2 - y1) * (0 - x1) / (MAP_WIDTH + (0 - x2)));
+        } else {
+          // City is on right, target on left - draw to right edge
+          line1.setAttribute('x1', x1);
+          line1.setAttribute('y1', y1);
+          line1.setAttribute('x2', MAP_WIDTH);
+          line1.setAttribute('y2', y1 + (y2 - y1) * (MAP_WIDTH - x1) / (0 - x2 + MAP_WIDTH));
+        }
+        line1.setAttribute('stroke', '#aaa');
+        line1.setAttribute('stroke-width', '2');
+        line1.setAttribute('stroke-dasharray', '5,3');
+        line1.setAttribute('stroke-linecap', 'round');
+        svg.appendChild(line1);
+
+        // Second segment - from other edge to target
+        const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        if (x1 < x2) {
+          // Target is on right, wrap to its left edge
+          line2.setAttribute('x1', MAP_WIDTH);
+          line2.setAttribute('y1', y1 + (y2 - y1) * (MAP_WIDTH - x1) / (0 - x2 + MAP_WIDTH));
+          line2.setAttribute('x2', x2);
+          line2.setAttribute('y2', y2);
+        } else {
+          // Target is on left, wrap to its right edge
+          line2.setAttribute('x1', 0);
+          line2.setAttribute('y1', y1 + (y2 - y1) * (0 - x1) / (MAP_WIDTH + (0 - x2)));
+          line2.setAttribute('x2', x2);
+          line2.setAttribute('y2', y2);
+        }
+        line2.setAttribute('stroke', '#aaa');
+        line2.setAttribute('stroke-width', '2');
+        line2.setAttribute('stroke-dasharray', '5,3');
+        line2.setAttribute('stroke-linecap', 'round');
+        svg.appendChild(line2);
+      } else {
+        // Draw direct connection (no wrap needed)
+        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        line.setAttribute('x1', x1);
+        line.setAttribute('y1', y1);
+        line.setAttribute('x2', x2);
+        line.setAttribute('y2', y2);
+        line.setAttribute('stroke', '#aaa');
+        line.setAttribute('stroke-width', '2');
+        line.setAttribute('stroke-linecap', 'round');
+        svg.appendChild(line);
+      }
     });
   }
 }
