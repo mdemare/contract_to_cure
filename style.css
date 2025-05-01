@@ -67,9 +67,6 @@ body {
   max-width: 100px;
 }
 
-.city.clone .city-label {
-  display: none; /* Hide labels for clone cities to reduce clutter */
-}
 
 .city.blue .dot { background-color: #3b90ff; }
 .city.yellow .dot { background-color: #ffd700; }

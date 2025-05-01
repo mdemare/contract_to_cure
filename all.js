@@ -115,33 +115,6 @@ function renderPandemicCities(pandemicMap, offset = 0) {
     renderedCities.add(cityName);
   }
 
-  // Now handle transpacific connections by creating clone cities
-  for (const [cityName, cityData] of Object.entries(pandemicMap)) {
-    // Create western clone for cities near eastern edge
-    // These should appear on the left side of the map
-    if (cityData.x > MAP_WIDTH - CLONE_THRESHOLD) {
-      const clone = createCityClone(cityName, cityData, offset, -MAP_WIDTH, 'clone-west');
-
-      // Make sure the clone is actually positioned on the left edge
-      const cloneX = mod(cityData.x - MAP_WIDTH + offset, MAP_WIDTH);
-      if (cloneX < CLONE_THRESHOLD) {
-        mapInner.appendChild(clone);
-      }
-    }
-
-    // Create eastern clone for cities near western edge
-    // These should appear on the right side of the map
-    if (cityData.x < CLONE_THRESHOLD) {
-      const clone = createCityClone(cityName, cityData, offset, MAP_WIDTH, 'clone-east');
-
-      // Make sure the clone is actually positioned on the right edge
-      const cloneX = mod(cityData.x + MAP_WIDTH + offset, MAP_WIDTH);
-      if (cloneX > MAP_WIDTH - CLONE_THRESHOLD) {
-        mapInner.appendChild(clone);
-      }
-    }
-  }
-
   // Append the inner container to the scrollable container
   container.appendChild(mapInner);
 
@@ -150,57 +123,6 @@ function renderPandemicCities(pandemicMap, offset = 0) {
 
   // Render the connections after creating all cities
   renderConnections(pandemicMap, globalMapOffset);
-}
-
-// Helper function to create a clone of a city for better visual representation
-function createCityClone(cityName, cityData, offset, xOffset, cloneClass) {
-  const MAP_WIDTH = 1300;
-  const mod = (n, m) => ((n % m) + m) % m;
-
-  const clone = document.createElement('div');
-  clone.classList.add('city', cityData.color, cloneClass, 'clone');
-
-  // Apply offset to the clone
-  // For west clones (clones that appear on the left side), we subtract MAP_WIDTH
-  // For east clones (clones that appear on the right side), we add MAP_WIDTH
-  const adjustedX = mod(cityData.x + xOffset + offset, MAP_WIDTH);
-  clone.style.left = `${adjustedX}px`;
-  clone.style.top = `${cityData.y}px`;
-
-  // Mark as clone and store original city name
-  clone.dataset.cityName = cityName;
-  clone.dataset.isClone = "true";
-  clone.dataset.originalX = cityData.x; // Store original position for debugging
-
-  // City dot (slightly transparent to indicate it's a clone)
-  const dot = document.createElement('div');
-  dot.classList.add('dot');
-  dot.title = `${cityName} (clone)`;
-  dot.style.opacity = "0.7";
-  clone.appendChild(dot);
-
-  // For clones, we'll add a label but make it semi-transparent
-  const label = document.createElement('div');
-  label.classList.add('city-label');
-  label.textContent = cityName;
-  label.style.opacity = "0.5";
-  clone.appendChild(label);
-
-  // Debug marker - add a small indicator to show it's a clone
-  // This will help identify if clones are incorrectly showing up
-  const debugMarker = document.createElement('div');
-  debugMarker.style.position = 'absolute';
-  debugMarker.style.top = '-10px';
-  debugMarker.style.left = '0';
-  debugMarker.style.fontSize = '8px';
-  debugMarker.style.color = 'white';
-  debugMarker.style.background = 'rgba(255,0,0,0.5)';
-  debugMarker.style.padding = '2px';
-  debugMarker.style.borderRadius = '2px';
-  debugMarker.textContent = cloneClass === 'clone-west' ? 'W' : 'E';
-  clone.appendChild(debugMarker);
-
-  return clone;
 }
 
 // Add mouse drag scrolling functionality
@@ -282,28 +204,6 @@ function updateMapOffset(newOffset) {
 
   // Re-create necessary clones based on new offset
   const mapInner = document.querySelector('.map-inner');
-
-  for (const [cityName, cityData] of Object.entries(pandemicMapData)) {
-    // Create western clone for cities near eastern edge
-    if (cityData.x > MAP_WIDTH - CLONE_THRESHOLD) {
-      const adjustedX = mod(cityData.x + newOffset, MAP_WIDTH);
-      // Only create clone if original is near the right edge
-      if (adjustedX > MAP_WIDTH - CLONE_THRESHOLD) {
-        const clone = createCityClone(cityName, cityData, newOffset, -MAP_WIDTH, 'clone-west');
-        mapInner.appendChild(clone);
-      }
-    }
-
-    // Create eastern clone for cities near western edge
-    if (cityData.x < CLONE_THRESHOLD) {
-      const adjustedX = mod(cityData.x + newOffset, MAP_WIDTH);
-      // Only create clone if original is near the left edge
-      if (adjustedX < CLONE_THRESHOLD) {
-        const clone = createCityClone(cityName, cityData, newOffset, MAP_WIDTH, 'clone-east');
-        mapInner.appendChild(clone);
-      }
-    }
-  }
 
   // Update connections
   renderConnections(pandemicMapData, globalMapOffset);
