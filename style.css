@@ -1,0 +1,105 @@
+body {
+  margin: 0;
+  overflow: hidden;
+}
+
+.map-container {
+  position: relative;
+  width: 100%;
+  height: 500px;
+  overflow-x: auto;
+  overflow-y: auto;
+  white-space: nowrap;
+}
+
+.error-message {
+  color: #d32f2f;
+  padding: 20px;
+  text-align: center;
+  font-weight: bold;
+}
+
+.map-inner {
+  position: relative;
+  width: 1200px; /* Match the modulo width */
+  height: 100%;
+  margin-left: 200px; /* Add left margin to the inner container */
+  padding-right: 200px; /* Add right padding to maintain scrollable area */
+}
+
+.map-container {
+  position: relative;
+  width: 1200px;
+  height: 700px;
+  background-image: url('pandemic-board.jpg'); /* Use actual board image */
+  background-size: cover;
+}
+
+.city {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  cursor: pointer;
+}
+
+.city .dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid white;
+}
+
+.city.blue .dot { background-color: #3b90ff; }
+.city.yellow .dot { background-color: #ffd700; }
+.city.black .dot { background-color: #444; }
+.city.red .dot { background-color: #ff5e5e; }
+
+.city .cubes {
+  display: flex;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.cube {
+  width: 6px;
+  height: 6px;
+  border-radius: 2px;
+}
+
+.cube.blue { background-color: #3b90ff; }
+.cube.yellow { background-color: #ffd700; }
+.cube.black { background-color: #444; }
+.cube.red { background-color: #ff5e5e; }
+
+.pawns {
+  display: flex;
+  gap: 2px;
+  margin-top: 2px;
+}
+
+.pawn {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  border: 1px solid white;
+}
+
+.pawn.blue { background-color: #3b90ff; }
+.pawn.red { background-color: #ff5e5e; }
+.pawn.yellow { background-color: #ffd700; }
+.pawn.black { background-color: #000; }
+
+.station {
+  margin-top: 2px;
+  font-size: 10px;
+  color: white;
+}
+
+.connections-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    pointer-events: none;
+}
