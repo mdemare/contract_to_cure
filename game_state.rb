@@ -856,31 +856,4 @@ class GameState
       end_turn: @actions_remaining <= 0
     }
   end
-
-  # Debugging methods
-
-  def debug_city_disease_cubes
-    debug_info = {}
-    @cities.each do |name, city|
-      debug_info[name] = city.disease_cubes.select { |_, count| count.positive? }
-    end
-    debug_info
-  end
-
-  def debug_player_hands
-    debug_info = {}
-    @players.each_with_index do |player, idx|
-      debug_info["Player #{idx} (#{player.role})"] = player.hand.map do |card|
-        "#{card.name} (#{card.type} #{card.color})"
-      end
-    end
-    debug_info
-  end
 end
-
-# Example usage:
-# game = GameState.new(4, :normal)
-# status = game.game_status
-# p status
-#
-# available_actions = game.available_actions(0)
