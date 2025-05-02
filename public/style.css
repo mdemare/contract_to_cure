@@ -417,3 +417,103 @@ button {
 .dragging {
   cursor: grabbing !important;
 }
+
+/* Action Buttons Styles - Touch Friendly Version */
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 15px;
+  padding: 20px;
+  background-color: var(--header-bg);
+  border-top: 1px solid rgba(255, 255, 255, 0.2);
+}
+
+.action-btn {
+  background-color: rgba(255, 255, 255, 0.1);
+  color: white;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+  width: 110px;
+  height: 110px;
+  font-size: 16px;
+  font-weight: bold;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  transition: all 0.2s ease;
+  cursor: pointer;
+  text-align: center;
+}
+
+.action-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+.action-btn:active {
+  transform: scale(0.96);
+  background-color: rgba(255, 255, 255, 0.25);
+}
+
+.action-btn.disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+.action-btn i {
+  font-size: 32px;
+  line-height: 1;
+  display: block;
+  margin-bottom: 5px;
+}
+
+/* Icons for buttons */
+.action-btn.move i::before {
+  content: "🚶‍♂️";
+}
+
+.action-btn.treat i::before {
+  content: "💊";
+}
+
+.action-btn.cure i::before {
+  content: "🧪";
+}
+
+.action-btn.trade i::before {
+  content: "🔄";
+}
+
+.action-btn.build i::before {
+  content: "🏗️";
+}
+
+.action-btn.skip i::before {
+  content: "⏭️";
+}
+
+/* Make text wrap inside buttons */
+.action-btn span {
+  display: block;
+  max-width: 100%;
+  line-height: 1.2;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .action-buttons {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .action-btn {
+    width: 90px;
+    height: 90px;
+    font-size: 14px;
+  }
+
+  .action-btn i {
+    font-size: 28px;
+  }
+}

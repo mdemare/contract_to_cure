@@ -11,6 +11,8 @@
   <script type="module" src="constants.js"></script>
   <script type="module" src="all.js"></script>
   <script type="module" src="scrolling.js"></script>
+  <script type="module" src="game_state.js"></script>
+  <script type="module" src="action_buttons.js"></script>
   <script type="module" src="events.js"></script>
 </head>
 <body>
@@ -101,6 +103,34 @@
         <svg class="connections-layer" width="100%" height="100%"></svg>
       </div>
     </div>
+  </div>
+
+  <!-- Touch-Friendly Action Buttons -->
+  <div class="action-buttons">
+    <button id="move-btn" class="action-btn move">
+      <i></i>
+      <span>Move</span>
+    </button>
+    <button id="treat-btn" class="action-btn treat">
+      <i></i>
+      <span>Treat Disease</span>
+    </button>
+    <button id="cure-btn" class="action-btn cure">
+      <i></i>
+      <span>Find Cure</span>
+    </button>
+    <button id="trade-btn" class="action-btn trade">
+      <i></i>
+      <span>Share Knowledge</span>
+    </button>
+    <button id="build-btn" class="action-btn build">
+      <i></i>
+      <span>Build Station</span>
+    </button>
+    <button id="skip-btn" class="action-btn skip">
+      <i></i>
+      <span>Skip Action</span>
+    </button>
   </div>
 
   <div class="game-footer">

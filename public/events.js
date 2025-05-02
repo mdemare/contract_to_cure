@@ -1,6 +1,8 @@
 import { loadCities, prepareMapForRendering, renderPandemicCities } from './all.js';
 import { initScrolling } from './scrolling.js';
 import { MAP_WIDTH } from './constants.js';
+import { loadGameState, startGameStateRefresh } from './game_state.js';
+import { initActionButtons } from './action_buttons.js';
 
 // Function to zoom the map
 function zoomMap(factor) {
@@ -90,21 +92,21 @@ async function initializePandemicMap() {
       document.getElementById('reset-view').addEventListener('click', function() {
         resetMapView();
       });
+
+      // Load the game state from the server
+      await loadGameState();
+
+      // Initialize action buttons
+      initActionButtons();
+
+      // Start periodic refresh of game state (every 10 seconds)
+      startGameStateRefresh(10000);
     }
   } catch (error) {
     console.error('Error initializing map:', error);
     document.querySelector('.map-container').innerHTML =
       `<div class="error-message">Failed to initialize map: ${error.message}</div>`;
   }
-
-  // Update game status panel with sample data
-  updateGameStatus({
-    currentTurn: 1,
-    outbreaks: 0,
-    cures: { blue: false, yellow: false, black: false, red: false },
-    playerDeck: 35,
-    infectionDeck: 42
-  });
 }
 
 // Setup DOM event listeners when the document is ready
