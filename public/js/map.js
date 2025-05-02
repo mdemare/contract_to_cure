@@ -21,34 +21,36 @@ export async function loadCities(jsonUrl) {
   }
 }
 
-// Create city div on numbered panel
+// Create city div with centralized dot
 function createCityOnPanel(cityData, cityName, panel) {
   const city = document.createElement('div');
   city.classList.add('city', cityData.color);
 
-  // Apply modular arithmetic to x position
-  city.style.left = `${cityData.x + panel * MAP_WIDTH}px`;
+  // Position the city div at the exact coordinate (dot will be centered)
+  const xPos = cityData.x + panel * MAP_WIDTH;
+  city.style.left = `${xPos}px`;
   city.style.top = `${cityData.y}px`;
 
   // Add data attribute for city name (useful for debugging)
   city.dataset.cityName = cityName;
 
-  // City dot
+  // City dot (centered at the city coordinates)
   const dot = document.createElement('div');
   dot.classList.add('dot');
   dot.title = cityName;
   city.appendChild(dot);
 
-  // City label
+  // City label (positioned below the dot)
   const label = document.createElement('div');
   label.classList.add('city-label');
   label.textContent = cityName;
   city.appendChild(label);
 
   // Disease cubes (if any)
-  if (cityData.cubes) {
+  if (cityData.cubes && Object.values(cityData.cubes).some(count => count > 0)) {
     const cubes = document.createElement('div');
     cubes.classList.add('cubes');
+
     for (const [color, count] of Object.entries(cityData.cubes)) {
       for (let i = 0; i < count; i++) {
         const cube = document.createElement('div');
@@ -56,18 +58,23 @@ function createCityOnPanel(cityData, cityName, panel) {
         cubes.appendChild(cube);
       }
     }
+
     city.appendChild(cubes);
   }
 
-  // Pawns (if any)
+  // Pawns (if any) - now using chess pawns
   if (cityData.pawns && cityData.pawns.length > 0) {
     const pawns = document.createElement('div');
     pawns.classList.add('pawns');
-    for (const color of cityData.pawns) {
+
+    // cityData.pawns might contain role names instead of colors
+    cityData.pawns.forEach((role, index) => {
       const pawn = document.createElement('div');
-      pawn.classList.add('pawn', color);
+      pawn.classList.add('pawn', role); // Use the role directly as the class
+      pawn.textContent = '♟';
       pawns.appendChild(pawn);
-    }
+    });
+
     city.appendChild(pawns);
   }
 
@@ -78,6 +85,7 @@ function createCityOnPanel(cityData, cityName, panel) {
     station.textContent = '🧪';
     city.appendChild(station);
   }
+
   return city;
 }
 

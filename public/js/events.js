@@ -98,8 +98,8 @@ async function initializePandemicMap() {
       // Initialize action buttons
       initActionButtons();
 
-      // Start periodic refresh of game state (every 10 seconds)
-      startGameStateRefresh(10000);
+      // Start periodic refresh of game state (every 1000 seconds)
+      startGameStateRefresh(1000000);
     }
   } catch (error) {
     console.error('Error initializing map:', error);

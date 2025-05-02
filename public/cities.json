@@ -213,37 +213,37 @@
     "color": "black",
     "x": 800,
     "y": 350,
-    "connections": ["Delhi", "Chennai", "Bangkok", "Hong Kong"]
+    "connections": ["Delhi", "Chennai", "Bangkok", "Wuhan"]
   },
   "Bangkok": {
     "color": "red",
     "x": 850,
     "y": 400,
-    "connections": ["Kolkata", "Chennai", "Jakarta", "Ho Chi Minh City", "Hong Kong"]
+    "connections": ["Kolkata", "Chennai", "Jakarta", "Hong Kong", "Wuhan"]
   },
   "Jakarta": {
     "color": "red",
     "x": 870,
     "y": 500,
-    "connections": ["Chennai", "Bangkok", "Ho Chi Minh City", "Sydney"]
-  },
-  "Ho Chi Minh City": {
-    "color": "red",
-    "x": 900,
-    "y": 450,
-    "connections": ["Jakarta", "Bangkok", "Hong Kong", "Manila"]
+    "connections": ["Chennai", "Bangkok", "Hong Kong", "Sydney"]
   },
   "Hong Kong": {
     "color": "red",
     "x": 900,
+    "y": 450,
+    "connections": ["Jakarta", "Bangkok", "Wuhan", "Manila"]
+  },
+  "Wuhan": {
+    "color": "red",
+    "x": 900,
     "y": 350,
-    "connections": ["Kolkata", "Bangkok", "Ho Chi Minh City", "Shanghai", "Manila", "Taipei"]
+    "connections": ["Kolkata", "Bangkok", "Hong Kong", "Shanghai", "Manila", "Taipei"]
   },
   "Shanghai": {
     "color": "red",
     "x": 950,
     "y": 300,
-    "connections": ["Beijing", "Seoul", "Tokyo", "Taipei", "Hong Kong"]
+    "connections": ["Beijing", "Seoul", "Tokyo", "Taipei", "Wuhan"]
   },
   "Beijing": {
     "color": "red",
@@ -273,13 +273,13 @@
     "color": "red",
     "x": 1000,
     "y": 400,
-    "connections": ["Osaka", "Hong Kong", "Shanghai", "Manila"]
+    "connections": ["Osaka", "Wuhan", "Shanghai", "Manila"]
   },
   "Manila": {
     "color": "red",
     "x": 950,
     "y": 440,
-    "connections": ["Taipei", "Hong Kong", "Ho Chi Minh City", "San Francisco", "Sydney"]
+    "connections": ["Taipei", "Wuhan", "Hong Kong", "San Francisco", "Sydney"]
   },
   "Sydney": {
     "color": "red",

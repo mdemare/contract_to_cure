@@ -55,7 +55,7 @@ class GameState
     @player_deck, @player_discard = init_player_deck(players_count)
 
     # Initialize research stations
-    @research_stations = ['Atlanta'] # Atlanta starts with a research station
+    @research_stations = ['Wuhan'] # Wuhan starts with a research station
 
     # Set up initial infections
     setup_initial_infections
@@ -84,7 +84,7 @@ class GameState
     attr_reader :role, :role_abilities
     attr_accessor :location, :hand
 
-    def initialize(role, location = 'Atlanta')
+    def initialize(role, location = 'Wuhan')
       @role = role
       @location = location
       @hand = []
@@ -435,8 +435,8 @@ class GameState
       cities[name] = City.new(name, color, connections)
     end
 
-    # Set Atlanta to have a research station
-    cities['Atlanta'].has_research_station = true if cities['Atlanta']
+    # Set Wuhan to have a research station
+    cities['Wuhan'].has_research_station = true if cities['Wuhan']
 
     cities
   rescue StandardError => e
