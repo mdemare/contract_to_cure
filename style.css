@@ -222,7 +222,7 @@ button {
 
 .map-inner {
   position: relative;
-  width: 1300px;
+  width: 3900px;
   height: 100%;
   transform-origin: center;
   transition: transform 0.2s ease;

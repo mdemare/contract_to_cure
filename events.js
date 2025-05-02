@@ -1,3 +1,4 @@
+import { loadCities, prepareMapForRendering, renderPandemicCities } from './all.js';
 // Drag scrolling functionality has been removed
 
 // Function to zoom the map
@@ -62,9 +63,6 @@ async function initializePandemicMap() {
     if (cities) {
       // Prepare the map data for rendering
       const renderableMap = prepareMapForRendering(cities);
-
-      // Store map data globally
-      pandemicMapData = renderableMap;
 
       // Render the cities
       renderPandemicCities(renderableMap);
