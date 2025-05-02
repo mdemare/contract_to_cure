@@ -1,26 +1,30 @@
+# frozen_string_literal: true
+
 require 'awesome_print'
 require 'json'
 
 class GameState
   attr_reader :cities, :players, :current_player_index, :infection_deck, :infection_discard,
-  :player_deck, :player_discard, :research_stations, :disease_cubes, :cures,
-  :outbreak_count, :infection_rate, :infection_rate_marker, :game_over,
-  :game_over_reason, :difficulty_level
+              :player_deck, :player_discard, :research_stations, :disease_cubes, :cures,
+              :outbreak_count, :infection_rate, :infection_rate_marker, :game_over,
+              :game_over_reason, :difficulty_level
 
-  COLORS = [:blue, :yellow, :black, :red]
-  ROLES = [:medic, :scientist, :researcher, :operations_expert, :dispatcher, :contingency_planner, :quarantine_specialist]
-  INFECTION_RATE_TRACK = [2, 2, 2, 3, 3, 4, 4]
+  COLORS = %i[blue yellow black red].freeze
+  ROLES = %i[medic scientist researcher operations_expert dispatcher contingency_planner
+             quarantine_specialist].freeze
+  INFECTION_RATE_TRACK = [2, 2, 2, 3, 3, 4, 4].freeze
   MAX_OUTBREAKS = 8
   MAX_DISEASE_CUBES_PER_COLOR = 24
-  CARDS_PER_PLAYER = { 2 => 4, 3 => 3, 4 => 2 }
+  CARDS_PER_PLAYER = { 2 => 4, 3 => 3, 4 => 2 }.freeze
   INITIAL_RESEARCH_STATIONS = 1
   MAX_RESEARCH_STATIONS = 6
-  CARDS_NEEDED_FOR_CURE = { scientist: 4, default: 5 }
+  CARDS_NEEDED_FOR_CURE = { scientist: 4, default: 5 }.freeze
 
   # Initialize a new game state
   def initialize(players_count, difficulty_level = :normal)
-    raise ArgumentError, "Player count must be 2-4" unless (2..4).include?(players_count)
-    raise ArgumentError, "Difficulty must be :introductory, :normal, :heroic" unless [:introductory, :normal, :heroic].include?(difficulty_level)
+    raise ArgumentError, 'Player count must be 2-4' unless (2..4).include?(players_count)
+    raise ArgumentError, 'Difficulty must be :introductory, :normal, :heroic' unless %i[introductory normal
+                                                                                        heroic].include?(difficulty_level)
 
     @difficulty_level = difficulty_level
     @current_player_index = 0
@@ -40,16 +44,18 @@ class GameState
 
     # Initialize cities
     @cities = init_cities
+    raise unless @cities.size == 48
 
     # Initialize players
     @players = init_players(players_count)
 
     # Initialize decks
+    raise unless @cities.size == 48
     @infection_deck, @infection_discard = init_infection_deck
     @player_deck, @player_discard = init_player_deck(players_count)
 
     # Initialize research stations
-    @research_stations = ["Atlanta"] # Atlanta starts with a research station
+    @research_stations = ['Atlanta'] # Atlanta starts with a research station
 
     # Set up initial infections
     setup_initial_infections
@@ -78,7 +84,7 @@ class GameState
     attr_reader :role, :role_abilities
     attr_accessor :location, :hand
 
-    def initialize(role, location = "Atlanta")
+    def initialize(role, location = 'Atlanta')
       @role = role
       @location = location
       @hand = []
@@ -90,21 +96,21 @@ class GameState
     def set_role_abilities(role)
       case role
       when :medic
-        { description: "Remove all cubes of a single color when treating a disease. Automatically remove cubes of cured diseases in your location." }
+        { description: 'Remove all cubes of a single color when treating a disease. Automatically remove cubes of cured diseases in your location.' }
       when :scientist
-        { description: "You need only 4 cards of the same color to discover a cure." }
+        { description: 'You need only 4 cards of the same color to discover a cure.' }
       when :researcher
-        { description: "You may give a player cards from your hand for one action per card." }
+        { description: 'You may give a player cards from your hand for one action per card.' }
       when :operations_expert
-        { description: "You may build a research station in your location without discarding a city card. Once per turn, you may move from a research station to any city by discarding any city card." }
+        { description: 'You may build a research station in your location without discarding a city card. Once per turn, you may move from a research station to any city by discarding any city card.' }
       when :dispatcher
         { description: "Move other players' pawns as if they were your own. Move any pawn to a city with another pawn." }
       when :contingency_planner
-        { description: "You may take an event card from the discard pile and use it. Remove it from the game afterward." }
+        { description: 'You may take an event card from the discard pile and use it. Remove it from the game afterward.' }
       when :quarantine_specialist
-        { description: "Prevent disease cubes in your location and all connected cities." }
+        { description: 'Prevent disease cubes in your location and all connected cities.' }
       else
-        { description: "Unknown role" }
+        { description: 'Unknown role' }
       end
     end
   end
@@ -128,9 +134,9 @@ class GameState
 
     # Check if move is valid
     if @cities[current_location].connections.include?(destination) ||
-      (@research_stations.include?(current_location) && @research_stations.include?(destination)) ||
-      has_city_card?(player_index, destination) ||
-      has_city_card?(player_index, current_location) && player.role == :operations_expert
+       (@research_stations.include?(current_location) && @research_stations.include?(destination)) ||
+       has_city_card?(player_index, destination) ||
+       has_city_card?(player_index, current_location) && player.role == :operations_expert
 
       player.location = destination
       return true
@@ -169,7 +175,7 @@ class GameState
     player = @players[player_index]
     city = @cities[player.location]
 
-    return false if city.disease_cubes[color] == 0
+    return false if city.disease_cubes[color].zero?
 
     # Medic can remove all cubes of a color
     if player.role == :medic || @cures[color]
@@ -195,7 +201,7 @@ class GameState
 
     # The card must be a city card matching the current location, or the player must be a researcher
     return false unless card.type == :city &&
-    (card.name == giving_player.location || giving_player.role == :researcher)
+                        (card.name == giving_player.location || giving_player.role == :researcher)
 
     # Move the card
     giving_player.hand.delete_at(card_index)
@@ -218,7 +224,9 @@ class GameState
     return false if card_indices.size != cards_needed
 
     # Check if all selected cards are of the right color
-    selected_cards = card_indices.map { |idx| player.hand[idx] }.select { |card| card.type == :city && card.color == color }
+    selected_cards = card_indices.map do |idx|
+      player.hand[idx]
+    end.select { |card| card.type == :city && card.color == color }
     return false if selected_cards.size != cards_needed
 
     # Discard the cards
@@ -291,20 +299,20 @@ class GameState
     @infection_rate = INFECTION_RATE_TRACK[@infection_rate_marker] if @infection_rate_marker < INFECTION_RATE_TRACK.size
 
     # Infect: draw bottom card from infection deck
-    if @infection_deck.any?
-      card = @infection_deck.shift
-      city = @cities[card.name]
+    return unless @infection_deck.any?
 
-      # Add 3 cubes of the city's color
-      add_disease_cubes(city.name, city.color, 3)
+    card = @infection_deck.shift
+    city = @cities[card.name]
 
-      # Add card to discard pile
-      @infection_discard << card
+    # Add 3 cubes of the city's color
+    add_disease_cubes(city.name, city.color, 3)
 
-      # Intensify: shuffle the infection discard pile and put it on top of infection deck
-      @infection_deck = @infection_discard.shuffle + @infection_deck
-      @infection_discard = []
-    end
+    # Add card to discard pile
+    @infection_discard << card
+
+    # Intensify: shuffle the infection discard pile and put it on top of infection deck
+    @infection_deck = @infection_discard.shuffle + @infection_deck
+    @infection_discard = []
   end
 
   def infect_city
@@ -321,9 +329,7 @@ class GameState
     city = @cities[city_name]
 
     # Handle quarantine specialist prevention
-    if has_quarantine_specialist_protection?(city_name)
-      return
-    end
+    return if has_quarantine_specialist_protection?(city_name)
 
     # If the disease is eradicated, don't add cubes
     return if @cures[color] && @disease_cubes[color] == MAX_DISEASE_CUBES_PER_COLOR
@@ -339,16 +345,16 @@ class GameState
     @disease_cubes[color] -= to_add
 
     # If we're out of cubes, game over
-    if @disease_cubes[color] == 0
+    if @disease_cubes[color].zero?
       @game_over = true
       @game_over_reason = :no_cubes
       return
     end
 
     # Handle outbreak if needed
-    if outbreak_needed > 0
-      trigger_outbreak(city_name, color)
-    end
+    return unless outbreak_needed.positive?
+
+    trigger_outbreak(city_name, color)
   end
 
   def trigger_outbreak(city_name, color, outbreak_chain = [])
@@ -381,15 +387,15 @@ class GameState
 
       # Add 1 cube, or trigger outbreak if already at 3 cubes
       if connected_city.disease_cubes[color] < 3
-        if @disease_cubes[color] > 0
+        if @disease_cubes[color].positive?
           connected_city.disease_cubes[color] += 1
           @disease_cubes[color] -= 1
 
           # If we're out of cubes, game over
-          if @disease_cubes[color] == 0
+          if @disease_cubes[color].zero?
             @game_over = true
             @game_over_reason = :no_cubes
-            return
+            break
           end
         end
       else
@@ -412,117 +418,117 @@ class GameState
   # Initialize methods
 
   def init_cities
-  # Load cities from JSON file
-  begin
-    cities_json = File.read('cities.json')
+    # Load cities from JSON file
+
+    cities_json = File.read('public/cities.json')
     cities_data = JSON.parse(cities_json)
-    
+    raise cities_data unless cities_data.size == 48
+
     # Convert the JSON data to City objects
     cities = {}
     cities_data.each do |name, data|
       # Convert string keys to symbols for color and convert string array to symbols
       color = data['color'].to_sym
       connections = data['connections']
-      
+
       # Create a new City object
       cities[name] = City.new(name, color, connections)
     end
-    
+
     # Set Atlanta to have a research station
-    cities["Atlanta"].has_research_station = true if cities["Atlanta"]
-    
+    cities['Atlanta'].has_research_station = true if cities['Atlanta']
+
     cities
-  rescue => e
+  rescue StandardError => e
     puts "Error loading cities from JSON: #{e.message}"
     puts e.backtrace
     # Fall back to returning an empty hash or handling the error as needed
     {}
   end
-end
 
-def init_players(count)
-  # Randomly assign roles to players
-  roles = ROLES.shuffle.take(count)
+  def init_players(count)
+    # Randomly assign roles to players
+    roles = ROLES.shuffle.take(count)
 
-  players = []
-  roles.each do |role|
-    players << Player.new(role)
-  end
-
-  players
-end
-
-def init_infection_deck
-  # Create infection cards for each city
-  infection_cards = @cities.map do |name, city|
-    Card.new(:city, name, city.color)
-  end
-
-  # Shuffle the deck
-  infection_deck = infection_cards.shuffle
-  infection_discard = []
-
-  [infection_deck, infection_discard]
-end
-
-def init_player_deck(players_count)
-  # Create city cards
-  city_cards = @cities.map do |name, city|
-    Card.new(:city, name, city.color)
-  end
-
-  # Create event cards
-  event_cards = [
-    Card.new(:event, "Airlift"),
-    Card.new(:event, "Forecast"),
-    Card.new(:event, "Government Grant"),
-    Card.new(:event, "One Quiet Night"),
-    Card.new(:event, "Resilient Population")
-  ]
-
-  # Combine and shuffle
-  combined_deck = (city_cards + event_cards).shuffle
-
-  # Deal initial hands
-  player_deck = combined_deck.dup
-  players_hand = []
-
-  # Deal cards to players
-  @players.each do |player|
-    CARDS_PER_PLAYER[players_count].times do
-      player.hand << player_deck.pop
+    players = []
+    roles.each do |role|
+      players << Player.new(role)
     end
+
+    players
   end
 
-  # Add epidemic cards
-  epidemic_count = case @difficulty_level
-  when :introductory then 4
-  when :normal then 5
-  when :heroic then 6
+  def init_infection_deck
+    raise unless @cities.size == 48
+    # Create infection cards for each city
+    infection_cards = @cities.map do |name, city|
+      Card.new(:city, name, city.color)
+    end
+
+    # Shuffle the deck
+    infection_deck = infection_cards.shuffle
+    infection_discard = []
+
+    [infection_deck, infection_discard]
   end
 
-  epidemic_cards = Array.new(epidemic_count) { Card.new(:epidemic, "Event:Epidemic") }
+  def init_player_deck(players_count)
+    # Create city cards
+    city_cards = @cities.map do |name, city|
+      Card.new(:city, name, city.color)
+    end
 
-  # Split deck into piles and add epidemic cards
-  pile_size = player_deck.size / epidemic_count
-  piles = []
+    # Create event cards
+    event_cards = [
+      Card.new(:event, 'Airlift'),
+      Card.new(:event, 'Forecast'),
+      Card.new(:event, 'Government Grant'),
+      Card.new(:event, 'One Quiet Night'),
+      Card.new(:event, 'Resilient Population')
+    ]
 
-  epidemic_count.times do |i|
-    start_idx = i * pile_size
-    end_idx = (i == epidemic_count - 1) ? player_deck.size : (i + 1) * pile_size
-    pile = player_deck[start_idx ... end_idx]
-    pile << epidemic_cards[i]
-    piles << pile.shuffle
+    # Combine and shuffle
+    combined_deck = (city_cards + event_cards).shuffle
+
+    # Deal initial hands
+    player_deck = combined_deck.dup
+
+    # Deal cards to players
+    @players.each do |player|
+      CARDS_PER_PLAYER[players_count].times do
+        player.hand << player_deck.pop
+      end
+    end
+
+    # Add epidemic cards
+    epidemic_count = case @difficulty_level
+                     when :introductory then 4
+                     when :normal then 5
+                     when :heroic then 6
+                     end
+
+    epidemic_cards = Array.new(epidemic_count) { Card.new(:epidemic, 'Event:Epidemic') }
+
+    # Split deck into piles and add epidemic cards
+    pile_size = player_deck.size / epidemic_count
+    piles = []
+
+    epidemic_count.times do |i|
+      start_idx = i * pile_size
+      end_idx = i == epidemic_count - 1 ? player_deck.size : (i + 1) * pile_size
+      pile = player_deck[start_idx...end_idx]
+      pile << epidemic_cards[i]
+      piles << pile.shuffle
+    end
+
+    # Combine piles to form the final player deck
+    player_deck = piles.flatten
+    player_discard = []
+
+    [player_deck, player_discard]
   end
 
-  # Combine piles to form the final player deck
-  player_deck = piles.flatten
-  player_discard = []
-
-  [player_deck, player_discard]
-end
-
-def setup_initial_infections
+  def setup_initial_infections
     # Initial infections: 3 cities with 3 cubes, 3 cities with 2 cubes, 3 cities with 1 cube
     [3, 2, 1].each do |cube_count|
       3.times do
@@ -538,7 +544,7 @@ def setup_initial_infections
   # Utility methods for game status
 
   def game_status
-    status = {
+    {
       players: @players.map do |player|
         {
           role: player.role,
@@ -564,8 +570,6 @@ def setup_initial_infections
       remaining_player_cards: @player_deck.size,
       remaining_infection_cards: @infection_deck.size
     }
-
-    status
   end
 
   def cities_with_3_or_more_cubes
@@ -592,61 +596,57 @@ def setup_initial_infections
       can_discover_cure: []
     }
 
-  # Move options
-  actions[:move_options] = city.connections.dup
+    # Move options
+    actions[:move_options] = city.connections.dup
 
-  # Direct flights (if player has city cards)
-  player.hand.each do |card|
-    if card.type == :city
-      actions[:move_options] << card.name unless actions[:move_options].include?(card.name)
+    # Direct flights (if player has city cards)
+    player.hand.each do |card|
+      actions[:move_options] << card.name if (card.type == :city) && !actions[:move_options].include?(card.name)
     end
-  end
 
-  # Charter flights (if player has current city card)
-  if has_city_card?(player_index, player.location)
-    actions[:move_options] = @cities.keys - [player.location]
-  end
+    # Charter flights (if player has current city card)
+    actions[:move_options] = @cities.keys - [player.location] if has_city_card?(player_index, player.location)
 
-  # Shuttle flights (if current city has research station)
-  if @research_stations.include?(player.location)
-    @research_stations.each do |rs|
-      actions[:move_options] << rs unless rs == player.location || actions[:move_options].include?(rs)
+    # Shuttle flights (if current city has research station)
+    if @research_stations.include?(player.location)
+      @research_stations.each do |rs|
+        actions[:move_options] << rs unless rs == player.location || actions[:move_options].include?(rs)
+      end
     end
-  end
 
-  # Build research station
-  actions[:can_build_research_station] =
-  !@research_stations.include?(player.location) &&
-  (@research_stations.size < MAX_RESEARCH_STATIONS) &&
-  (has_city_card?(player_index, player.location) || player.role == :operations_expert)
+    # Build research station
+    actions[:can_build_research_station] =
+      !@research_stations.include?(player.location) &&
+      (@research_stations.size < MAX_RESEARCH_STATIONS) &&
+      (has_city_card?(player_index, player.location) || player.role == :operations_expert)
 
-  # Treat disease
-  COLORS.each do |color|
-    if city.disease_cubes[color] > 0
-      actions[:can_treat_disease][color] = true
+    # Treat disease
+    COLORS.each do |color|
+      actions[:can_treat_disease][color] = true if city.disease_cubes[color].positive?
     end
-  end
 
-  # Share knowledge
-  @players.each_with_index do |other_player, other_idx|
-    next if other_idx == player_index
+    # Share knowledge
+    @players.each_with_index do |other_player, other_idx|
+      next if other_idx == player_index
 
-    if other_player.location == player.location
+      next unless other_player.location == player.location
+
       # Give knowledge
       player.hand.each_with_index do |card, card_idx|
-        if card.type == :city && (card.name == player.location || player.role == :researcher)
-          actions[:can_share_knowledge] << {
-            action: :give,
-            player: other_idx,
-            card_index: card_idx,
-            card_name: card.name
-          }
-        end
+        next unless card.type == :city && (card.name == player.location || player.role == :researcher)
+
+        actions[:can_share_knowledge] << {
+          action: :give,
+          player: other_idx,
+          card_index: card_idx,
+          card_name: card.name
+        }
       end
 
-    # Take knowledge
-    other_player.hand.each_with_index do |card, card_idx|
-      if card.type == :city && (card.name == player.location || other_player.role == :researcher)
+      # Take knowledge
+      other_player.hand.each_with_index do |card, card_idx|
+        next unless card.type == :city && (card.name == player.location || other_player.role == :researcher)
+
         actions[:can_share_knowledge] << {
           action: :take,
           player: other_idx,
@@ -655,25 +655,21 @@ def setup_initial_infections
         }
       end
     end
-  end
-end
 
-  # Discover cure
-  if @research_stations.include?(player.location)
-    COLORS.each do |color|
-      next if @cures[color]
+    # Discover cure
+    if @research_stations.include?(player.location)
+      COLORS.each do |color|
+        next if @cures[color]
 
-      cards_of_color = player.hand.select { |card| card.type == :city && card.color == color }
-      cards_needed = player.role == :scientist ? CARDS_NEEDED_FOR_CURE[:scientist] : CARDS_NEEDED_FOR_CURE[:default]
+        cards_of_color = player.hand.select { |card| card.type == :city && card.color == color }
+        cards_needed = player.role == :scientist ? CARDS_NEEDED_FOR_CURE[:scientist] : CARDS_NEEDED_FOR_CURE[:default]
 
-      if cards_of_color.size >= cards_needed
-        actions[:can_discover_cure] << color
+        actions[:can_discover_cure] << color if cards_of_color.size >= cards_needed
       end
     end
-  end
 
-  actions
-end
+    actions
+  end
 
   # JSON
 
@@ -686,93 +682,91 @@ end
         infectionRate: @infection_rate,
         infectionRatePosition: @infection_rate_marker,
         currentPlayerIndex: @current_player_index,
-    phase: "playerActions" # This would need to be tracked separately in the full implementation
-  },
-  diseaseCubes: COLORS.each_with_object({}) do |color, hash|
-    # Only include cities with cubes
-    cities_with_cubes = @cities.select { |_, city| city.disease_cubes[color] > 0 }
-    .map { |name, city| [name, city.disease_cubes[color]] }
-    .to_h
+        phase: 'playerActions' # This would need to be tracked separately in the full implementation
+      },
+      diseaseCubes: COLORS.each_with_object({}) do |color, hash|
+        # Only include cities with cubes
+        cities_with_cubes = @cities.select { |_, city| city.disease_cubes[color].positive? }
+                                   .transform_values { |city| city.disease_cubes[color] }
 
-    hash[color] = {
-      cured: @cures[color],
-      eradicated: @cures[color] && @disease_cubes[color] == MAX_DISEASE_CUBES_PER_COLOR,
-      inSupply: @disease_cubes[color],
-      onBoard: cities_with_cubes
-    }
-  end,
-  researchStations: {
-    available: MAX_RESEARCH_STATIONS - @research_stations.size,
-    locations: @research_stations
-  },
-  players: @players.map do |player|
-    {
-      role: player.role,
-      location: player.location,
-      hand: player.hand.map do |card|
-        if card.type == :event
-          "Action:#{card.name}"
-        else
-          card.name
-        end
-      end
-    }
-  end,
-  decks: {
-    playerDeck: {
-      draw: @player_deck.map do |card|
-        if card.type == :event
-          "Action:#{card.name}"
-        elsif card.type == :epidemic
-          "Epidemic"
-        else
-          card.name
-        end
+        hash[color] = {
+          cured: @cures[color],
+          eradicated: @cures[color] && @disease_cubes[color] == MAX_DISEASE_CUBES_PER_COLOR,
+          inSupply: @disease_cubes[color],
+          onBoard: cities_with_cubes
+        }
       end,
-      discard: @player_discard.map do |card|
-        if card.type == :event
-          "Action:#{card.name}"
-        elsif card.type == :epidemic
-          "Epidemic"
-        else
-          card.name
-        end
-      end
-    },
-    infectionDeck: {
-      draw: @infection_deck.map { |card| card.name },
-      discard: @infection_discard.map { |card| card.name }
-    }
-  }
-}.to_json
-end
-
-def perform_action(action)
-  case action
-  when :move
-  when :charter_flight
-  when :shuttle_flight
-  when :treat_disease
-  when :cure_disease
-  when :give_card
-  when :take_card
-  when :build_research_station
-  when :play_card
-  when :action_card
+      researchStations: {
+        available: MAX_RESEARCH_STATIONS - @research_stations.size,
+        locations: @research_stations
+      },
+      players: @players.map do |player|
+        {
+          role: player.role,
+          location: player.location,
+          hand: player.hand.map do |card|
+            if card.type == :event
+              "Action:#{card.name}"
+            else
+              card.name
+            end
+          end
+        }
+      end,
+      decks: {
+        playerDeck: {
+          draw: @player_deck.map do |card|
+            if card.type == :event
+              "Action:#{card.name}"
+            elsif card.type == :epidemic
+              'Epidemic'
+            else
+              card.name
+            end
+          end,
+          discard: @player_discard.map do |card|
+            if card.type == :event
+              "Action:#{card.name}"
+            elsif card.type == :epidemic
+              'Epidemic'
+            else
+              card.name
+            end
+          end
+        },
+        infectionDeck: {
+          draw: @infection_deck.map(&:name),
+          discard: @infection_discard.map(&:name)
+        }
+      }
+    }.to_json
   end
-  @actions_remaining -= 1
-  if @actions_remaining == 0
+
+  def perform_action(action)
+    case action
+    when :move
+    when :charter_flight
+    when :shuttle_flight
+    when :treat_disease
+    when :cure_disease
+    when :give_card
+    when :take_card
+    when :build_research_station
+    when :play_card
+    when :action_card
+    end
+    @actions_remaining -= 1
+    return unless @actions_remaining.zero?
+
     end_turn
   end
-end
 
   # Debugging methods
-
 
   def debug_city_disease_cubes
     debug_info = {}
     @cities.each do |name, city|
-      debug_info[name] = city.disease_cubes.select { |_, count| count > 0 }
+      debug_info[name] = city.disease_cubes.select { |_, count| count.positive? }
     end
     debug_info
   end
@@ -780,15 +774,17 @@ end
   def debug_player_hands
     debug_info = {}
     @players.each_with_index do |player, idx|
-      debug_info["Player #{idx} (#{player.role})"] = player.hand.map { |card| "#{card.name} (#{card.type} #{card.color})" }
+      debug_info["Player #{idx} (#{player.role})"] = player.hand.map do |card|
+        "#{card.name} (#{card.type} #{card.color})"
+      end
     end
     debug_info
   end
 end
 
-  # Example usage:
-  # game = GameState.new(4, :normal)
-  # status = game.game_status
-  # p status
-  #
-  # available_actions = game.available_actions(0)
+# Example usage:
+# game = GameState.new(4, :normal)
+# status = game.game_status
+# p status
+#
+# available_actions = game.available_actions(0)
