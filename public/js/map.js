@@ -78,12 +78,9 @@ function createCityOnPanel(cityData, cityName, panel) {
     city.appendChild(pawns);
   }
 
-  // Research station
+  // Add a class to the city if it has a research station
   if (cityData.hasStation) {
-    const station = document.createElement('div');
-    station.classList.add('station');
-    station.textContent = '🧪';
-    city.appendChild(station);
+    city.classList.add('has-station');
   }
 
   return city;
