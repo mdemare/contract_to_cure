@@ -175,6 +175,40 @@ function updateMapOffset(newOffset) {
   renderConnections(pandemicMapData, globalMapOffset);
 }
 
+// Helper function to draw a styled line in the SVG
+function drawStyledLine(svg, x1, y1, x2, y2, isDashed = false) {
+  const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+  line.setAttribute('x1', x1);
+  line.setAttribute('y1', y1);
+  line.setAttribute('x2', x2);
+  line.setAttribute('y2', y2);
+  line.setAttribute('stroke', '#aaa');
+  line.setAttribute('stroke-width', '2');
+
+  if (isDashed) {
+    line.setAttribute('stroke-dasharray', '5,3');
+  }
+
+  line.setAttribute('stroke-linecap', 'round');
+  svg.appendChild(line);
+
+  return line;
+}
+
+// Helper function to calculate where a line would intersect the map edge
+function calculateEdgeIntersection(x1, y1, x2, y2, edgeX, isWrapAround = false) {
+  // If the line is vertical, there's no well-defined intersection
+  if (x2 === x1) {
+    return y1;
+  }
+
+  // When creating wrap-around connections, we need to adjust x2
+  // The incoming x2 should already be adjusted for wrap-around if isWrapAround is true
+
+  // Now calculate the y value at the specified edge x
+  return y1 + (y2 - y1) / (x2 - x1) * (edgeX - x1);
+}
+
 // Improved renderConnections function that handles wrap-around connections properly
 function renderConnections(map, currentOffset = 0) {
   const svg = document.querySelector('.connections-layer');
@@ -193,21 +227,6 @@ function renderConnections(map, currentOffset = 0) {
 
   // Map width used for modular arithmetic
   const MAP_WIDTH = 1300;
-
-  // Helper function to calculate where a line would intersect the map edge
-  // For wrap-around connections, we need to adjust the target city's position
-  function calculateEdgeIntersection(x1, y1, x2, y2, edgeX, isWrapAround = false) {
-    // If the line is vertical, there's no well-defined intersection
-    if (x2 === x1) {
-      return y1;
-    }
-
-    // When creating wrap-around connections, we need to adjust x2
-    // The incoming x2 should already be adjusted for wrap-around if isWrapAround is true
-
-    // Now calculate the y value at the specified edge x
-    return y1 + (y2 - y1) / (x2 - x1) * (edgeX - x1);
-  }
 
   for (const [city, data] of Object.entries(map)) {
     const { connections } = data;
@@ -242,75 +261,22 @@ function renderConnections(map, currentOffset = 0) {
 
         if (x1 < x2) {
           // City is on left, target on right - draw to left edge
-          const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-          line1.setAttribute('x1', x1);
-          line1.setAttribute('y1', y1);
-          line1.setAttribute('x2', 0); // Left edge
-
-          // Calculate where the line intersects the left edge
-          // For wrap-around, we need to adjust x2 by subtracting MAP_WIDTH
           const leftEdgeY = calculateEdgeIntersection(x1, y1, x2 - MAP_WIDTH, y2, 0);
-          line1.setAttribute('y2', leftEdgeY);
-
-          line1.setAttribute('stroke', '#aaa');
-          line1.setAttribute('stroke-width', '2');
-          line1.setAttribute('stroke-dasharray', '5,3');
-          line1.setAttribute('stroke-linecap', 'round');
-          svg.appendChild(line1);
+          drawStyledLine(svg, x1, y1, 0, leftEdgeY, true);
 
           // Second segment - from right edge to target
-          const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-          line2.setAttribute('x1', MAP_WIDTH); // Right edge
-          line2.setAttribute('y1', leftEdgeY); // Same Y as left edge (continuous line)
-          line2.setAttribute('x2', x2);
-          line2.setAttribute('y2', y2);
-          line2.setAttribute('stroke', '#aaa');
-          line2.setAttribute('stroke-width', '2');
-          line2.setAttribute('stroke-dasharray', '5,3');
-          line2.setAttribute('stroke-linecap', 'round');
-          svg.appendChild(line2);
-
+          drawStyledLine(svg, MAP_WIDTH, leftEdgeY, x2, y2, true);
         } else {
           // City is on right, target on left - draw to right edge
-          const line1 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-          line1.setAttribute('x1', x1);
-          line1.setAttribute('y1', y1);
-          line1.setAttribute('x2', MAP_WIDTH); // Right edge
-
-          // Calculate where the line intersects the right edge
-          // For wrap-around, we need to adjust x2 by adding MAP_WIDTH
           const rightEdgeY = calculateEdgeIntersection(x1, y1, x2 + MAP_WIDTH, y2, MAP_WIDTH);
-          line1.setAttribute('y2', rightEdgeY);
-
-          line1.setAttribute('stroke', '#aaa');
-          line1.setAttribute('stroke-width', '2');
-          line1.setAttribute('stroke-dasharray', '5,3');
-          line1.setAttribute('stroke-linecap', 'round');
-          svg.appendChild(line1);
+          drawStyledLine(svg, x1, y1, MAP_WIDTH, rightEdgeY, true);
 
           // Second segment - from left edge to target
-          const line2 = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-          line2.setAttribute('x1', 0); // Left edge
-          line2.setAttribute('y1', rightEdgeY); // Same Y as right edge (continuous line)
-          line2.setAttribute('x2', x2);
-          line2.setAttribute('y2', y2);
-          line2.setAttribute('stroke', '#aaa');
-          line2.setAttribute('stroke-width', '2');
-          line2.setAttribute('stroke-dasharray', '5,3');
-          line2.setAttribute('stroke-linecap', 'round');
-          svg.appendChild(line2);
+          drawStyledLine(svg, 0, rightEdgeY, x2, y2, true);
         }
       } else {
         // Draw direct connection (no wrap needed)
-        const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
-        line.setAttribute('x1', x1);
-        line.setAttribute('y1', y1);
-        line.setAttribute('x2', x2);
-        line.setAttribute('y2', y2);
-        line.setAttribute('stroke', '#aaa');
-        line.setAttribute('stroke-width', '2');
-        line.setAttribute('stroke-linecap', 'round');
-        svg.appendChild(line);
+        drawStyledLine(svg, x1, y1, x2, y2);
       }
     });
   }
