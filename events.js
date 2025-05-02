@@ -1,38 +1,4 @@
-// Enable drag scrolling for the map container
-function enableDragScroll(container, mapController) {
-  let isDown = false;
-  let startX;
-  let startOffset;
-
-  container.addEventListener('mousedown', (e) => {
-    isDown = true;
-    container.classList.add('grabbing');
-    startX = e.pageX - container.offsetLeft;
-    startOffset = globalMapOffset;
-    e.preventDefault();
-  });
-
-  container.addEventListener('mouseleave', () => {
-    isDown = false;
-    container.classList.remove('grabbing');
-  });
-
-  container.addEventListener('mouseup', () => {
-    isDown = false;
-    container.classList.remove('grabbing');
-  });
-
-  container.addEventListener('mousemove', (e) => {
-    if (!isDown) return;
-    e.preventDefault();
-    const x = e.pageX - container.offsetLeft;
-    const walkX = (x - startX); // How far the mouse has moved
-
-    // Update the map offset directly
-    const newOffset = startOffset + walkX;
-    updateMapOffset(newOffset);
-  });
-}
+// Drag scrolling functionality has been removed
 
 // Function to zoom the map
 function zoomMap(factor) {
@@ -56,7 +22,6 @@ function resetMapView() {
 
   mapInner.style.transform = 'scale(1)';
   mapInner.dataset.scale = 1;
-  updateMapOffset(200);
 }
 
 // Function to update game status panel
@@ -101,22 +66,8 @@ async function initializePandemicMap() {
       // Store map data globally
       pandemicMapData = renderableMap;
 
-      // Render the cities with an initial offset
-      renderPandemicCities(renderableMap, globalMapOffset);
-
-      // Make sure drag scrolling is explicitly enabled
-      const mapContainer = document.querySelector('.map-container');
-      enableDragScroll(mapContainer);
-
-      // Add event listener for scroll control with arrow keys
-      document.addEventListener('keydown', function(e) {
-        const SCROLL_AMOUNT = 10;
-        if (e.key === 'ArrowLeft') {
-          updateMapOffset(globalMapOffset + SCROLL_AMOUNT);
-        } else if (e.key === 'ArrowRight') {
-          updateMapOffset(globalMapOffset - SCROLL_AMOUNT);
-        }
-      });
+      // Render the cities
+      renderPandemicCities(renderableMap);
 
       // Setup zoom controls
       document.getElementById('zoom-in').addEventListener('click', function() {

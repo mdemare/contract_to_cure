@@ -20,10 +20,7 @@ async function loadCities(jsonUrl) {
 }
 
 // Updated render function using the global offset variable
-function renderPandemicCities(pandemicMap, offset = 0) {
-  // Update global offset value
-  globalMapOffset = offset;
-
+function renderPandemicCities(pandemicMap) {
   const container = document.querySelector('.map-container');
 
   // Clear previous content
@@ -58,8 +55,7 @@ function renderPandemicCities(pandemicMap, offset = 0) {
     city.classList.add('city', cityData.color);
 
     // Apply modular arithmetic to x position
-    const adjustedX = mod(cityData.x + offset, MAP_WIDTH);
-    city.style.left = `${adjustedX}px`;
+    city.style.left = `${cityData.x}px`;
     city.style.top = `${cityData.y}px`;
 
     // Add data attribute for city name (useful for debugging)
@@ -118,11 +114,10 @@ function renderPandemicCities(pandemicMap, offset = 0) {
   // Append the inner container to the scrollable container
   container.appendChild(mapInner);
 
-  // Enable drag scrolling
-  enableDragScroll(container);
+  // Drag scrolling has been removed
 
   // Render the connections after creating all cities
-  renderConnections(pandemicMap, globalMapOffset);
+  renderConnections(pandemicMap);
 }
 
 // Prepare the raw city data for rendering by adding default properties
@@ -139,40 +134,6 @@ function prepareMapForRendering(rawMap) {
   }
 
   return fullMap;
-}
-
-// Global function to update the map offset
-function updateMapOffset(newOffset) {
-  console.log("updateOffset(" + newOffset + ")");
-  globalMapOffset = newOffset;
-
-  const MAP_WIDTH = 1300;
-  const CLONE_THRESHOLD = 200;
-  const mod = (n, m) => ((n % m) + m) % m;
-
-  // First, remove all existing clones
-  document.querySelectorAll('.city.clone').forEach(clone => {
-    clone.remove();
-  });
-
-  // Update position of original cities
-  const allOriginalCities = document.querySelectorAll('.city:not(.clone)');
-  allOriginalCities.forEach(cityElement => {
-    const cityName = cityElement.dataset.cityName;
-    const cityData = pandemicMapData[cityName];
-
-    if (!cityData) return; // Skip if we can't find data
-
-    // Update original city position
-    const adjustedX = mod(cityData.x + newOffset, MAP_WIDTH);
-    cityElement.style.left = `${adjustedX}px`;
-  });
-
-  // Re-create necessary clones based on new offset
-  const mapInner = document.querySelector('.map-inner');
-
-  // Update connections
-  renderConnections(pandemicMapData, globalMapOffset);
 }
 
 // Helper function to draw a styled line in the SVG
@@ -233,7 +194,7 @@ function renderConnections(map, currentOffset = 0) {
     if (!connections) continue;
 
     // Get the current adjusted position with modular arithmetic
-    const x1 = mod(data.x + currentOffset, MAP_WIDTH);
+    const x1 = data.x;
     const y1 = data.y;
 
     connections.forEach(connectedCity => {
@@ -246,7 +207,7 @@ function renderConnections(map, currentOffset = 0) {
       if (city > connectedCity) return;
 
       // Get the target's adjusted position
-      const x2 = mod(target.x + currentOffset, MAP_WIDTH);
+      const x2 = target.x;
       const y2 = target.y;
 
       // Calculate the direct distance and the wrap-around distance
