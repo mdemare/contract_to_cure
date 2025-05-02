@@ -1,18 +1,26 @@
 import { loadCities, prepareMapForRendering, renderPandemicCities } from './all.js';
-// Drag scrolling functionality has been removed
+import { initScrolling } from './scrolling.js';
+import { MAP_WIDTH } from './constants.js';
 
 // Function to zoom the map
 function zoomMap(factor) {
   const mapInner = document.querySelector('.map-inner');
   if (!mapInner) return;
 
-  const currentScale = parseFloat(mapInner.dataset.scale || 1);
+  // Get the current transform values
+  const transform = mapInner.style.transform;
+  const translateMatch = transform.match(/translate\((-?\d+\.?\d*)px/);
+  const scaleMatch = transform.match(/scale\((\d+\.?\d*)\)/);
+
+  const translateX = translateMatch ? parseFloat(translateMatch[1]) : -1300;
+  const translateY = 0; // Y is fixed at 0 for horizontal scrolling
+  const currentScale = scaleMatch ? parseFloat(scaleMatch[1]) : 1;
+
   const newScale = currentScale * factor;
 
   // Limit scale to reasonable bounds
   if (newScale >= 0.5 && newScale <= 2) {
-    mapInner.style.transform = `scale(${newScale})`;
-    mapInner.dataset.scale = newScale;
+    mapInner.style.transform = `translate(${translateX}px, 0px) scale(${newScale})`;
   }
 }
 
@@ -21,8 +29,8 @@ function resetMapView() {
   const mapInner = document.querySelector('.map-inner');
   if (!mapInner) return;
 
-  mapInner.style.transform = 'scale(1)';
-  mapInner.dataset.scale = 1;
+  // Reset to center position and scale 1
+  mapInner.style.transform = 'translate(-1300px) scale(1)';
 }
 
 // Function to update game status panel
@@ -66,6 +74,9 @@ async function initializePandemicMap() {
 
       // Render the cities
       renderPandemicCities(renderableMap);
+
+      // Initialize the scrolling functionality
+      initScrolling();
 
       // Setup zoom controls
       document.getElementById('zoom-in').addEventListener('click', function() {

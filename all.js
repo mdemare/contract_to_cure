@@ -23,8 +23,6 @@ export async function loadCities(jsonUrl) {
 
 // Create city div on numbered panel
 function createCityOnPanel(cityData, cityName, panel) {
-  // Modular arithmetic helper function that doesn't return negative values
-
   const city = document.createElement('div');
   city.classList.add('city', cityData.color);
 
@@ -94,6 +92,10 @@ export function renderPandemicCities(pandemicMap) {
   const mapInner = document.createElement('div');
   mapInner.classList.add('map-inner');
 
+  // Initial positioning will be handled by the scrolling.js module
+  // Initial transform with translate to center the map
+  mapInner.style.transform = `translate(-${MAP_WIDTH}px) scale(1)`;
+
   // Add the SVG layer back
   const svgLayer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svgLayer.classList.add('connections-layer');
@@ -115,7 +117,8 @@ export function renderPandemicCities(pandemicMap) {
   // Append the inner container to the scrollable container
   container.appendChild(mapInner);
 
-  // Drag scrolling has been removed
+  // Set initial cursor style
+  container.style.cursor = 'grab';
 
   // Render the connections after creating all cities
   renderConnections(pandemicMap);
@@ -178,8 +181,6 @@ function renderConnection(svg, x1, y1, target) {
   const dx = target.x - x1;
   const k = Math.floor(0.5 - dx / MAP_WIDTH);
   const x2 = target.x + k * MAP_WIDTH;
-
-  console.log(x2)
 
   if (x2 >= 0 && x2 < 3*MAP_WIDTH) {
     drawStyledLine(svg, x1, y1, x2, target.y);

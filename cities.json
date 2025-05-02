@@ -223,7 +223,7 @@
   },
   "Jakarta": {
     "color": "red",
-    "x": 850,
+    "x": 870,
     "y": 500,
     "connections": ["Chennai", "Bangkok", "Ho Chi Minh City", "Sydney"]
   },
