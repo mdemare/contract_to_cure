@@ -1,6 +1,9 @@
 // action_buttons.js
 import { getCurrentGameState } from './game_state.js';
 
+// Game mode state to track which action is currently selected
+let currentMode = null;
+
 // Initialize the action buttons
 export function initActionButtons() {
   // Get button elements
@@ -12,15 +15,71 @@ export function initActionButtons() {
   const skipBtn = document.getElementById('skip-btn');
 
   // Add click event listeners
-  moveBtn.addEventListener('click', handleMoveAction);
-  treatBtn.addEventListener('click', handleTreatAction);
-  cureBtn.addEventListener('click', handleCureAction);
-  tradeBtn.addEventListener('click', handleTradeAction);
-  buildBtn.addEventListener('click', handleBuildAction);
+  moveBtn.addEventListener('click', () => toggleMode('move'));
+  treatBtn.addEventListener('click', () => toggleMode('treat'));
+  cureBtn.addEventListener('click', () => toggleMode('cure'));
+  tradeBtn.addEventListener('click', () => toggleMode('trade'));
+  buildBtn.addEventListener('click', () => toggleMode('build'));
   skipBtn.addEventListener('click', handleSkipAction);
 
   // Update button states based on current game state
   updateButtonStates();
+
+  // Listen for player moved events to reset the mode
+  document.addEventListener('playerMoved', () => {
+    resetMode();
+    updateButtonStates();
+  });
+}
+
+// Toggle action mode when a button is clicked
+function toggleMode(mode) {
+  // If the mode is already active, deactivate it
+  if (currentMode === mode) {
+    resetMode();
+    return;
+  }
+
+  // Set the new mode
+  currentMode = mode;
+
+  // Update UI to show active mode
+  updateActiveModeUI();
+
+  console.log(`Mode switched to: ${mode}`);
+
+  // Dispatch event to notify that the mode has changed
+  const modeChangedEvent = new CustomEvent('actionModeChanged', {
+    detail: { mode: mode }
+  });
+  document.dispatchEvent(modeChangedEvent);
+}
+
+// Reset the current mode
+function resetMode() {
+  currentMode = null;
+  updateActiveModeUI();
+
+  // Dispatch event to notify that the mode has been reset
+  const modeResetEvent = new CustomEvent('actionModeReset');
+  document.dispatchEvent(modeResetEvent);
+}
+
+// Update UI to highlight the active mode button
+function updateActiveModeUI() {
+  // Remove active class from all buttons
+  const buttons = document.querySelectorAll('.action-btn');
+  buttons.forEach(button => {
+    button.classList.remove('active');
+  });
+
+  // Add active class to the current mode button
+  if (currentMode) {
+    const activeButton = document.getElementById(`${currentMode}-btn`);
+    if (activeButton) {
+      activeButton.classList.add('active');
+    }
+  }
 }
 
 // Update button states based on game state
@@ -30,39 +89,21 @@ export function updateButtonStates() {
   if (!gameState) return;
 
   // Determine which actions are available based on game state
+  const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
+
+  // In a real implementation, we'd check the player's available actions
   // For now, all buttons are enabled
-  // This will be expanded when implementing actual game logic
+  enableAllButtons();
 }
 
-// Handler functions for each action
-function handleMoveAction() {
-  console.log('Move action clicked');
-  // Will implement actual move logic later
-}
-
-function handleTreatAction() {
-  console.log('Treat disease action clicked');
-  // Will implement actual treat disease logic later
-}
-
-function handleCureAction() {
-  console.log('Find cure action clicked');
-  // Will implement actual cure logic later
-}
-
-function handleTradeAction() {
-  console.log('Share knowledge action clicked');
-  // Will implement actual share knowledge logic later
-}
-
-function handleBuildAction() {
-  console.log('Build station action clicked');
-  // Will implement actual build station logic later
-}
-
+// Handler for skip action
 function handleSkipAction() {
   console.log('Skip action clicked');
-  // Will implement actual skip action logic later
+  // Reset the current mode
+  resetMode();
+
+  // In a full implementation, we'd send a skip action to the server
+  // and then update the game state
 }
 
 // Helper functions for game actions
@@ -94,6 +135,11 @@ function enableSpecificButtons(buttonIds) {
       button.disabled = false;
     }
   });
+}
+
+// Get the current action mode
+export function getCurrentMode() {
+  return currentMode;
 }
 
 // Export helper functions for use in other modules

@@ -172,9 +172,10 @@ class GameState
     false
   end
 
-  def treat_disease(player_index, color)
+  def treat_disease(player_index)
     player = @players[player_index]
     city = @cities[player.location]
+    # TODO: color = color of city
 
     return false if city.disease_cubes[color].zero?
 
@@ -744,7 +745,62 @@ class GameState
     }.to_json
   end
 
-  # Add this method to the GameState class in game_state.rb
+  def medic_move(requested_player, destination)
+    raise unless requested_player.is_a?(Player)
+    # Automatic medic ability: remove cubes of cured diseases
+    if requested_player.role == :medic
+      COLORS.each do |color|
+        next unless @cures[color]
+
+        city = @cities[destination]
+        cubes_removed = city.disease_cubes[color]
+        city.disease_cubes[color] = 0
+        @disease_cubes[color] += cubes_removed
+      end
+    end
+  end
+
+  def move_drive_ferry(player_index, destination)
+    # Validate destination exists
+    return { success: false, status: "error", message: 'Invalid destination city' } unless @cities.key?(destination)
+
+    # Check if it's the player's turn or if current player is dispatcher
+    current_player = @players[@current_player_index]
+    raise unless current_player.is_a?(Player)
+    requested_player = @players[player_index]
+    raise unless requested_player.is_a?(Player)
+
+    # If not the current player's turn and current player is not dispatcher
+    if player_index != @current_player_index && current_player.role != :dispatcher
+      return {
+        success: false,
+        status: "error",
+        message: 'Cannot move another player unless you are the dispatcher'
+      }
+    end
+
+    # TODO check if destination is connection of current city
+
+    # All checks passed, perform the move
+
+    # Move the player
+    old_location = requested_player.location
+    requested_player.location = destination
+
+    medic_move(requested_player, destination)
+
+    @actions_remaining = (@actions_remaining || 4) - 1
+
+    # End turn if no actions remaining
+    end_turn if @actions_remaining <= 0
+
+    {
+      success: true,
+      status: "success",
+      message: "Successfully moved #{requested_player.role} from #{old_location} to #{destination} via direct flight",
+      end_turn: @actions_remaining <= 0
+    }
+  end
 
   def move_direct_flight(player_index, destination)
     # Validate destination exists
@@ -758,6 +814,7 @@ class GameState
     if player_index != @current_player_index && current_player.role != :dispatcher
       return {
         success: false,
+        status: "error",
         message: 'Cannot move another player unless you are the dispatcher'
       }
     end
@@ -770,7 +827,8 @@ class GameState
     unless card_index
       return {
         success: false,
-        message: "Player does not have the #{destination} city card for direct flight"
+        status: "error",
+        message: "Player does not have the #{destination} city card for direct flight, he only has #{requested_player.hand.select { _1.type == :city }.inspect}"
       }
     end
 
@@ -783,48 +841,20 @@ class GameState
     requested_player.location = destination
 
     # Automatic medic ability: remove cubes of cured diseases
-    if requested_player.role == :medic
-      COLORS.each do |color|
-        next unless @cures[color]
-
-        city = @cities[destination]
-        cubes_removed = city.disease_cubes[color]
-        city.disease_cubes[color] = 0
-        @disease_cubes[color] += cubes_removed
-      end
-    end
+    medic_move(requested_player, destination)
 
     # Consume an action (only if moving the current player)
-    if player_index == @current_player_index
-      @actions_remaining = (@actions_remaining || 4) - 1
+    @actions_remaining -= 1
 
-      # End turn if no actions remaining
-      end_turn if @actions_remaining <= 0
-    end
+    # End turn if no actions remaining
+    end_turn if @actions_remaining <= 0
 
     {
       success: true,
-      message: "Successfully moved #{requested_player.role} from #{old_location} to #{destination} via direct flight"
+      status: "success",
+      message: "Successfully moved #{requested_player.role} from #{old_location} to #{destination} via direct flight",
+      end_turn: @actions_remaining <= 0
     }
-  end
-
-  def perform_action(action)
-    case action
-    when :move
-    when :charter_flight
-    when :shuttle_flight
-    when :treat_disease
-    when :cure_disease
-    when :give_card
-    when :take_card
-    when :build_research_station
-    when :play_card
-    when :action_card
-    end
-    @actions_remaining -= 1
-    return unless @actions_remaining.zero?
-
-    end_turn
   end
 
   # Debugging methods

@@ -128,6 +128,10 @@ export function renderPandemicCities(pandemicMap) {
 
   // Render the connections after creating all cities
   renderConnections(pandemicMap);
+
+  // Dispatch an event to notify that the map has been updated
+  const mapUpdatedEvent = new CustomEvent('mapUpdated');
+  document.dispatchEvent(mapUpdatedEvent);
 }
 
 // Prepare the raw city data for rendering by adding default properties

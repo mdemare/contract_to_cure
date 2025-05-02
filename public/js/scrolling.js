@@ -1,177 +1,196 @@
 // scrolling.js
 import { MAP_WIDTH } from './constants.js';
 
+// Store the current transform state
+let scale = 1;
+let offsetX = -MAP_WIDTH; // Initial centering
+let offsetY = 0;
 let isDragging = false;
+let startX = 0;
+let startY = 0;
 let lastX = 0;
 let lastY = 0;
-let mapContainer;
 
-// Initialize the scrolling functionality
+// Initialize scrolling and zooming
 export function initScrolling() {
-  mapContainer = document.querySelector('.map-container');
-  let mapInner = document.querySelector('.map-inner');
+  console.log('Initializing map scrolling...');
 
-  if (!mapContainer || !mapInner) {
-    console.error('Map container or inner element not found');
+  const container = document.querySelector('.map-container');
+  if (!container) {
+    console.error('Map container not found!');
     return;
   }
 
-  // Initial position - center on the middle panel
-  mapInner.style.transform = `translate(-${MAP_WIDTH}px) scale(1)`;
+  // Set initial transform
+  updateTransform();
 
-  // Set up event listeners for mouse-based scrolling
-  setupMouseScrolling();
+  // Add event listeners for scrolling
+  container.addEventListener('mousedown', startDrag);
+  document.addEventListener('mousemove', drag);
+  document.addEventListener('mouseup', endDrag);
 
-  // Set up event listeners for touch-based scrolling
-  setupTouchScrolling();
-}
+  // Add event listeners for touch devices
+  container.addEventListener('touchstart', startDragTouch);
+  document.addEventListener('touchmove', dragTouch);
+  document.addEventListener('touchend', endDragTouch);
 
-// Get the current transform values
-function getTransformValues() {
-  const transform = document.querySelector('.map-inner').style.transform || '';
-  const translateMatch = transform.match(/translate\((-?\d+\.?\d*)px/);
-  const scaleMatch = transform.match(/scale\((\d+\.?\d*)\)/);
+  // Add event listeners for zooming
+  const zoomInBtn = document.getElementById('zoom-in');
+  const zoomOutBtn = document.getElementById('zoom-out');
+  const resetViewBtn = document.getElementById('reset-view');
 
-  const translateX = translateMatch ? parseFloat(translateMatch[1]) : -MAP_WIDTH;
-  const translateY = 0; // Y is fixed at 0 for horizontal scrolling
-  const scale = scaleMatch ? parseFloat(scaleMatch[1]) : 1;
+  if (zoomInBtn) zoomInBtn.addEventListener('click', zoomIn);
+  if (zoomOutBtn) zoomOutBtn.addEventListener('click', zoomOut);
+  if (resetViewBtn) resetViewBtn.addEventListener('click', resetView);
 
-  return { translateX, translateY, scale };
-}
+  // Debug message
+  console.log('Map scrolling initialized');
 
-// Create a transform string with the given values
-function getTransformString(translateX, translateY, scale) {
-  return `translate(${translateX}px) scale(${scale})`;
-}
+  // VERY IMPORTANT DEBUG CODE: Modified to catch clicks on cities and ensure they propagate
+  // This stops map dragging from intercepting city clicks
+  document.addEventListener('click', function(e) {
+    // Check if the clicked element is a city or its child
+    let targetElement = e.target;
+    let isCity = false;
 
-// Handle the scroll update and wrapping logic
-function updateScroll(deltaX) {
-  const { translateX, translateY, scale } = getTransformValues();
-
-  // Calculate new position - inverted direction
-  let newX = translateX + deltaX;
-
-  // Check if we need to wrap around
-  const threshold = MAP_WIDTH * 0.25;
-  const leftEdge = -2 * MAP_WIDTH;  // Left section start (0-based)
-  const middleEdge = -MAP_WIDTH;    // Middle section start
-  const rightEdge = 0;              // Right section start
-
-  // For debugging
-  let jumpOccurred = false;
-  let jumpDirection = "";
-  let oldX = newX;
-
-  // If we're in left section and close to the left edge
-  if (newX < leftEdge + threshold) {
-    // Jump right by exactly one panel width
-    newX += MAP_WIDTH;
-    jumpOccurred = true;
-    jumpDirection = "right";
-  }
-  // If we're in right section and close to the right edge
-  else if (newX > rightEdge - threshold) {
-    // Jump left by exactly one panel width
-    newX -= MAP_WIDTH;
-    jumpOccurred = true;
-    jumpDirection = "left";
-  }
-
-  // Log jump details if one occurred
-  if (jumpOccurred) {
-    console.log(`Jump ${jumpDirection}: ${oldX.toFixed(2)} -> ${newX.toFixed(2)}`);
-  }
-
-  // Update the transform without any transition
-  const transform = getTransformString(newX, translateY, scale);
-  console.log("New transform value:" + transform)
-  document.querySelector('.map-inner').style.transform = transform;
-}
-
-// Mouse-based scrolling event handlers
-function setupMouseScrolling() {
-  mapContainer.addEventListener('mousedown', (e) => {
-    isDragging = true;
-    lastX = e.clientX;
-    lastY = e.clientY;
-    mapContainer.style.cursor = 'grabbing';
-
-    // Disable any pointer events during dragging to ensure smooth performance
-    document.querySelector('.map-inner').style.pointerEvents = 'none';
-  });
-
-  document.addEventListener('mousemove', (e) => {
-    if (!isDragging) return;
-
-    const deltaX = e.clientX - lastX;
-
-    // Skip tiny movements to avoid performance issues
-    if (Math.abs(deltaX) < 0.5) return;
-
-    updateScroll(deltaX);
-
-    lastX = e.clientX;
-    lastY = e.clientY;
-
-    // Prevent default to avoid text selection
-    e.preventDefault();
-  });
-
-  document.addEventListener('mouseup', () => {
-    isDragging = false;
-    mapContainer.style.cursor = 'grab';
-
-    // Re-enable pointer events
-    document.querySelector('.map-inner').style.pointerEvents = 'auto';
-  });
-
-  // Prevent context menu when right-clicking on the map
-  mapContainer.addEventListener('contextmenu', (e) => {
-    e.preventDefault();
-  });
-}
-
-// Touch-based scrolling event handlers
-function setupTouchScrolling() {
-  mapContainer.addEventListener('touchstart', (e) => {
-    if (e.touches.length === 1) {
-      isDragging = true;
-      lastX = e.touches[0].clientX;
-      lastY = e.touches[0].clientY;
-
-      // Disable pointer events for better performance
-      document.querySelector('.map-inner').style.pointerEvents = 'none';
+    // Traverse up the DOM tree to find if any parent is a city
+    while (targetElement && targetElement !== document.body) {
+      if (targetElement.classList && targetElement.classList.contains('city')) {
+        isCity = true;
+        console.log('City click detected on:', targetElement.dataset.cityName);
+        console.log('Click event:', e);
+        // Stop here, don't prevent default for city clicks
+        break;
+      }
+      targetElement = targetElement.parentNode;
     }
-  });
 
-  mapContainer.addEventListener('touchmove', (e) => {
-    if (!isDragging || e.touches.length !== 1) return;
-
-    const deltaX = e.touches[0].clientX - lastX;
-
-    // Skip tiny movements to avoid performance issues
-    if (Math.abs(deltaX) < 0.5) return;
-
-    updateScroll(deltaX);
-
-    lastX = e.touches[0].clientX;
-    lastY = e.touches[0].clientY;
-
-    // Prevent default to avoid page scrolling
-    e.preventDefault();
-  });
-
-  mapContainer.addEventListener('touchend', () => {
-    isDragging = false;
-
-    // Re-enable pointer events
-    document.querySelector('.map-inner').style.pointerEvents = 'auto';
-  });
-
-  mapContainer.addEventListener('touchcancel', () => {
-    isDragging = false;
-
-    // Re-enable pointer events
-    document.querySelector('.map-inner').style.pointerEvents = 'auto';
-  });
+    // Only log, don't interfere with the event
+    if (isCity) {
+      console.log('City was clicked:', targetElement.dataset.cityName);
+    }
+  }, true); // Use capturing phase to see all clicks
 }
+
+// Start drag
+function startDrag(e) {
+  // Very important debug: Only start dragging if not clicking on a city
+  let targetElement = e.target;
+  while (targetElement && targetElement !== document.body) {
+    if (targetElement.classList && targetElement.classList.contains('city')) {
+      console.log('Preventing map drag on city:', targetElement.dataset.cityName);
+      return; // Don't start dragging if clicking on a city
+    }
+    targetElement = targetElement.parentNode;
+  }
+
+  isDragging = true;
+  startX = e.clientX;
+  startY = e.clientY;
+  lastX = startX;
+  lastY = startY;
+
+  // Change cursor
+  document.querySelector('.map-container').style.cursor = 'grabbing';
+
+  e.preventDefault();
+}
+
+// Drag
+function drag(e) {
+  if (!isDragging) return;
+
+  const deltaX = e.clientX - lastX;
+  const deltaY = e.clientY - lastY;
+
+  offsetX += deltaX;
+  offsetY += deltaY;
+
+  lastX = e.clientX;
+  lastY = e.clientY;
+
+  updateTransform();
+
+  e.preventDefault();
+}
+
+// End drag
+function endDrag() {
+  isDragging = false;
+
+  // Change cursor back
+  document.querySelector('.map-container').style.cursor = 'grab';
+}
+
+// Touch support
+function startDragTouch(e) {
+  if (e.touches.length !== 1) return;
+
+  // Crucial debug: check if touching a city
+  let targetElement = e.touches[0].target;
+  while (targetElement && targetElement !== document.body) {
+    if (targetElement.classList && targetElement.classList.contains('city')) {
+      console.log('Touch on city detected:', targetElement.dataset.cityName);
+      return; // Don't start dragging if touching a city
+    }
+    targetElement = targetElement.parentNode;
+  }
+
+  isDragging = true;
+  startX = e.touches[0].clientX;
+  startY = e.touches[0].clientY;
+  lastX = startX;
+  lastY = startY;
+
+  e.preventDefault();
+}
+
+function dragTouch(e) {
+  if (!isDragging || e.touches.length !== 1) return;
+
+  const deltaX = e.touches[0].clientX - lastX;
+  const deltaY = e.touches[0].clientY - lastY;
+
+  offsetX += deltaX;
+  offsetY += deltaY;
+
+  lastX = e.touches[0].clientX;
+  lastY = e.touches[0].clientY;
+
+  updateTransform();
+
+  e.preventDefault();
+}
+
+function endDragTouch() {
+  isDragging = false;
+}
+
+// Zoom functions
+function zoomIn() {
+  scale = Math.min(scale * 1.2, 3); // Maximum zoom level
+  updateTransform();
+}
+
+function zoomOut() {
+  scale = Math.max(scale / 1.2, 0.5); // Minimum zoom level
+  updateTransform();
+}
+
+function resetView() {
+  scale = 1;
+  offsetX = -MAP_WIDTH; // Center the map
+  offsetY = 0;
+  updateTransform();
+}
+
+// Update the transform style
+function updateTransform() {
+  const inner = document.querySelector('.map-inner');
+  if (inner) {
+    inner.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+  }
+}
+
+// Export functions for external use
+export { zoomIn, zoomOut, resetView };

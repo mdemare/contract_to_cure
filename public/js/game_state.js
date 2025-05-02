@@ -179,19 +179,6 @@ function prepareMapWithGameState(citiesData, gameState) {
   return updatedMap;
 }
 
-// Function to refresh the game state periodically
-export function startGameStateRefresh(intervalMs = 5000) {
-  // Load the initial state
-  loadGameState();
-
-  // Set up periodic refresh
-  const intervalId = setInterval(() => {
-    loadGameState();
-  }, intervalMs);
-
-  return intervalId; // Return the interval ID so it can be cleared if needed
-}
-
 // Export the current game state
 export function getCurrentGameState() {
   return currentGameState;

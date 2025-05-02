@@ -1,7 +1,8 @@
 import { loadCities, prepareMapForRendering, renderPandemicCities } from './map.js';
 import { initScrolling } from './scrolling.js';
-import { loadGameState, startGameStateRefresh } from './game_state.js';
+import { loadGameState } from './game_state.js';
 import { initActionButtons } from './action_buttons.js';
+import { initMoveActions } from './move_actions.js';
 
 // Function to zoom the map
 function zoomMap(factor) {
@@ -32,32 +33,6 @@ function resetMapView() {
 
   // Reset to center position and scale 1
   mapInner.style.transform = 'translate(-1300px) scale(1)';
-}
-
-// Function to update game status panel
-function updateGameStatus(status) {
-  document.getElementById('turn-counter').textContent = status.currentTurn;
-  document.getElementById('outbreak-counter').textContent = status.outbreaks;
-
-  // Update cure status
-  const cureElements = {
-    blue: document.getElementById('blue-cure'),
-    yellow: document.getElementById('yellow-cure'),
-    black: document.getElementById('black-cure'),
-    red: document.getElementById('red-cure')
-  };
-
-  for (const [color, cured] of Object.entries(status.cures)) {
-    const element = cureElements[color];
-    if (element) {
-      element.classList.toggle('cured', cured);
-      element.textContent = cured ? 'CURED' : 'Not Cured';
-    }
-  }
-
-  // Update card counts
-  document.getElementById('player-cards').textContent = status.playerDeck;
-  document.getElementById('infection-cards').textContent = status.infectionDeck;
 }
 
 // Initialize the pandemic map
@@ -98,8 +73,8 @@ async function initializePandemicMap() {
       // Initialize action buttons
       initActionButtons();
 
-      // Start periodic refresh of game state (every 1000 seconds)
-      startGameStateRefresh(1000000);
+      // Initialize move actions (city clicking)
+      initMoveActions();
     }
   } catch (error) {
     console.error('Error initializing map:', error);

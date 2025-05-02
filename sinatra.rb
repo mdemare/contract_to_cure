@@ -30,6 +30,22 @@ post '/game_state.json' do
 end
 
 # Move action endpoint
+post '/move_drive_ferry' do
+  content_type :json
+  request.body.rewind
+  data = JSON.parse(request.body.read)
+
+  player_index = data['player_index'].to_i
+  destination = data['destination']
+
+  # Validate required parameters
+  return { status: 'error', message: 'Missing required parameters' }.to_json unless player_index && destination
+
+  # Perform the move and get result
+  game_state.move_drive_ferry(player_index, destination).to_json
+end
+
+# Move action endpoint
 post '/move_direct_flight' do
   content_type :json
   request.body.rewind
@@ -42,12 +58,20 @@ post '/move_direct_flight' do
   return { status: 'error', message: 'Missing required parameters' }.to_json unless player_index && destination
 
   # Perform the move and get result
-  result = game_state.move_direct_flight(player_index, destination)
+  game_state.move_direct_flight(player_index, destination).to_json
+end
 
-  # Return the result
-  if result[:success]
-    { status: 'success', message: result[:message] }.to_json
-  else
-    { status: 'error', message: result[:message] }.to_json
-  end
+# Move action endpoint
+post '/treat' do
+  content_type :json
+  request.body.rewind
+  data = JSON.parse(request.body.read)
+
+  player_index = data['player_index'].to_i
+
+  # Validate required parameters
+  return { status: 'error', message: 'Missing required parameters' }.to_json unless player_index
+
+  # Perform the move and get result
+  game_state.treat_disease(player_index).to_json
 end
