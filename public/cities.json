@@ -21,7 +21,7 @@
     "color": "blue",
     "x": 350,
     "y": 280,
-    "connections": ["Montreal", "Washington", "London", "Madrid"]
+    "connections": ["Montreal", "Washington", "London", "Barcelona"]
   },
   "Washington": {
     "color": "blue",
@@ -33,27 +33,27 @@
     "color": "blue",
     "x": 500,
     "y": 250,
-    "connections": ["New York", "Madrid", "Stockholm", "Paris"]
+    "connections": ["New York", "Barcelona", "Stockholm", "Paris"]
   },
-  "Madrid": {
+  "Barcelona": {
     "color": "blue",
     "x": 480,
     "y": 300,
-    "connections": ["London", "New York", "Paris", "Sao Paulo", "Algiers"]
+    "connections": ["London", "New York", "Paris", "Sao Paulo", "Casablanca"]
   },
   "Paris": {
     "color": "blue",
     "x": 530,
     "y": 280,
-    "connections": ["Algiers", "Stockholm", "Madrid", "Milan"]
+    "connections": ["Casablanca", "Stockholm", "Barcelona", "Rome"]
   },
   "Stockholm": {
     "color": "blue",
     "x": 550,
     "y": 190,
-    "connections": ["London", "Paris", "Milan", "Moscow"]
+    "connections": ["London", "Paris", "Rome", "Moscow"]
   },
-  "Milan": {
+  "Rome": {
     "color": "blue",
     "x": 580,
     "y": 260,
@@ -81,15 +81,15 @@
     "color": "yellow",
     "x": 200,
     "y": 440,
-    "connections": ["Los Angeles", "Chicago", "Havana", "Bogota", "Lima"]
+    "connections": ["Los Angeles", "Chicago", "Havana", "Paramaribo", "Lima"]
   },
   "Havana": {
     "color": "yellow",
     "x": 300,
     "y": 440,
-    "connections": ["Houston", "Mexico City", "Washington", "Bogota"]
+    "connections": ["Houston", "Mexico City", "Washington", "Paramaribo"]
   },
-  "Bogota": {
+  "Paramaribo": {
     "color": "yellow",
     "x": 300,
     "y": 500,
@@ -99,7 +99,7 @@
     "color": "yellow",
     "x": 250,
     "y": 550,
-    "connections": ["Mexico City", "Bogota", "Santiago"]
+    "connections": ["Mexico City", "Paramaribo", "Santiago"]
   },
   "Santiago": {
     "color": "yellow",
@@ -111,21 +111,21 @@
     "color": "yellow",
     "x": 350,
     "y": 600,
-    "connections": ["Bogota", "Sao Paulo"]
+    "connections": ["Paramaribo", "Sao Paulo"]
   },
   "Sao Paulo": {
     "color": "yellow",
     "x": 400,
     "y": 550,
-    "connections": ["Bogota", "Buenos Aires", "Madrid", "Lagos"]
+    "connections": ["Paramaribo", "Buenos Aires", "Barcelona", "Lagos"]
   },
   "Lagos": {
     "color": "yellow",
     "x": 500,
     "y": 500,
-    "connections": ["Sao Paulo", "Khartoum", "Kinshasa"]
+    "connections": ["Sao Paulo", "Nairobi", "Kinshasa"]
   },
-  "Khartoum": {
+  "Nairobi": {
     "color": "yellow",
     "x": 600,
     "y": 500,
@@ -135,31 +135,31 @@
     "color": "yellow",
     "x": 530,
     "y": 580,
-    "connections": ["Lagos", "Khartoum", "Johannesburg"]
+    "connections": ["Lagos", "Nairobi", "Johannesburg"]
   },
   "Johannesburg": {
     "color": "yellow",
     "x": 580,
     "y": 660,
-    "connections": ["Kinshasa", "Khartoum"]
+    "connections": ["Kinshasa", "Nairobi"]
   },
-  "Algiers": {
+  "Casablanca": {
     "color": "black",
     "x": 500,
     "y": 350,
-    "connections": ["Madrid", "Paris", "Istanbul", "Cairo"]
+    "connections": ["Barcelona", "Paris", "Istanbul", "Cairo"]
   },
   "Istanbul": {
     "color": "black",
     "x": 600,
     "y": 300,
-    "connections": ["Milan", "Algiers", "Moscow", "Cairo", "Baghdad", "Kyiv"]
+    "connections": ["Rome", "Casablanca", "Moscow", "Cairo", "Baghdad", "Kyiv"]
   },
   "Cairo": {
     "color": "black",
     "x": 600,
     "y": 400,
-    "connections": ["Algiers", "Istanbul", "Baghdad", "Khartoum", "Riyadh"]
+    "connections": ["Casablanca", "Istanbul", "Baghdad", "Nairobi", "Riyadh"]
   },
   "Kyiv": {
     "color": "black",
@@ -171,21 +171,21 @@
     "color": "black",
     "x": 650,
     "y": 350,
-    "connections": ["Istanbul", "Cairo", "Riyadh", "Karachi", "Tehran"]
+    "connections": ["Istanbul", "Cairo", "Riyadh", "Kabul", "Tehran"]
   },
   "Riyadh": {
     "color": "black",
     "x": 650,
     "y": 450,
-    "connections": ["Cairo", "Baghdad", "Karachi"]
+    "connections": ["Cairo", "Baghdad", "Kabul"]
   },
   "Tehran": {
     "color": "black",
     "x": 700,
     "y": 300,
-    "connections": ["Kyiv", "Baghdad", "Karachi", "Delhi"]
+    "connections": ["Kyiv", "Baghdad", "Kabul", "Delhi"]
   },
-  "Karachi": {
+  "Kabul": {
     "color": "black",
     "x": 700,
     "y": 400,
@@ -195,13 +195,13 @@
     "color": "black",
     "x": 750,
     "y": 350,
-    "connections": ["Tehran", "Karachi", "Mumbai", "Chennai", "Kolkata"]
+    "connections": ["Tehran", "Kabul", "Mumbai", "Chennai", "Kolkata"]
   },
   "Mumbai": {
     "color": "black",
     "x": 750,
     "y": 450,
-    "connections": ["Karachi", "Delhi", "Chennai"]
+    "connections": ["Kabul", "Delhi", "Chennai"]
   },
   "Chennai": {
     "color": "black",
@@ -261,9 +261,9 @@
     "color": "red",
     "x": 1050,
     "y": 300,
-    "connections": ["Seoul", "Shanghai", "Osaka", "San Francisco"]
+    "connections": ["Seoul", "Shanghai", "Kyoto", "San Francisco"]
   },
-  "Osaka": {
+  "Kyoto": {
     "color": "red",
     "x": 1050,
     "y": 350,
@@ -273,7 +273,7 @@
     "color": "red",
     "x": 1000,
     "y": 400,
-    "connections": ["Osaka", "Wuhan", "Shanghai", "Manila"]
+    "connections": ["Kyoto", "Wuhan", "Shanghai", "Manila"]
   },
   "Manila": {
     "color": "red",
