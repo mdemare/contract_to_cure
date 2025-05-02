@@ -5,12 +5,11 @@ let isDragging = false;
 let lastX = 0;
 let lastY = 0;
 let mapContainer;
-let mapInner;
 
 // Initialize the scrolling functionality
 export function initScrolling() {
   mapContainer = document.querySelector('.map-container');
-  mapInner = document.querySelector('.map-inner');
+  let mapInner = document.querySelector('.map-inner');
 
   if (!mapContainer || !mapInner) {
     console.error('Map container or inner element not found');
@@ -29,7 +28,7 @@ export function initScrolling() {
 
 // Get the current transform values
 function getTransformValues() {
-  const transform = mapInner.style.transform || '';
+  const transform = document.querySelector('.map-inner').style.transform || '';
   const translateMatch = transform.match(/translate\((-?\d+\.?\d*)px/);
   const scaleMatch = transform.match(/scale\((\d+\.?\d*)\)/);
 
@@ -84,7 +83,9 @@ function updateScroll(deltaX) {
   }
 
   // Update the transform without any transition
-  mapInner.style.transform = getTransformString(newX, translateY, scale);
+  const transform = getTransformString(newX, translateY, scale);
+  console.log("New transform value:" + transform)
+  document.querySelector('.map-inner').style.transform = transform;
 }
 
 // Mouse-based scrolling event handlers
@@ -96,7 +97,7 @@ function setupMouseScrolling() {
     mapContainer.style.cursor = 'grabbing';
 
     // Disable any pointer events during dragging to ensure smooth performance
-    mapInner.style.pointerEvents = 'none';
+    document.querySelector('.map-inner').style.pointerEvents = 'none';
   });
 
   document.addEventListener('mousemove', (e) => {
@@ -121,7 +122,7 @@ function setupMouseScrolling() {
     mapContainer.style.cursor = 'grab';
 
     // Re-enable pointer events
-    mapInner.style.pointerEvents = 'auto';
+    document.querySelector('.map-inner').style.pointerEvents = 'auto';
   });
 
   // Prevent context menu when right-clicking on the map
@@ -139,7 +140,7 @@ function setupTouchScrolling() {
       lastY = e.touches[0].clientY;
 
       // Disable pointer events for better performance
-      mapInner.style.pointerEvents = 'none';
+      document.querySelector('.map-inner').style.pointerEvents = 'none';
     }
   });
 
@@ -164,13 +165,13 @@ function setupTouchScrolling() {
     isDragging = false;
 
     // Re-enable pointer events
-    mapInner.style.pointerEvents = 'auto';
+    document.querySelector('.map-inner').style.pointerEvents = 'auto';
   });
 
   mapContainer.addEventListener('touchcancel', () => {
     isDragging = false;
 
     // Re-enable pointer events
-    mapInner.style.pointerEvents = 'auto';
+    document.querySelector('.map-inner').style.pointerEvents = 'auto';
   });
 }

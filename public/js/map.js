@@ -88,6 +88,7 @@ function createCityOnPanel(cityData, cityName, panel) {
 
 // Updated render function using the global offset variable
 export function renderPandemicCities(pandemicMap) {
+  console.log("renderPandemicCities");
   const container = document.querySelector('.map-container');
 
   // Clear previous content
