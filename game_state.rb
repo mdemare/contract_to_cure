@@ -51,6 +51,7 @@ class GameState
 
     # Initialize decks
     raise unless @cities.size == 48
+
     @infection_deck, @infection_discard = init_infection_deck
     @player_deck, @player_discard = init_player_deck(players_count)
 
@@ -460,6 +461,7 @@ class GameState
 
   def init_infection_deck
     raise unless @cities.size == 48
+
     # Create infection cards for each city
     infection_cards = @cities.map do |name, city|
       Card.new(:city, name, city.color)
@@ -740,6 +742,70 @@ class GameState
         }
       }
     }.to_json
+  end
+
+  # Add this method to the GameState class in game_state.rb
+
+  def move_direct_flight(player_index, destination)
+    # Validate destination exists
+    return { success: false, message: 'Invalid destination city' } unless @cities.key?(destination)
+
+    # Check if it's the player's turn or if current player is dispatcher
+    current_player = @players[@current_player_index]
+    requested_player = @players[player_index]
+
+    # If not the current player's turn and current player is not dispatcher
+    if player_index != @current_player_index && current_player.role != :dispatcher
+      return {
+        success: false,
+        message: 'Cannot move another player unless you are the dispatcher'
+      }
+    end
+
+    # Check if player has the destination city card for direct flight
+    card_index = requested_player.hand.find_index do |card|
+      card.type == :city && card.name == destination
+    end
+
+    unless card_index
+      return {
+        success: false,
+        message: "Player does not have the #{destination} city card for direct flight"
+      }
+    end
+
+    # All checks passed, perform the move
+    # Discard the city card
+    discard_player_card(player_index, card_index)
+
+    # Move the player
+    old_location = requested_player.location
+    requested_player.location = destination
+
+    # Automatic medic ability: remove cubes of cured diseases
+    if requested_player.role == :medic
+      COLORS.each do |color|
+        next unless @cures[color]
+
+        city = @cities[destination]
+        cubes_removed = city.disease_cubes[color]
+        city.disease_cubes[color] = 0
+        @disease_cubes[color] += cubes_removed
+      end
+    end
+
+    # Consume an action (only if moving the current player)
+    if player_index == @current_player_index
+      @actions_remaining = (@actions_remaining || 4) - 1
+
+      # End turn if no actions remaining
+      end_turn if @actions_remaining <= 0
+    end
+
+    {
+      success: true,
+      message: "Successfully moved #{requested_player.role} from #{old_location} to #{destination} via direct flight"
+    }
   end
 
   def perform_action(action)
