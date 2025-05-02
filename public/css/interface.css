@@ -1,0 +1,191 @@
+
+/* Header Styles */
+.game-header {
+  background-color: var(--header-bg);
+  color: white;
+  padding: 15px 30px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+.logo-container h1 {
+  font-size: 2.5rem;
+  letter-spacing: 2px;
+  margin: 0;
+  background: linear-gradient(90deg, var(--blue-disease), var(--yellow-disease), var(--black-disease), var(--red-disease));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+  text-shadow: 0 2px 4px rgba(0, 0, 0, 0.3);
+}
+
+.logo-container h2 {
+  font-size: 1rem;
+  font-weight: normal;
+  margin: 0;
+  opacity: 0.9;
+}
+
+.controls {
+  display: flex;
+  gap: 10px;
+}
+
+.control-btn {
+  background-color: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 4px;
+  color: white;
+  width: 36px;
+  height: 36px;
+  font-size: 1.2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: all 0.2s ease;
+}
+
+.control-btn:hover {
+  background-color: rgba(255, 255, 255, 0.2);
+}
+
+/* Game Interface Layout */
+.game-interface {
+  display: flex;
+  flex-grow: 1;
+  overflow: hidden;
+}
+
+.game-status {
+  width: 280px;
+  background-color: var(--panel-bg);
+  border-right: 1px solid var(--border-color);
+  padding: 15px;
+  display: flex;
+  flex-shrink: 0;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.map-wrapper {
+  flex-grow: 1;
+  position: relative;
+  overflow: hidden;
+}
+
+/* Status Panels */
+.status-panel, .cure-status, .legend {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: var(--panel-shadow);
+  padding: 15px;
+}
+
+.status-panel h3, .cure-status h3, .legend h3 {
+  font-size: 1.1rem;
+  margin-bottom: 10px;
+  padding-bottom: 5px;
+  border-bottom: 1px solid var(--border-color);
+  color: #333;
+}
+
+.status-item {
+  display: flex;
+  justify-content: space-between;
+  padding: 5px 0;
+}
+
+/* Cure Status Styling */
+.cure-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.cure-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px;
+  border-radius: 4px;
+  background-color: rgba(0, 0, 0, 0.03);
+}
+
+.cure-color {
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.cure-item.blue .cure-color {
+  background-color: var(--blue-disease);
+}
+
+.cure-item.yellow .cure-color {
+  background-color: var(--yellow-disease);
+}
+
+.cure-item.black .cure-color {
+  background-color: var(--black-disease);
+}
+
+.cure-item.red .cure-color {
+  background-color: var(--red-disease);
+}
+
+.cure-label {
+  font-size: 0.8rem;
+  white-space: nowrap;
+}
+
+.cure-label.cured {
+  color: var(--cured-color);
+  font-weight: bold;
+}
+
+/* Legend Styling */
+.legend-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
+}
+
+.legend-dot {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid white;
+  box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
+}
+
+.legend-dot.blue { background-color: var(--blue-disease); }
+.legend-dot.yellow { background-color: var(--yellow-disease); }
+.legend-dot.black { background-color: var(--black-disease); }
+.legend-dot.red { background-color: var(--red-disease); }
+
+.legend-station {
+  font-size: 14px;
+}
+
+/* Footer Styles */
+.game-footer {
+  background-color: var(--header-bg);
+  color: rgba(255, 255, 255, 0.7);
+  padding: 10px 20px;
+  text-align: center;
+  font-size: 0.8rem;
+}
+
+.game-footer p {
+  margin: 5px 0;
+}
+
+.copyright {
+  font-size: 0.7rem;
+  opacity: 0.7;
+}

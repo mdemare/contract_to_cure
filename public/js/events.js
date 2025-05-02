@@ -1,6 +1,5 @@
-import { loadCities, prepareMapForRendering, renderPandemicCities } from './all.js';
+import { loadCities, prepareMapForRendering, renderPandemicCities } from './map.js';
 import { initScrolling } from './scrolling.js';
-import { MAP_WIDTH } from './constants.js';
 import { loadGameState, startGameStateRefresh } from './game_state.js';
 import { initActionButtons } from './action_buttons.js';
 
