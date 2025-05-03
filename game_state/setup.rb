@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require_relative 'config'
+require 'json'
 
 module Setup
   include GameStateConfig

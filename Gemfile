@@ -14,3 +14,7 @@ gem 'thin', '~> 1.8.2' # Fast and reliable server
 group :development do
   gem 'rerun', '~> 0.14.0' # Auto-restart server when files change
 end
+
+group :test do
+  gem 'minitest'
+end

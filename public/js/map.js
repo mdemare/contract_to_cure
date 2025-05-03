@@ -1,4 +1,12 @@
+// map.js
 import { MAP_WIDTH, COLORS } from './constants.js';
+
+// Store the current transform state so it can be preserved during re-renders
+let currentTransform = {
+  translateX: -MAP_WIDTH,
+  translateY: 0,
+  scale: 1
+};
 
 // Create city div with centralized dot
 function createCityOnPanel(cityData, cityName, panel) {
@@ -63,10 +71,29 @@ function createCityOnPanel(cityData, cityName, panel) {
   return city;
 }
 
-// Updated render function using the global offset variable
+// This function should be called whenever scrolling.js updates the transform
+export function saveCurrentTransform(translateX, translateY, scale) {
+  currentTransform = { translateX, translateY, scale };
+}
+
+// Updated render function preserving the current transform
 export function renderPandemicCities(pandemicMap) {
   console.log("renderPandemicCities", pandemicMap);
   const container = document.querySelector('.map-container');
+
+  // Save current transform if it exists
+  const currentMapInner = document.querySelector('.map-inner');
+  if (currentMapInner) {
+    const transform = currentMapInner.style.transform;
+    const translateMatch = transform.match(/translate\((-?\d+\.?\d*)px,\s*(-?\d+\.?\d*)px\)/);
+    const scaleMatch = transform.match(/scale\((\d+\.?\d*)\)/);
+
+    if (translateMatch && scaleMatch) {
+      currentTransform.translateX = parseFloat(translateMatch[1]);
+      currentTransform.translateY = parseFloat(translateMatch[2]);
+      currentTransform.scale = parseFloat(scaleMatch[1]);
+    }
+  }
 
   // Clear previous content
   container.innerHTML = '';
@@ -75,9 +102,8 @@ export function renderPandemicCities(pandemicMap) {
   const mapInner = document.createElement('div');
   mapInner.classList.add('map-inner');
 
-  // Initial positioning will be handled by the scrolling.js module
-  // Initial transform with translate to center the map
-  mapInner.style.transform = `translate(-${MAP_WIDTH}px) scale(1)`;
+  // Apply the saved transform instead of always resetting to initial
+  mapInner.style.transform = `translate(${currentTransform.translateX}px, ${currentTransform.translateY}px) scale(${currentTransform.scale})`;
 
   // Add the SVG layer back
   const svgLayer = document.createElementNS("http://www.w3.org/2000/svg", "svg");

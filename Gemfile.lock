@@ -1,6 +1,7 @@
 GEM
   remote: https://rubygems.org/
   specs:
+    awesome_print (1.9.2)
     daemons (1.4.1)
     eventmachine (1.2.7)
     ffi (1.17.2)
@@ -15,9 +16,11 @@ GEM
     ffi (1.17.2-x86_64-linux-gnu)
     ffi (1.17.2-x86_64-linux-musl)
     json (2.7.6)
+    like_1999 (0.9.0)
     listen (3.9.0)
       rb-fsevent (~> 0.10, >= 0.10.3)
       rb-inotify (~> 0.9, >= 0.9.10)
+    minitest (5.25.5)
     multi_json (1.15.0)
     mustermann (3.0.3)
       ruby2_keywords (~> 0.0.1)
@@ -61,7 +64,10 @@ PLATFORMS
   x86_64-linux-musl
 
 DEPENDENCIES
+  awesome_print
   json (~> 2.7.0)
+  like_1999
+  minitest
   rerun (~> 0.14.0)
   sinatra (~> 3.1.0)
   sinatra-contrib (~> 3.1.0)

@@ -1,5 +1,6 @@
 // scrolling.js
 import { MAP_WIDTH } from './constants.js';
+import { saveCurrentTransform } from './map.js';
 
 // Store the current transform state
 let scale = 1;
@@ -189,6 +190,9 @@ function updateTransform() {
   const inner = document.querySelector('.map-inner');
   if (inner) {
     inner.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
+
+    // Save the current transform to be preserved during re-renders
+    saveCurrentTransform(offsetX, offsetY, scale);
   }
 }
 

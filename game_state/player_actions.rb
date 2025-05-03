@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 module PlayerActions
+  include GameStateConfig
+
   def move_pawn(player_index, destination)
     player = @players[player_index]
     current_location = player.location
@@ -56,12 +58,13 @@ module PlayerActions
 
     # Medic can remove all cubes
     if player.role == :medic || @cures[color]
-      @disease_cubes[color] += city.disease_cubes
+      cubes_removed = city.disease_cubes
       city.disease_cubes = 0
     else
+      cubes_removed = 1
       city.disease_cubes -= 1
-      @disease_cubes[color] += 1
     end
+    @disease_cubes[color] += cubes_removed
 
     # Consume an action
     @actions_remaining -= 1
@@ -73,7 +76,7 @@ module PlayerActions
       success: true,
       status: "success",
       message: "Treated #{color} disease in #{city.name}",
-      cubes_removed: player.role == :medic || @cures[color] ? cubes_removed : 1,
+      cubes_removed: cubes_removed,
       end_turn: @actions_remaining <= 0
     }
   end
@@ -102,20 +105,33 @@ module PlayerActions
     player = @players[player_index]
 
     # Player must be at a research station
-    return false unless @research_stations.include?(player.location)
+    unless @research_stations.include?(player.location)
+      puts 'wrong 1'
+      return false
+    end
 
     # Cure must not already be discovered
-    return false if @cures[color]
+    if @cures[color]
+      puts 'wrong 2'
+      return false
+    end
 
     # Determine number of cards needed
     cards_needed = player.role == :scientist ? CARDS_NEEDED_FOR_CURE[:scientist] : CARDS_NEEDED_FOR_CURE[:default]
-    return false if card_indices.size != cards_needed
+    if card_indices.size != cards_needed
+      puts 'wrong 3'
+      puts player.role
+      return false
+    end
 
     # Check if all selected cards are of the right color
     selected_cards = card_indices.map do |idx|
       player.hand[idx]
     end.select { |card| card.type == :city && card.color == color }
-    return false if selected_cards.size != cards_needed
+    if selected_cards.size != cards_needed
+      puts 'wrong 4'
+      return false
+    end
 
     # Discard the cards
     card_indices.sort.reverse.each { |idx| discard_player_card(player_index, idx) }
