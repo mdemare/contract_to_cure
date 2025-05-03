@@ -25,10 +25,14 @@ export function initActionButtons() {
   // Update button states based on current game state
   updateButtonStates();
 
+  // Initial hand update
+  updatePlayerHand(getCurrentGameState());
+
   // Listen for player moved events to reset the mode
   document.addEventListener('playerMoved', () => {
     resetMode();
     updateButtonStates();
+    updatePlayerHand(getCurrentGameState());
   });
 }
 
@@ -144,3 +148,95 @@ export function getCurrentMode() {
 
 // Export helper functions for use in other modules
 export { disableAllButtons, enableAllButtons, enableSpecificButtons };
+
+// Function to update player hand
+export function updatePlayerHand(gameState) {
+  const handContainer = document.querySelector('.player-hand');
+  if (!handContainer) return;
+
+  // Clear existing cards
+  handContainer.innerHTML = '';
+
+  // Get current player
+  const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
+  const currentPlayer = gameState.players[currentPlayerIndex];
+
+  if (!currentPlayer || !currentPlayer.hand) return;
+
+  // Create card elements
+  currentPlayer.hand.forEach((cardName, index) => {
+    const card = document.createElement('div');
+    card.classList.add('hand-card');
+
+    // Determine card type and color
+    if (cardName.startsWith('Action:')) {
+      card.classList.add('event');
+      card.title = 'Event Card';
+    } else if (cardName === 'Epidemic') {
+      card.classList.add('epidemic');
+      card.title = 'Epidemic!';
+    } else {
+      // City card - find the color
+      card.classList.add('city');
+      const cityColor = getCityColor(cardName, gameState);
+      if (cityColor) {
+        card.classList.add(cityColor);
+      }
+      card.title = `City: ${cardName}`;
+    }
+
+    // Create card name element
+    const cardNameElement = document.createElement('div');
+    cardNameElement.classList.add('card-name');
+    cardNameElement.textContent = cardName.replace('Action:', '');
+    card.appendChild(cardNameElement);
+
+    // Add data attribute for card index
+    card.dataset.cardIndex = index;
+
+    // Add click handler for potential card interactions
+    card.addEventListener('click', () => handleCardClick(index, cardName));
+
+    handContainer.appendChild(card);
+  });
+}
+
+// Helper function to get city color
+function getCityColor(cityName, gameState) {
+  // You could load this from cities.json or store it in game state
+  // For now, we'll try to determine from disease cubes if available
+  if (gameState.diseaseCubes) {
+    for (const color of ['blue', 'yellow', 'black', 'red']) {
+      if (gameState.diseaseCubes[color] &&
+          gameState.diseaseCubes[color].onBoard &&
+          gameState.diseaseCubes[color].onBoard[cityName]) {
+        return color;
+      }
+    }
+  }
+
+  // Could fetch from cities.json here if needed
+  return null;
+}
+
+// Handle card clicks
+function handleCardClick(cardIndex, cardName) {
+  console.log(`Card clicked: ${cardName} (index: ${cardIndex})`);
+
+  // Check if we're in a mode that uses cards
+  const mode = getCurrentMode();
+
+  if (mode === 'cure') {
+    // Could implement card selection for cure action
+    console.log('Selecting card for cure action');
+  } else if (mode === 'trade') {
+    // Could implement card selection for trading
+    console.log('Selecting card for trade');
+  } else if (mode === 'move') {
+    // Could implement direct flight if clicking on city card
+    if (!cardName.startsWith('Action:') && cardName !== 'Epidemic') {
+      console.log(`Using ${cardName} for direct flight`);
+      // Implement direct flight here
+    }
+  }
+}

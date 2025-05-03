@@ -63,6 +63,9 @@ function updateGameUI(gameState) {
     // Update cure status
     updateCureStatus(gameState);
 
+    // Update player hand
+    updatePlayerHand(gameState);
+
     // Update the map with the new state
     updateMapState(gameState);
   } catch (error) {
