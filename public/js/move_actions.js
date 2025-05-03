@@ -180,7 +180,7 @@ async function handleCityClick(event) {
   } else if (canDirectFlight) {
     console.log('Attempting direct flight to', cityName);
     // Try to move to the city using direct flight
-    await moveToCity(currentPlayerIndex, cityName);
+    await moveDirectFlight(currentPlayerIndex, cityName);
   } else {
     console.log('Cannot move - city is not adjacent and player has no city card');
     // If they don't have the card, inform the user
@@ -272,6 +272,67 @@ async function moveDriveFerry(playerIndex, destination) {
     }
   } catch (error) {
     console.error('Error during drive/ferry operation:', error);
+    showErrorMessage(`Network error: ${error.message}`);
+  }
+}
+
+// Move to an adjacent city using drive/ferry
+async function moveDirectFlight(playerIndex, destination) {
+  try {
+    console.log('moveDirectFlight called with:', 'playerIndex:', playerIndex, 'destination:', destination);
+
+    // Prepare the request data
+    const moveData = {
+      player_index: playerIndex,
+      destination: destination
+    };
+    console.log('Request payload:', moveData);
+
+    console.log('Sending API request to /move_drive_ferry...');
+    // Make the API call to move_drive_ferry
+    const response = await fetch('/move_direct_flight', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify(moveData)
+    });
+
+    console.log('API response status:', response.status, response.statusText);
+
+    // Parse the response
+    const result = await response.json();
+    console.log('API response data:', result);
+
+    if (result.status === 'success') {
+      console.log('Move successful:', result.message);
+
+      console.log('Refreshing game state...');
+      // Refresh the game state
+      await loadGameState();
+      console.log('Game state refreshed');
+
+      // Dispatch a custom event to notify that a move was made
+      console.log('Dispatching playerMoved event');
+      const moveEvent = new CustomEvent('playerMoved', {
+        detail: {
+          playerIndex: playerIndex,
+          destination: destination,
+          success: true,
+          moveType: 'direct_flight'
+        }
+      });
+      document.dispatchEvent(moveEvent);
+
+      // Show success message
+      showSuccessMessage(result.message);
+    } else {
+      console.error(`Direct Flight failed: ${result.message}`);
+      console.log('Failed move details:', { playerIndex, destination });
+      showErrorMessage(result.message);
+    }
+  } catch (error) {
+    console.error('Error during direct flight operation:', error);
     showErrorMessage(`Network error: ${error.message}`);
   }
 }

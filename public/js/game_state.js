@@ -149,9 +149,7 @@ function prepareMapWithGameState(citiesData, gameState) {
     };
 
     // Initialize empty cubes for all colors
-    COLOR_KEYS.forEach(color => {
-      updatedMap[cityName].cubes[color] = 0;
-    });
+    updatedMap[cityName].cubes = 0;
   }
 
   // Add disease cubes
