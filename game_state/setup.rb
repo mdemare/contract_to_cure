@@ -143,7 +143,7 @@ module Setup
         card = @infection_deck.pop
         @infection_discard << card
         city = @cities[card.name]
-        city.disease_cubes[city.color] += cube_count
+        city.disease_cubes += cube_count
         @disease_cubes[city.color] -= cube_count
       end
     end

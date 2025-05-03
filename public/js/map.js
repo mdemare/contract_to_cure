@@ -26,16 +26,14 @@ function createCityOnPanel(cityData, cityName, panel) {
   city.appendChild(label);
 
   // Disease cubes (if any)
-  if (cityData.cubes && Object.values(cityData.cubes).some(count => count > 0)) {
+  if (cityData.cubes > 0) {
     const cubes = document.createElement('div');
     cubes.classList.add('cubes');
 
-    for (const [color, count] of Object.entries(cityData.cubes)) {
-      for (let i = 0; i < count; i++) {
-        const cube = document.createElement('div');
-        cube.classList.add('cube', color);
-        cubes.appendChild(cube);
-      }
+    for (let i = 0; i < cityData.cubes; i++) {
+      const cube = document.createElement('div');
+      cube.classList.add('cube', cityData.color);
+      cubes.appendChild(cube);
     }
 
     city.appendChild(cubes);
@@ -67,7 +65,7 @@ function createCityOnPanel(cityData, cityName, panel) {
 
 // Updated render function using the global offset variable
 export function renderPandemicCities(pandemicMap) {
-  console.log("renderPandemicCities");
+  console.log("renderPandemicCities", pandemicMap);
   const container = document.querySelector('.map-container');
 
   // Clear previous content

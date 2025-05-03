@@ -75,13 +75,11 @@ class GameState
     raise unless requested_player.is_a?(Player)
     # Automatic medic ability: remove cubes of cured diseases
     if requested_player.role == :medic
-      COLORS.each do |color|
-        next unless @cures[color]
-
-        city = @cities[destination]
-        cubes_removed = city.disease_cubes[color]
-        city.disease_cubes[color] = 0
-        @disease_cubes[color] += cubes_removed
+      city = @cities[destination]
+      color = city.color
+      if @cures[color]
+        @disease_cubes[color] += city.disease_cubes
+        city.disease_cubes = 0
       end
     end
   end

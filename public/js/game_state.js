@@ -161,7 +161,7 @@ function prepareMapWithGameState(citiesData, gameState) {
       if (diseaseInfo && diseaseInfo.onBoard) {
         Object.entries(diseaseInfo.onBoard).forEach(([cityName, cubeCount]) => {
           if (updatedMap[cityName]) {
-            updatedMap[cityName].cubes[color] = cubeCount;
+            updatedMap[cityName].cubes = cubeCount;
           }
         });
       }

@@ -15,8 +15,8 @@ module JsonGenerator
       },
       diseaseCubes: COLORS.each_with_object({}) do |color, hash|
         # Only include cities with cubes
-        cities_with_cubes = @cities.select { |_, city| city.disease_cubes[color].positive? }
-                                   .transform_values { |city| city.disease_cubes[color] }
+        cities_with_cubes = @cities.select { |_, city| city.disease_cubes > 0 }
+                                   .transform_values { |city| city.disease_cubes }
 
         hash[color] = {
           cured: @cures[color],
@@ -102,7 +102,7 @@ module JsonGenerator
 
   def cities_with_3_or_more_cubes
     @cities.select do |_, city|
-      city.disease_cubes.any? { |_, count| count >= 3 }
+      city.disease_cubes == 3
     end.map { |name, _| name }
   end
 

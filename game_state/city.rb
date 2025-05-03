@@ -1,6 +1,3 @@
-require_relative 'config'
-
-# City class for tracking city-specific data
 class City
   include GameStateConfig
 
@@ -11,12 +8,7 @@ class City
     @name = name
     @color = color
     @connections = connections
-    @disease_cubes = {}
-    COLORS.each { |color_symbol| @disease_cubes[color_symbol] = 0 }
+    @disease_cubes = 0  # Simple counter instead of hash
     @has_research_station = false
-  end
-
-  def add_connection(city_name)
-    @connections << city_name unless @connections.include?(city_name)
   end
 end

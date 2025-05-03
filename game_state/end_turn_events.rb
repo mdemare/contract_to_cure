@@ -71,6 +71,7 @@ module EndTurnEvents
 
   def add_disease_cubes(city_name, color, count)
     city = @cities[city_name]
+    return if city.color != color
 
     # Handle quarantine specialist prevention
     return if has_quarantine_specialist_protection?(city_name)
@@ -85,11 +86,11 @@ module EndTurnEvents
     outbreak_needed = [count - to_add, 0].max
 
     # Add cubes to the city
-    city.disease_cubes[color] += to_add
+    city.disease_cubes += to_add
     @disease_cubes[color] -= to_add
 
     # If we're out of cubes, game over
-    if @disease_cubes[color].zero?
+    if @disease_cubes[color] <= 0
       @game_over = true
       @game_over_reason = :no_cubes
       return
@@ -130,21 +131,7 @@ module EndTurnEvents
       next if @cures[color] && @disease_cubes[color] == MAX_DISEASE_CUBES_PER_COLOR
 
       # Add 1 cube, or trigger outbreak if already at 3 cubes
-      if connected_city.disease_cubes[color] < 3
-        if @disease_cubes[color].positive?
-          connected_city.disease_cubes[color] += 1
-          @disease_cubes[color] -= 1
-
-          # If we're out of cubes, game over
-          if @disease_cubes[color].zero?
-            @game_over = true
-            @game_over_reason = :no_cubes
-            break
-          end
-        end
-      else
-        trigger_outbreak(connected_city_name, color, outbreak_chain)
-      end
+      add_disease_cubes(connected_city.name, color, 1)
     end
   end
 end

@@ -54,13 +54,12 @@ module PlayerActions
       return { success: false, message: "No #{color} disease cubes to treat in #{city.name}" }
     end
 
-    # Medic can remove all cubes of a color
+    # Medic can remove all cubes
     if player.role == :medic || @cures[color]
-      cubes_removed = city.disease_cubes[color]
-      city.disease_cubes[color] = 0
-      @disease_cubes[color] += cubes_removed
+      @disease_cubes[color] += city.disease_cubes
+      city.disease_cubes = 0
     else
-      city.disease_cubes[color] -= 1
+      city.disease_cubes -= 1
       @disease_cubes[color] += 1
     end
 
