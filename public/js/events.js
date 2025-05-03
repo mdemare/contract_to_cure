@@ -1,6 +1,6 @@
-import { loadCities, prepareMapForRendering, renderPandemicCities } from './map.js';
+import { prepareMapForRendering, renderPandemicCities } from './map.js';
 import { initScrolling } from './scrolling.js';
-import { loadGameState } from './game_state.js';
+import { loadGameState, loadCities, CITIES } from './game_state.js';
 import { initActionButtons } from './action_buttons.js';
 import { initMoveActions } from './move_actions.js';
 
@@ -37,16 +37,12 @@ function resetMapView() {
 
 // Initialize the pandemic map
 async function initializePandemicMap() {
-  // Define path to JSON file
-  const jsonUrl = 'cities.json';
-
   try {
-    // Load cities data
-    const cities = await loadCities(jsonUrl);
+    await loadCities();
 
-    if (cities) {
+    if (CITIES) {
       // Prepare the map data for rendering
-      const renderableMap = prepareMapForRendering(cities);
+      const renderableMap = prepareMapForRendering(CITIES);
 
       // Render the cities
       renderPandemicCities(renderableMap);

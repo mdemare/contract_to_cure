@@ -170,8 +170,8 @@ export function updatePlayerHand(gameState) {
 
     // Determine card type and color
     if (cardName.startsWith('Action:')) {
-      card.classList.add('event');
-      card.title = 'Event Card';
+      card.classList.add('action');
+      card.title = 'Action Card';
     } else if (cardName === 'Epidemic') {
       card.classList.add('epidemic');
       card.title = 'Epidemic!';

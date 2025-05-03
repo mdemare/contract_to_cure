@@ -1,26 +1,5 @@
 import { MAP_WIDTH, COLORS } from './constants.js';
 
-// Load cities from JSON file
-export async function loadCities(jsonUrl) {
-  try {
-    // Fetch the JSON file
-    const response = await fetch(jsonUrl);
-
-    if (!response.ok) {
-      throw new Error(`Failed to load cities: ${response.status} ${response.statusText}`);
-    }
-
-    return await response.json();
-  } catch (error) {
-    console.error('Error loading cities:', error);
-
-    // Display error message on the map container
-    const container = document.querySelector('.map-container');
-    container.innerHTML = `<div class="error-message">Failed to load cities data: ${error.message}</div>`;
-    return null;
-  }
-}
-
 // Create city div with centralized dot
 function createCityOnPanel(cityData, cityName, panel) {
   const city = document.createElement('div');

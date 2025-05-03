@@ -44,15 +44,13 @@ module PlayerActions
     false
   end
 
-  def treat_disease(player_index, color)
+  def treat_disease(player_index)
     player = @players[player_index]
     city = @cities[player.location]
-
-    # Validate color parameter
-    return { success: false, message: 'Invalid disease color' } unless COLORS.include?(color)
+    color = city.color
 
     # Check if there are any cubes of this color to treat
-    if city.disease_cubes[color].zero?
+    if city.disease_cubes == 0
       return { success: false, message: "No #{color} disease cubes to treat in #{city.name}" }
     end
 
@@ -74,6 +72,7 @@ module PlayerActions
 
     {
       success: true,
+      status: "success",
       message: "Treated #{color} disease in #{city.name}",
       cubes_removed: player.role == :medic || @cures[color] ? cubes_removed : 1,
       end_turn: @actions_remaining <= 0

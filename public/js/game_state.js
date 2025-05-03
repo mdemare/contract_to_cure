@@ -1,11 +1,33 @@
 // game_state.js
 import { renderPandemicCities } from './map.js';
+import { updatePlayerHand } from './action_buttons.js';
+import { updateCurrentPlayer, initializeCurrentPlayer } from './current_player.js';
 
 // Define color keys for disease tracking
 const COLOR_KEYS = ['blue', 'yellow', 'black', 'red'];
 
 // Global variable to store the current game state
 let currentGameState = null;
+export let CITIES = null;
+
+export async function loadCities() {
+  const jsonUrl = 'cities.json';
+
+  try {
+    // Load cities data
+    const response = await fetch(jsonUrl);
+    if (!response.ok) {
+      throw new Error(`Failed to load cities: ${response.status} ${response.statusText}`);
+    }
+    // Parse the cities data
+    CITIES = await response.json();
+    console.log(CITIES)
+  } catch (error) {
+    console.error('Error loading cities:', error);
+    document.querySelector('.map-container').innerHTML =
+      `<div class="error-message">Failed to initialize game state: ${error.message}</div>`;
+  }
+}
 
 // Load the game state from the server
 export async function loadGameState() {
@@ -66,6 +88,8 @@ function updateGameUI(gameState) {
     // Update player hand
     updatePlayerHand(gameState);
 
+    updateCurrentPlayer(gameState);
+
     // Update the map with the new state
     updateMapState(gameState);
   } catch (error) {
@@ -98,22 +122,10 @@ function updateCureStatus(gameState) {
 
 // Update the map with disease cubes, research stations, and player pawns
 async function updateMapState(gameState) {
-  // First load the cities data
-  const jsonUrl = 'cities.json';
-
+  if(CITIES === undefined) { throw new Error("Cities not loaded")}
   try {
-    // Fetch the cities data
-    const response = await fetch(jsonUrl);
-
-    if (!response.ok) {
-      throw new Error(`Failed to load cities: ${response.status} ${response.statusText}`);
-    }
-
-    // Parse the cities data
-    const citiesData = await response.json();
-
     // Prepare the map data with the current game state
-    const updatedMap = prepareMapWithGameState(citiesData, gameState);
+    const updatedMap = prepareMapWithGameState(CITIES, gameState);
 
     // Render the updated map
     renderPandemicCities(updatedMap);
