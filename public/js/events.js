@@ -50,19 +50,6 @@ async function initializePandemicMap() {
       // Initialize the scrolling functionality
       initScrolling();
 
-      // Setup zoom controls
-      document.getElementById('zoom-in').addEventListener('click', function() {
-        zoomMap(1.1);
-      });
-
-      document.getElementById('zoom-out').addEventListener('click', function() {
-        zoomMap(0.9);
-      });
-
-      document.getElementById('reset-view').addEventListener('click', function() {
-        resetMapView();
-      });
-
       // Load the game state from the server
       await loadGameState();
 

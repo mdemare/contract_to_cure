@@ -35,15 +35,6 @@ export function initScrolling() {
   document.addEventListener('touchmove', dragTouch);
   document.addEventListener('touchend', endDragTouch);
 
-  // Add event listeners for zooming
-  const zoomInBtn = document.getElementById('zoom-in');
-  const zoomOutBtn = document.getElementById('zoom-out');
-  const resetViewBtn = document.getElementById('reset-view');
-
-  if (zoomInBtn) zoomInBtn.addEventListener('click', zoomIn);
-  if (zoomOutBtn) zoomOutBtn.addEventListener('click', zoomOut);
-  if (resetViewBtn) resetViewBtn.addEventListener('click', resetView);
-
   // Debug message
   console.log('Map scrolling initialized');
 
@@ -105,7 +96,7 @@ function drag(e) {
   const deltaY = e.clientY - lastY;
 
   offsetX += deltaX;
-  offsetY += deltaY;
+  // offsetY += deltaY;
 
   lastX = e.clientX;
   lastY = e.clientY;
@@ -167,24 +158,6 @@ function endDragTouch() {
   isDragging = false;
 }
 
-// Zoom functions
-function zoomIn() {
-  scale = Math.min(scale * 1.2, 3); // Maximum zoom level
-  updateTransform();
-}
-
-function zoomOut() {
-  scale = Math.max(scale / 1.2, 0.5); // Minimum zoom level
-  updateTransform();
-}
-
-function resetView() {
-  scale = 1;
-  offsetX = -MAP_WIDTH; // Center the map
-  offsetY = 0;
-  updateTransform();
-}
-
 // Update the transform style
 function updateTransform() {
   const inner = document.querySelector('.map-inner');
@@ -195,6 +168,3 @@ function updateTransform() {
     saveCurrentTransform(offsetX, offsetY, scale);
   }
 }
-
-// Export functions for external use
-export { zoomIn, zoomOut, resetView };

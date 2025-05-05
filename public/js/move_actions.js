@@ -1,5 +1,5 @@
 // move_actions.js
-import { getCurrentGameState, loadGameState } from './game_state.js';
+import { getCurrentGameState, loadGameState, CITIES } from './game_state.js';
 import { getCurrentMode } from './action_buttons.js';
 
 // Map click handler - initialize city click events
@@ -190,29 +190,15 @@ async function handleCityClick(event) {
 
 // Helper function to check if a city is adjacent to another
 async function isCityAdjacent(fromCity, toCity) {
-  try {
-    // Load cities data to get connections
-    const citiesResponse = await fetch('cities.json');
-    if (!citiesResponse.ok) {
-      console.error('Failed to load cities data');
-      return false;
-    }
-
-    const citiesData = await citiesResponse.json();
-
-    // Check if the cities exist in the data
-    if (!citiesData[fromCity] || !citiesData[toCity]) {
-      console.error('City not found in data:', !citiesData[fromCity] ? fromCity : toCity);
-      return false;
-    }
-
-    // Check if toCity is in the connections array of fromCity
-    const connections = citiesData[fromCity].connections;
-    return connections.includes(toCity);
-  } catch (error) {
-    console.error('Error checking adjacent cities:', error);
+  // Check if the cities exist in the data
+  if (!CITIES[fromCity] || !CITIES[toCity]) {
+    console.error('City not found in data:', !CITIES[fromCity] ? fromCity : toCity);
     return false;
   }
+
+  // Check if toCity is in the connections array of fromCity
+  const connections = CITIES[fromCity].connections;
+  return connections.includes(toCity);
 }
 
 // Move to an adjacent city using drive/ferry

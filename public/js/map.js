@@ -16,7 +16,7 @@ function createCityOnPanel(cityData, cityName, panel) {
   // Position the city div at the exact coordinate (dot will be centered)
   const xPos = cityData.x + panel * MAP_WIDTH;
   city.style.left = `${xPos}px`;
-  city.style.top = `${cityData.y}px`;
+  city.style.top = `${cityData.y - 165}px`;
 
   // Add data attribute for city name (useful for debugging)
   city.dataset.cityName = cityName;
@@ -196,17 +196,17 @@ function renderConnection(svg, x1, y1, target) {
   const x2 = target.x + k * MAP_WIDTH;
 
   if (x2 >= 0 && x2 < 3*MAP_WIDTH) {
-    drawStyledLine(svg, x1, y1, x2, target.y);
+    drawStyledLine(svg, x1, y1 - 165, x2, target.y - 165);
   } else {
     // Target connection is out of bounds. Only draw to the edge of the map
     if (x2 < 0) {
       // City is on left, target on right - draw to left edge
-      const leftEdgeY = calculateEdgeIntersection(x1, y1, x2, target.y, 0);
-      drawStyledLine(svg, x1, y1, 0, leftEdgeY, true);
+      const leftEdgeY = calculateEdgeIntersection(x1, y1 - 165, x2, target.y - 165, 0);
+      drawStyledLine(svg, x1, y1 - 165, 0, leftEdgeY - 165, true);
     } else {
       // City is on right, target on left - draw to right edge
       const rightEdgeY = calculateEdgeIntersection(x1, y1, x2, target.y, 3*MAP_WIDTH);
-      drawStyledLine(svg, x1, y1, 3*MAP_WIDTH, rightEdgeY, true);
+      drawStyledLine(svg, x1, y1 - 165, 3*MAP_WIDTH, rightEdgeY - 165, true);
     }
   }
 }

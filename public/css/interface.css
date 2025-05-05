@@ -28,29 +28,6 @@
   opacity: 0.9;
 }
 
-.controls {
-  display: flex;
-  gap: 10px;
-}
-
-.control-btn {
-  background-color: rgba(255, 255, 255, 0.1);
-  border: 1px solid rgba(255, 255, 255, 0.3);
-  border-radius: 4px;
-  color: white;
-  width: 36px;
-  height: 36px;
-  font-size: 1.2rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  transition: all 0.2s ease;
-}
-
-.control-btn:hover {
-  background-color: rgba(255, 255, 255, 0.2);
-}
-
 /* Game Interface Layout */
 .game-interface {
   display: flex;
@@ -170,24 +147,6 @@
 
 .legend-station {
   font-size: 14px;
-}
-
-/* Footer Styles */
-.game-footer {
-  background-color: var(--header-bg);
-  color: rgba(255, 255, 255, 0.7);
-  padding: 10px 20px;
-  text-align: center;
-  font-size: 0.8rem;
-}
-
-.game-footer p {
-  margin: 5px 0;
-}
-
-.copyright {
-  font-size: 0.7rem;
-  opacity: 0.7;
 }
 
 /* Player hand styles */
