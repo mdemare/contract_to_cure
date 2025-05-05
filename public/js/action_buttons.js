@@ -15,12 +15,12 @@ export function initActionButtons() {
   const skipBtn = document.getElementById('skip-btn');
 
   // Add click event listeners
-  moveBtn.addEventListener('click', () => toggleMode('move'));
-  treatBtn.addEventListener('click', () => toggleMode('treat'));
-  cureBtn.addEventListener('click', () => toggleMode('cure'));
-  tradeBtn.addEventListener('click', () => toggleMode('trade'));
-  buildBtn.addEventListener('click', () => toggleMode('build'));
-  skipBtn.addEventListener('click', handleSkipAction);
+  // moveBtn.addEventListener('click', () => toggleMode('move'));
+  // treatBtn.addEventListener('click', () => toggleMode('treat'));
+  // cureBtn.addEventListener('click', () => toggleMode('cure'));
+  // tradeBtn.addEventListener('click', () => toggleMode('trade'));
+  // buildBtn.addEventListener('click', () => toggleMode('build'));
+  // skipBtn.addEventListener('click', handleSkipAction);
 
   // Update button states based on current game state
   updateButtonStates();

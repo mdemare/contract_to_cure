@@ -72,13 +72,16 @@ module PlayerActions
     # End turn if no actions remaining
     end_turn if @actions_remaining <= 0
 
-    {
+    rvalue = {
       success: true,
       status: "success",
       message: "Treated #{color} disease in #{city.name}",
       cubes_removed: cubes_removed,
       end_turn: @actions_remaining <= 0
     }
+
+    end_turn if @actions_remaining <= 0
+    return rvalue
   end
 
   def share_knowledge(giving_player_index, receiving_player_index, card_index)
@@ -184,18 +187,24 @@ module PlayerActions
     requested_player.location = destination
 
     medic_move(requested_player, destination)
+    @actions_remaining ||= 4
+    @actions_remaining -= 1
 
-    @actions_remaining = (@actions_remaining || 4) - 1
-
-    # End turn if no actions remaining
-    end_turn if @actions_remaining <= 0
-
-    {
+    rvalue = {
       success: true,
       status: "success",
       message: "Successfully moved #{requested_player.role} from #{old_location} to #{destination} via drive/ferry",
-      end_turn: @actions_remaining <= 0
+      actions_remaining: @actions_remaining,
+      end_turn: @actions_remaining == 0
     }
+
+    # End turn if no actions remaining
+    if @actions_remaining == 0
+      end_turn_events = end_turn
+      return rvalue.merge({end_turn_events: end_turn_events})
+    else
+      return rvalue
+    end
   end
 
   def move_direct_flight(player_index, destination)

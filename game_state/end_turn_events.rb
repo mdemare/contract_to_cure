@@ -40,7 +40,7 @@ module EndTurnEvents
 
     card = @player_deck.pop
     player = @players[player_index]
-    event = { type: :draw_card, player: player_index, card: card }
+    event = { type: :draw_card, player: player_index, card: card.description }
 
     if card.type == :epidemic
       epidemic_events = handle_epidemic
