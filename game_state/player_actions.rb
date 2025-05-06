@@ -21,18 +21,18 @@ module PlayerActions
   end
 
   def build_research_station(player_index, city_name)
-    return false if @research_stations.size >= MAX_RESEARCH_STATIONS
-    return false if @research_stations.include?(city_name)
+    return after_action(false, "Maximum number of research stations reached") if @research_stations.size >= MAX_RESEARCH_STATIONS
+    return after_action(false, "Research station already exists in #{city_name}") if @research_stations.include?(city_name)
 
     player = @players[player_index]
 
     # Check if player is at the city
-    return false unless player.location == city_name
+    return after_action(false, "Player must be in #{city_name} to build a research station") unless player.location == city_name
 
     # Operations expert can build without a card
     if player.role == :operations_expert
       @research_stations << city_name
-      return true
+      return after_action(true, "Successfully built a research station in #{city_name} (Operations Expert ability)")
     end
 
     # Otherwise, player needs the city card
@@ -40,10 +40,10 @@ module PlayerActions
     if player_card_index
       discard_player_card(player_index, player_card_index)
       @research_stations << city_name
-      return true
+      return after_action(true, "Successfully built a research station in #{city_name}")
     end
 
-    false
+    after_action(false, "Player does not have the #{city_name} city card")
   end
 
   def treat_disease(player_index)
@@ -69,9 +69,7 @@ module PlayerActions
     # Consume an action
     @actions_remaining -= 1
 
-    # End turn if no actions remaining
-    end_turn if @actions_remaining <= 0
-
+    # Prepare response
     rvalue = {
       success: true,
       status: "success",
@@ -88,9 +86,6 @@ module PlayerActions
     else
       return rvalue
     end
-
-    end_turn if @actions_remaining <= 0
-    return rvalue
   end
 
   def share_knowledge(giving_player_index, receiving_player_index, card_index)
@@ -98,19 +93,23 @@ module PlayerActions
     receiving_player = @players[receiving_player_index]
 
     # Both players must be in the same city
-    return false unless giving_player.location == receiving_player.location
+    unless giving_player.location == receiving_player.location
+      return after_action(false, "Both players must be in the same city to share knowledge")
+    end
 
     card = giving_player.hand[card_index]
 
     # The card must be a city card matching the current location, or the player must be a researcher
-    return false unless card.type == :city &&
-                        (card.name == giving_player.location || giving_player.role == :researcher)
+    unless card.type == :city && (card.name == giving_player.location || giving_player.role == :researcher)
+      return after_action(false, "Card must be a city card matching the current location, or player must be a researcher")
+    end
 
     # Move the card
     giving_player.hand.delete_at(card_index)
     receiving_player.hand << card
 
-    true
+    # Return success
+    after_action(true, "Successfully shared #{card.name} card from #{giving_player.role} to #{receiving_player.role}")
   end
 
   def discover_cure(player_index, color, card_indices)
@@ -118,31 +117,27 @@ module PlayerActions
 
     # Player must be at a research station
     unless @research_stations.include?(player.location)
-      puts 'wrong 1'
-      return false
+      return after_action(false, "Player must be at a research station to discover a cure")
     end
 
     # Cure must not already be discovered
     if @cures[color]
-      puts 'wrong 2'
-      return false
+      return after_action(false, "The #{color} disease is already cured")
     end
 
     # Determine number of cards needed
     cards_needed = player.role == :scientist ? CARDS_NEEDED_FOR_CURE[:scientist] : CARDS_NEEDED_FOR_CURE[:default]
     if card_indices.size != cards_needed
-      puts 'wrong 3'
-      puts player.role
-      return false
+      return after_action(false, "Need #{cards_needed} cards of the same color to discover a cure")
     end
 
     # Check if all selected cards are of the right color
     selected_cards = card_indices.map do |idx|
       player.hand[idx]
     end.select { |card| card.type == :city && card.color == color }
+
     if selected_cards.size != cards_needed
-      puts 'wrong 4'
-      return false
+      return after_action(false, "All selected cards must be #{color} city cards")
     end
 
     # Discard the cards
@@ -157,68 +152,47 @@ module PlayerActions
       @game_over_reason = :victory
     end
 
-    true
+    # Return success
+    after_action(true, "Successfully discovered a cure for the #{color} disease!")
   end
 
   def move_drive_ferry(player_index, destination)
     # Validate destination exists
-    return { success: false, status: "error", message: 'Invalid destination city' } unless @cities.key?(destination)
+    unless @cities.key?(destination)
+      return { success: false, status: "error", message: 'Invalid destination city' }
+    end
 
     # Check if it's the player's turn or if current player is dispatcher
     current_player = @players[@current_player_index]
-    raise unless current_player.is_a?(Player)
     requested_player = @players[player_index]
-    raise unless requested_player.is_a?(Player)
 
     # If not the current player's turn and current player is not dispatcher
     if player_index != @current_player_index && current_player.role != :dispatcher
-      return {
-        success: false,
-        status: "error",
-        message: 'Cannot move another player unless you are the dispatcher'
-      }
+      return { success: false, status: "error", message: 'Cannot move another player unless you are the dispatcher' }
     end
 
     # Check if destination is connected to current city
     current_city = @cities[requested_player.location]
     unless current_city.connections.include?(destination)
-      return {
-        success: false,
-        status: "error",
-        message: "#{destination} is not connected to #{requested_player.location}"
-      }
+      return { success: false, status: "error", message: "#{destination} is not connected to #{requested_player.location}" }
     end
 
     # All checks passed, perform the move
-
-    # Move the player
     old_location = requested_player.location
     requested_player.location = destination
 
+    # Handle medic ability
     medic_move(requested_player, destination)
-    @actions_remaining ||= 4
-    @actions_remaining -= 1
 
-    rvalue = {
-      success: true,
-      status: "success",
-      message: "Successfully moved #{requested_player.role} from #{old_location} to #{destination} via drive/ferry",
-      actions_remaining: @actions_remaining,
-      end_turn: @actions_remaining == 0
-    }
-
-    # End turn if no actions remaining
-    if @actions_remaining == 0
-      end_turn_events = end_turn
-      return rvalue.merge({end_turn_events: end_turn_events})
-    else
-      return rvalue
-    end
+    # Return success with appropriate message
+    after_action(true, "Successfully moved #{requested_player.role} from #{old_location} to #{destination} via drive/ferry")
   end
 
   def move_direct_flight(player_index, destination)
     # Validate destination exists
-    return { success: false, message: 'Invalid destination city' } unless @cities.key?(destination)
+    unless @cities.key?(destination)
+      return { success: false, status: "error", message: 'Invalid destination city' }
+    end
 
     # Check if it's the player's turn or if current player is dispatcher
     current_player = @players[@current_player_index]
@@ -226,11 +200,7 @@ module PlayerActions
 
     # If not the current player's turn and current player is not dispatcher
     if player_index != @current_player_index && current_player.role != :dispatcher
-      return {
-        success: false,
-        status: "error",
-        message: 'Cannot move another player unless you are the dispatcher'
-      }
+      return { success: false, status: "error", message: 'Cannot move another player unless you are the dispatcher' }
     end
 
     # Check if player has the destination city card for direct flight
@@ -239,11 +209,7 @@ module PlayerActions
     end
 
     unless card_index
-      return {
-        success: false,
-        status: "error",
-        message: "Player does not have the #{destination} city card for direct flight, he only has #{requested_player.hand.select { _1.type == :city }.inspect}"
-      }
+      return { success: false, status: "error", message: "Player does not have the #{destination} city card for direct flight, he only has #{requested_player.hand.select { _1.type == :city }.inspect}" }
     end
 
     # All checks passed, perform the move
@@ -257,104 +223,73 @@ module PlayerActions
     # Automatic medic ability: remove cubes of cured diseases
     medic_move(requested_player, destination)
 
-    # Consume an action (only if moving the current player)
-    @actions_remaining -= 1
-
-    # End turn if no actions remaining
-    end_turn if @actions_remaining <= 0
-
-    {
-      success: true,
-      status: "success",
-      message: "Successfully moved #{requested_player.role} from #{old_location} to #{destination} via direct flight",
-      end_turn: @actions_remaining <= 0
-    }
+    # Return success
+    after_action(true, "Successfully moved #{requested_player.role} from #{old_location} to #{destination} via direct flight")
   end
 
-  def available_actions(player_index)
-    player = @players[player_index]
-    city = @cities[player.location]
-
-    actions = {
-      move_options: [],
-      can_build_research_station: false,
-      can_treat_disease: {},
-      can_share_knowledge: [],
-      can_discover_cure: []
-    }
-
-    # Move options
-    actions[:move_options] = city.connections.dup
-
-    # Direct flights (if player has city cards)
-    player.hand.each do |card|
-      actions[:move_options] << card.name if (card.type == :city) && !actions[:move_options].include?(card.name)
+  def move_charter_flight(player_index, destination)
+    # Validate destination exists
+    unless @cities.key?(destination)
+      return { success: false, status: "error", message: 'Invalid destination city' }
     end
 
-    # Charter flights (if player has current city card)
-    actions[:move_options] = @cities.keys - [player.location] if has_city_card?(player_index, player.location)
+    # Check if it's the player's turn or if current player is dispatcher
+    current_player = @players[@current_player_index]
+    requested_player = @players[player_index]
 
-    # Shuttle flights (if current city has research station)
-    if @research_stations.include?(player.location)
-      @research_stations.each do |rs|
-        actions[:move_options] << rs unless rs == player.location || actions[:move_options].include?(rs)
-      end
+    # If not the current player's turn and current player is not dispatcher
+    if player_index != @current_player_index && current_player.role != :dispatcher
+      return { success: false, status: "error", message: 'Cannot move another player unless you are the dispatcher' }
     end
 
-    # Build research station
-    actions[:can_build_research_station] =
-      !@research_stations.include?(player.location) &&
-      (@research_stations.size < MAX_RESEARCH_STATIONS) &&
-      (has_city_card?(player_index, player.location) || player.role == :operations_expert)
-
-    # Treat disease
-    COLORS.each do |color|
-      actions[:can_treat_disease][color] = true if city.disease_cubes[color].positive?
+    # Check if player has the source city card for direct flight
+    card_index = requested_player.hand.find_index do |card|
+      card.type == :city && card.name == requested_player.location
     end
 
-    # Share knowledge
-    @players.each_with_index do |other_player, other_idx|
-      next if other_idx == player_index
-
-      next unless other_player.location == player.location
-
-      # Give knowledge
-      player.hand.each_with_index do |card, card_idx|
-        next unless card.type == :city && (card.name == player.location || player.role == :researcher)
-
-        actions[:can_share_knowledge] << {
-          action: :give,
-          player: other_idx,
-          card_index: card_idx,
-          card_name: card.name
-        }
-      end
-
-      # Take knowledge
-      other_player.hand.each_with_index do |card, card_idx|
-        next unless card.type == :city && (card.name == player.location || other_player.role == :researcher)
-
-        actions[:can_share_knowledge] << {
-          action: :take,
-          player: other_idx,
-          card_index: card_idx,
-          card_name: card.name
-        }
-      end
+    unless card_index
+      return { success: false, status: "error", message: "Player does not have the #{requested_player.location} city card for charter flight, he only has #{requested_player.hand.select { _1.type == :city }.inspect}" }
     end
 
-    # Discover cure
-    if @research_stations.include?(player.location)
-      COLORS.each do |color|
-        next if @cures[color]
+    # All checks passed, perform the move
+    # Discard the city card
+    discard_player_card(player_index, card_index)
 
-        cards_of_color = player.hand.select { |card| card.type == :city && card.color == color }
-        cards_needed = player.role == :scientist ? CARDS_NEEDED_FOR_CURE[:scientist] : CARDS_NEEDED_FOR_CURE[:default]
+    # Move the player
+    old_location = requested_player.location
+    requested_player.location = destination
 
-        actions[:can_discover_cure] << color if cards_of_color.size >= cards_needed
-      end
+    # Automatic medic ability: remove cubes of cured diseases
+    medic_move(requested_player, destination)
+
+    # Return success
+    after_action(true, "Successfully moved #{requested_player.role} from #{old_location} to #{destination} via charter flight")
+  end
+
+  private
+
+  # Common after-action method to handle action consumption, end of turn, and response creation
+  def after_action(action_success, message, additional_data = {})
+    return { success: false, status: "error", message: message }.merge(additional_data) unless action_success
+
+    # Consume an action
+    @actions_remaining -= 1
+
+    # Prepare the base response
+    response = {
+      success: true,
+      status: "success",
+      message: message,
+      actions_remaining: @actions_remaining,
+      end_turn: @actions_remaining == 0
+    }.merge(additional_data)
+
+    # Handle end of turn if no actions remaining
+    if @actions_remaining == 0
+      end_turn_events = end_turn
+      response[:end_turn_events] = end_turn_events
     end
 
-    actions
+    response
   end
 end

@@ -6,7 +6,7 @@ module EndTurnEvents
     # Draw 2 player cards
     2.times do
       draw_event = draw_player_card(@current_player_index)
-      if draw_event[:type] == :epidemic
+      if draw_event[:card][:type] == :epidemic
         epidemic_events = handle_epidemic
         draw_event[:epidemic_events] = epidemic_events
       end
@@ -76,7 +76,8 @@ module EndTurnEvents
 
     # Intensify: shuffle the infection discard pile and put it on top of infection deck
     # We draw cards via pop, so shuffled cards at the end.
-    @infection_deck = @infection_deck + @infection_discard.shuffle
+    @infection_discard.shuffle!
+    @infection_deck = @infection_deck + @infection_discard
     @infection_discard = []
 
     epidemic_events
