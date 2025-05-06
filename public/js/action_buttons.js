@@ -1,5 +1,6 @@
 // action_buttons.js
 import { getCurrentGameState } from './game_state.js';
+import { getCityColor } from './player_actions.js';
 
 // Game mode state to track which action is currently selected
 let currentMode = null;
@@ -198,7 +199,7 @@ export function updatePlayerHand(gameState) {
     } else {
       // City card - find the color
       card.classList.add('city');
-      const cityColor = getCityColor(cardName, gameState);
+      const cityColor = getCityColor(cardName);
       if (cityColor) {
         card.classList.add(cityColor);
       }
@@ -222,24 +223,6 @@ export function updatePlayerHand(gameState) {
 
   // After updating the hand, update the button states
   updateButtonStates();
-}
-
-// Helper function to get city color
-function getCityColor(cityName, gameState) {
-  // You could load this from cities.json or store it in game state
-  // For now, we'll try to determine from disease cubes if available
-  if (gameState.diseaseCubes) {
-    for (const color of ['blue', 'yellow', 'black', 'red']) {
-      if (gameState.diseaseCubes[color] &&
-          gameState.diseaseCubes[color].onBoard &&
-          gameState.diseaseCubes[color].onBoard[cityName]) {
-        return color;
-      }
-    }
-  }
-
-  // Could fetch from cities.json here if needed
-  return null;
 }
 
 // Handle card clicks

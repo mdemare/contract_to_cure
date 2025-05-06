@@ -120,15 +120,7 @@ async function handleCityClick(event) {
   // Check if the city is adjacent (drive/ferry)
   const isAdjacent = isCityAdjacent(currentPlayer.location, cityName);
 
-  if (isAdjacent) {
-    await movePlayer(currentPlayerIndex, cityName, 'drive_ferry');
-  } else if (canDirectFlight) {
-    // Try to move to the city using direct flight
-    await movePlayer(currentPlayerIndex, cityName, 'direct_flight');
-  } else {
-    // If they don't have the card, inform the user
-    showInvalidMoveMessage(`Cannot move to ${cityName} - this city is not adjacent to your current location and you don't have this city card for a direct flight`);
-  }
+  await movePlayer(currentPlayerIndex, cityName);
 }
 
 // Helper function to check if a city is adjacent to another
@@ -144,11 +136,8 @@ function isCityAdjacent(fromCity, toCity) {
 }
 
 // Unified movement function that handles different move types
-async function movePlayer(playerIndex, destination, moveType) {
+async function movePlayer(playerIndex, destination) {
   try {
-    // Determine the API endpoint based on move type
-    const endpoint = moveType === 'drive_ferry' ? '/move_drive_ferry' : '/move_direct_flight';
-
     // Prepare the request data
     const moveData = {
       player_index: playerIndex,
@@ -157,11 +146,11 @@ async function movePlayer(playerIndex, destination, moveType) {
 
     // Process the move action
     await processAPIRequest(
-      endpoint,
+      '/move',
       moveData,
       `Moved to ${destination}`,
-      `${moveType} failed`,
-      { playerIndex, destination, moveType }
+      `move failed`,
+      { playerIndex, destination }
     );
   } catch (error) {
     showErrorMessage(`Network error: ${error.message}`);
@@ -267,11 +256,12 @@ async function processAPIRequest(endpoint, requestData, successMessage, failureP
 }
 
 // Helper function to get a city's color
-function getCityColor(cityName) {
+export function getCityColor(cityName) {
   // Use existing CITIES object instead of fetching cities.json
   if (CITIES[cityName] && CITIES[cityName].color) {
     return CITIES[cityName].color;
   }
+  console.log("No color found for "+cityName)
   return null;
 }
 

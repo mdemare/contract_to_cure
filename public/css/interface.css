@@ -124,36 +124,11 @@
   font-weight: bold;
 }
 
-/* Legend Styling */
-.legend-item {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 5px;
-}
-
-.legend-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid white;
-  box-shadow: 0 0 3px rgba(0, 0, 0, 0.5);
-}
-
-.legend-dot.blue { background-color: var(--blue-disease); }
-.legend-dot.yellow { background-color: var(--yellow-disease); }
-.legend-dot.black { background-color: var(--black-disease); }
-.legend-dot.red { background-color: var(--red-disease); }
-
-.legend-station {
-  font-size: 14px;
-}
-
 /* Player hand styles */
 .player-hand-container {
-  position: relative;
+  position: absolute;
+  top: 625px;
   width: 100%;
-  background-color: var(--header-bg);
   padding: 10px 0;
   border-top: 1px solid rgba(255, 255, 255, 0.2);
 }

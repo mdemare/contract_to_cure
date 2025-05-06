@@ -139,8 +139,8 @@
   },
   "Johannesburg": {
     "color": "yellow",
-    "x": 580,
-    "y": 660,
+    "x": 600,
+    "y": 630,
     "connections": ["Kinshasa", "Nairobi"]
   },
   "Casablanca": {
