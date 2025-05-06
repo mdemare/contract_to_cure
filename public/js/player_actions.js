@@ -61,7 +61,7 @@ async function handleCityClick(event) {
 
   // Check if the clicked city is the current city (for treat disease)
   if (cityName === currentPlayer.location) {
-    await treatDisease(currentPlayerIndex, cityName);
+    await treatDisease(cityName);
     return;
   }
 
@@ -120,22 +120,15 @@ async function movePlayer(playerIndex, destination, moveType) {
 }
 
 // Treat disease at the current location
-async function treatDisease(playerIndex, cityName) {
+async function treatDisease(cityName) {
   try {
     // Get the city's color
     let diseaseColor = getCityColor(cityName);
 
-    // Prepare the request data
-    const treatData = {
-      player_index: playerIndex,
-      city: cityName,
-      color: diseaseColor
-    };
-
     // Process the treat action
     await processAPIRequest(
       '/treat',
-      treatData,
+      {},
       `Treated ${diseaseColor} disease in ${cityName}`,
       'Treatment failed'
     );

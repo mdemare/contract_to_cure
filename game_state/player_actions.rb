@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 module PlayerActions
   include GameStateConfig
 
@@ -46,8 +44,8 @@ module PlayerActions
     after_action(false, "Player does not have the #{city_name} city card")
   end
 
-  def treat_disease(player_index)
-    player = @players[player_index]
+  def treat_disease
+    player = @players[@current_player_index]
     city = @cities[player.location]
     color = city.color
 
