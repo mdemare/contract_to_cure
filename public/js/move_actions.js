@@ -1,6 +1,7 @@
 // move_actions.js
 import { getCurrentGameState, loadGameState, CITIES } from './game_state.js';
 import { getCurrentMode } from './action_buttons.js';
+import { handleEndOfTurnEvents } from './end_turn_events.js';
 
 // Map click handler - initialize city click events
 export function initMoveActions() {
@@ -232,6 +233,12 @@ async function moveDriveFerry(playerIndex, destination) {
     if (result.status === 'success') {
       console.log('Move successful:', result.message);
 
+      // Check for end of turn events
+      if (result.end_turn && result.end_turn_events) {
+        console.log('End of turn detected, processing end turn events:', result.end_turn_events);
+        handleEndOfTurnEvents(result.end_turn_events);
+      }
+
       console.log('Refreshing game state...');
       // Refresh the game state
       await loadGameState();
@@ -244,7 +251,8 @@ async function moveDriveFerry(playerIndex, destination) {
           playerIndex: playerIndex,
           destination: destination,
           success: true,
-          moveType: 'drive_ferry'
+          moveType: 'drive_ferry',
+          endTurn: result.end_turn || false
         }
       });
       document.dispatchEvent(moveEvent);
@@ -274,8 +282,8 @@ async function moveDirectFlight(playerIndex, destination) {
     };
     console.log('Request payload:', moveData);
 
-    console.log('Sending API request to /move_drive_ferry...');
-    // Make the API call to move_drive_ferry
+    console.log('Sending API request to /move_direct_flight...');
+    // Make the API call to move_direct_flight
     const response = await fetch('/move_direct_flight', {
       method: 'POST',
       headers: {
@@ -293,6 +301,12 @@ async function moveDirectFlight(playerIndex, destination) {
     if (result.status === 'success') {
       console.log('Move successful:', result.message);
 
+      // Check for end of turn events
+      if (result.end_turn && result.end_turn_events) {
+        console.log('End of turn detected, processing end turn events:', result.end_turn_events);
+        handleEndOfTurnEvents(result.end_turn_events);
+      }
+
       console.log('Refreshing game state...');
       // Refresh the game state
       await loadGameState();
@@ -305,7 +319,8 @@ async function moveDirectFlight(playerIndex, destination) {
           playerIndex: playerIndex,
           destination: destination,
           success: true,
-          moveType: 'direct_flight'
+          moveType: 'direct_flight',
+          endTurn: result.end_turn || false
         }
       });
       document.dispatchEvent(moveEvent);
@@ -361,6 +376,12 @@ async function treatDisease(playerIndex, cityName) {
 
         if (result.status === 'success') {
           console.log('Treatment successful:', result.message);
+
+          // Check for end of turn events
+          if (result.end_turn && result.end_turn_events) {
+            console.log('End of turn detected, processing end turn events:', result.end_turn_events);
+            handleEndOfTurnEvents(result.end_turn_events);
+          }
 
           // Refresh the game state
           console.log('Refreshing game state...');

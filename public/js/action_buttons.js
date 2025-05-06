@@ -27,13 +27,6 @@ export function initActionButtons() {
 
   // Initial hand update
   updatePlayerHand(getCurrentGameState());
-
-  // Listen for player moved events to reset the mode
-  document.addEventListener('playerMoved', () => {
-    resetMode();
-    updateButtonStates();
-    updatePlayerHand(getCurrentGameState());
-  });
 }
 
 // Toggle action mode when a button is clicked
