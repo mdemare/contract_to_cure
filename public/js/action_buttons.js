@@ -15,12 +15,13 @@ export function initActionButtons() {
   const skipBtn = document.getElementById('skip-btn');
 
   // Add click event listeners
-  // moveBtn.addEventListener('click', () => toggleMode('move'));
-  // treatBtn.addEventListener('click', () => toggleMode('treat'));
-  // cureBtn.addEventListener('click', () => toggleMode('cure'));
-  // tradeBtn.addEventListener('click', () => toggleMode('trade'));
-  // buildBtn.addEventListener('click', () => toggleMode('build'));
-  // skipBtn.addEventListener('click', handleSkipAction);
+  moveBtn.addEventListener('click', () => toggleMode('move'));
+  treatBtn.addEventListener('click', () => toggleMode('treat'));
+  cureBtn.addEventListener('click', () => toggleMode('cure'));
+  tradeBtn.addEventListener('click', () => toggleMode('trade'));
+  // Build button is handled by player_actions.js
+
+  skipBtn.addEventListener('click', handleSkipAction);
 
   // Update button states based on current game state
   updateButtonStates();
@@ -87,9 +88,33 @@ export function updateButtonStates() {
 
   // Determine which actions are available based on game state
   const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
+  const currentPlayer = gameState.players[currentPlayerIndex];
 
-  // In a real implementation, we'd check the player's available actions
-  // For now, all buttons are enabled
+  if (!currentPlayer) return;
+
+  // Check for build station action availability
+  const buildBtn = document.getElementById('build-btn');
+  if (buildBtn) {
+    // Check if player has the city card matching their location
+    const currentLocation = currentPlayer.location;
+    const hasCityCard = currentPlayer.hand.includes(currentLocation);
+
+    // Check if there's already a research station at this location
+    const hasStation = gameState.researchStations &&
+                      gameState.researchStations.locations &&
+                      gameState.researchStations.locations.includes(currentLocation);
+
+    // Enable/disable the build button based on conditions
+    if (hasCityCard && !hasStation) {
+      buildBtn.classList.remove('disabled');
+      buildBtn.disabled = false;
+    } else {
+      buildBtn.classList.add('disabled');
+      buildBtn.disabled = true;
+    }
+  }
+
+  // For now, all other buttons are enabled
   enableAllButtons();
 }
 
@@ -151,6 +176,8 @@ export function updatePlayerHand(gameState) {
   handContainer.innerHTML = '';
 
   // Get current player
+  if (!gameState || !gameState.gameStatus) return;
+
   const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
   const currentPlayer = gameState.players[currentPlayerIndex];
 
@@ -192,6 +219,9 @@ export function updatePlayerHand(gameState) {
 
     handContainer.appendChild(card);
   });
+
+  // After updating the hand, update the button states
+  updateButtonStates();
 }
 
 // Helper function to get city color

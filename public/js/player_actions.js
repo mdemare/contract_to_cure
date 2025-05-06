@@ -11,6 +11,9 @@ export function initMoveActions() {
   document.addEventListener('mapUpdated', () => {
     setupCityClickHandlers();
   });
+
+  // Initialize build station button
+  initBuildStation();
 }
 
 // Set up click event handlers for all city elements
@@ -24,6 +27,52 @@ function setupCityClickHandlers() {
     // Add new click handler
     cityElement.addEventListener('click', handleCityClick);
   });
+}
+
+// Initialize the build station functionality
+function initBuildStation() {
+  // Set up event listener for the build station button
+  const buildBtn = document.getElementById('build-btn');
+  if (buildBtn) {
+    buildBtn.addEventListener('click', handleBuildStationClick);
+  }
+}
+
+// Handle build station button click
+async function handleBuildStationClick() {
+  // Get current game state
+  const gameState = getCurrentGameState();
+  if (!gameState) return;
+
+  // Get current player
+  const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
+  const currentPlayer = gameState.players[currentPlayerIndex];
+
+  if (!currentPlayer) return;
+
+  // Get current location
+  const currentLocation = currentPlayer.location;
+
+  // Check if there's already a research station at this location
+  const hasStation = gameState.researchStations &&
+                    gameState.researchStations.locations &&
+                    gameState.researchStations.locations.includes(currentLocation);
+
+  if (hasStation) {
+    showInvalidMoveMessage(`${currentLocation} already has a research station.`);
+    return;
+  }
+
+  // Check if player has the city card
+  const hasCityCard = currentPlayer.hand.includes(currentLocation);
+
+  if (!hasCityCard) {
+    showInvalidMoveMessage(`You need the ${currentLocation} city card to build a research station here.`);
+    return;
+  }
+
+  // All checks passed, proceed with building the station
+  await buildResearchStation(currentPlayerIndex, currentLocation);
 }
 
 // Handle a city click event
@@ -78,7 +127,7 @@ async function handleCityClick(event) {
     await movePlayer(currentPlayerIndex, cityName, 'direct_flight');
   } else {
     // If they don't have the card, inform the user
-    showInvalidMoveMessage(cityName);
+    showInvalidMoveMessage(`Cannot move to ${cityName} - this city is not adjacent to your current location and you don't have this city card for a direct flight`);
   }
 }
 
@@ -131,6 +180,27 @@ async function treatDisease(cityName) {
       {},
       `Treated ${diseaseColor} disease in ${cityName}`,
       'Treatment failed'
+    );
+  } catch (error) {
+    showErrorMessage(`Network error: ${error.message}`);
+  }
+}
+
+// Build a research station
+async function buildResearchStation(playerIndex, cityName) {
+  try {
+    // Prepare the request data
+    const buildData = {
+      player_index: playerIndex,
+      card_name: cityName
+    };
+
+    // Process the build action
+    await processAPIRequest(
+      '/build_research_station',
+      buildData,
+      `Built a research station in ${cityName}`,
+      'Failed to build research station'
     );
   } catch (error) {
     showErrorMessage(`Network error: ${error.message}`);
@@ -237,7 +307,6 @@ function showErrorMessage(message) {
 }
 
 // Display invalid move message
-function showInvalidMoveMessage(cityName) {
-  const message = `Cannot move to ${cityName} - this city is not adjacent to your current location and you don't have this city card for a direct flight`;
+function showInvalidMoveMessage(message) {
   showNotification(message, 'warning');
 }
