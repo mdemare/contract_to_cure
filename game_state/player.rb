@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # Player class for tracking player-specific data
 class Player
   attr_reader :role, :role_abilities

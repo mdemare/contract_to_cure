@@ -1,5 +1,3 @@
-# frozen_string_literal: true
-
 # Card class for both player and infection cards
 class Card
   attr_reader :type, :name, :color
@@ -11,7 +9,7 @@ class Card
   end
 
   def description
-    desc = {type: type, name: name, color: color}
+    desc = { type: type, name: name, color: color }
     desc.delete(:color) unless type == :city
     desc
   end

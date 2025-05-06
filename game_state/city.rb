@@ -8,7 +8,7 @@ class City
     @name = name
     @color = color
     @connections = connections
-    @disease_cubes = 0  # Simple counter instead of hash
+    @disease_cubes = 0 # Simple counter instead of hash
     @has_research_station = false
   end
 end

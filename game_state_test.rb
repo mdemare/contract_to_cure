@@ -34,7 +34,7 @@ class GameStateTest < Minitest::Test
     assert wuhan.has_research_station
 
     # Test a few city connections
-    assert wuhan.connections.include?('Shanghai'), "Wuhan should connect to Shanghai"
+    assert wuhan.connections.include?('Shanghai'), 'Wuhan should connect to Shanghai'
   end
 
   def test_players_initialization
@@ -51,8 +51,8 @@ class GameStateTest < Minitest::Test
     deck = @game.infection_deck
     discard = @game.infection_discard
 
-    assert_equal 48, deck.size + discard.size, "Should have cards for all 48 cities"
-    assert_equal 9, discard.size, "Should have 9 cards in the infection discard pile after setup"
+    assert_equal 48, deck.size + discard.size, 'Should have cards for all 48 cities'
+    assert_equal 9, discard.size, 'Should have 9 cards in the infection discard pile after setup'
 
     # Test that all infection cards are city cards
     all_cards = deck + discard
@@ -93,7 +93,7 @@ class GameStateTest < Minitest::Test
 
     # Check that proper number of cubes have been removed from supply
     removed_cubes = 0
-    @game.disease_cubes.each do |color, count|
+    @game.disease_cubes.each_value do |count|
       removed_cubes += (GameStateConfig::MAX_DISEASE_CUBES_PER_COLOR - count)
     end
     assert_equal 18, removed_cubes
@@ -143,8 +143,8 @@ class PlayerActionsTest < Minitest::Test
     assert_equal 'Chicago', @current_player.location
 
     # Card should be discarded
-    assert_equal 0, @current_player.hand.count { |card| card.name == 'Chicago' }
-    assert_equal 1, @game.player_discard.count { |card| card.name == 'Chicago' }
+    assert_equal(0, @current_player.hand.count { |card| card.name == 'Chicago' })
+    assert_equal(1, @game.player_discard.count { |card| card.name == 'Chicago' })
 
     # Try to move to a city without the card
     result = @game.move_direct_flight(@player_index, 'Paris')
@@ -196,11 +196,11 @@ class DiseaseTest < Minitest::Test
     infected_city = nil
 
     @game.cities.each do |name, city|
-      if city.disease_cubes > 0
-        infected_city_name = name
-        infected_city = city
-        break
-      end
+      next unless city.disease_cubes.positive?
+
+      infected_city_name = name
+      infected_city = city
+      break
     end
 
     # Make sure we found an infected city
@@ -394,7 +394,7 @@ class EndTurnEventsTest < Minitest::Test
 
     # Connected cities should have 1 cube each
     connected_cities.select { @game.cities[it].color == color }.each do |connected|
-      assert @game.cities[connected].disease_cubes > 0, "Connected city #{connected} should have disease cubes"
+      assert @game.cities[connected].disease_cubes.positive?, "Connected city #{connected} should have disease cubes"
     end
   end
 

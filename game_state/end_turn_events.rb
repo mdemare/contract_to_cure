@@ -77,7 +77,7 @@ module EndTurnEvents
     # Intensify: shuffle the infection discard pile and put it on top of infection deck
     # We draw cards via pop, so shuffled cards at the end.
     @infection_discard.shuffle!
-    @infection_deck = @infection_deck + @infection_discard
+    @infection_deck += @infection_discard
     @infection_discard = []
 
     epidemic_events
@@ -160,7 +160,7 @@ module EndTurnEvents
       next if @cures[color] && @disease_cubes[color] == MAX_DISEASE_CUBES_PER_COLOR
 
       # Check if adding cubes would cause game over
-      if 1 >= @disease_cubes[color]
+      if @disease_cubes[color] <= 1
         # Adding all remaining cubes then game over
         connected_city.disease_cubes += @disease_cubes[color]
         @disease_cubes[color] = 0
@@ -171,7 +171,7 @@ module EndTurnEvents
 
       # Normal case - add cubes
 
-      if connected_city.disease_cubes < 3 and @disease_cubes[color] == 1
+      if (connected_city.disease_cubes < 3) && (@disease_cubes[color] == 1)
         @disease_cubes[color] = 0
         @game_over = true
         @game_over_reason = :no_cubes
@@ -184,11 +184,12 @@ module EndTurnEvents
         connected_city.disease_cubes += 1
       end
 
-      if outbreak
-        event = trigger_outbreak(connected_city_name, outbreak_chain)
-        return event if event && event[:type] == :game_over
-        outbreak_chain = event[:outbreak_chain] if event
-      end
+      next unless outbreak
+
+      event = trigger_outbreak(connected_city_name, outbreak_chain)
+      return event if event && event[:type] == :game_over
+
+      outbreak_chain = event[:outbreak_chain] if event
     end
     { type: :outbreak, city: city_name, color: color, outbreak_chain: outbreak_chain }
   end
