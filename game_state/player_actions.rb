@@ -104,17 +104,23 @@ module PlayerActions
     rvalue.merge({ end_turn_events: end_turn_events })
   end
 
-  def share_knowledge(giving_player_index, receiving_player_index, card_index)
+  def share_knowledge(giving_player_index, receiving_player_index, city_name)
     giving_player = @players[giving_player_index]
     receiving_player = @players[receiving_player_index]
 
     # Both players must be in the same city
     return after_action(false, 'Both players must be in the same city to share knowledge') unless giving_player.location == receiving_player.location
 
+    # Find the card in the giving player's hand
+    card_index = giving_player.hand.find_index { |card| card.type == :city && card.name == city_name }
+    return after_action(false, "Player does not have the #{city_name} city card") unless card_index
+
     card = giving_player.hand[card_index]
 
     # The card must be a city card matching the current location, or the player must be a researcher
-    return after_action(false, 'Card must be a city card matching the current location, or player must be a researcher') unless card.type == :city && (card.name == giving_player.location || giving_player.role == :researcher)
+    unless card.name == giving_player.location || giving_player.role == :researcher
+      return after_action(false, 'Card must match current location or player must be a researcher')
+    end
 
     # Move the card
     giving_player.hand.delete_at(card_index)

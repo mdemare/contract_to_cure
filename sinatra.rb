@@ -49,6 +49,25 @@ post '/treat' do
   game_state.treat_disease.to_json
 end
 
+# Share knowledge endpoint
+post '/share_knowledge' do
+  content_type :json
+  request.body.rewind
+  data = JSON.parse(request.body.read)
+
+  giving_player_index = data['giving_player_index'].to_i
+  receiving_player_index = data['receiving_player_index'].to_i
+  city_name = data['city_name']
+
+  # Validate required parameters
+  unless giving_player_index && receiving_player_index && city_name
+    return { status: 'error', message: 'Missing required parameters' }.to_json
+  end
+
+  # Perform the action and get result
+  game_state.share_knowledge(giving_player_index, receiving_player_index, city_name).to_json
+end
+
 # Build research station endpoint
 post '/build_research_station' do
   content_type :json

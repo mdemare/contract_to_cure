@@ -5,6 +5,7 @@ import { loadCities, loadGameState, CITIES } from './game_state.js';
 import { initActionButtons } from './action_buttons.js';
 import { initMoveActions } from './player_actions.js';
 import { initializeCurrentPlayer } from './current_player.js';
+import { initShareKnowledge } from './share_knowledge.js';
 
 // Initialize the pandemic map
 async function initializePandemicMap() {
@@ -35,6 +36,11 @@ async function initializePandemicMap() {
 
       // Initialize move actions (includes build station functionality)
       initMoveActions();
+
+      // Initialize share knowledge functionality
+      // (This is actually already called from within initActionButtons,
+      // but we include it here for clarity and in case that changes in the future)
+      initShareKnowledge();
 
       console.log('Game initialization complete.');
     }

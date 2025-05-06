@@ -1,6 +1,7 @@
 // action_buttons.js
 import { getCurrentGameState } from './game_state.js';
 import { getCityColor } from './player_actions.js';
+import { initShareKnowledge, updateShareKnowledgeButtonState } from './share_knowledge.js';
 
 // Game mode state to track which action is currently selected
 let currentMode = null;
@@ -11,18 +12,22 @@ export function initActionButtons() {
   const moveBtn = document.getElementById('move-btn');
   const treatBtn = document.getElementById('treat-btn');
   const cureBtn = document.getElementById('cure-btn');
-  const tradeBtn = document.getElementById('trade-btn');
   const buildBtn = document.getElementById('build-btn');
+  const shareBtn = document.getElementById('share-btn');
   const skipBtn = document.getElementById('skip-btn');
 
   // Add click event listeners
   moveBtn.addEventListener('click', () => toggleMode('move'));
   treatBtn.addEventListener('click', () => toggleMode('treat'));
   cureBtn.addEventListener('click', () => toggleMode('cure'));
-  tradeBtn.addEventListener('click', () => toggleMode('trade'));
+  shareBtn.addEventListener('click', () => toggleMode('trade'));
   // Build button is handled by player_actions.js
+  // Share button is handled by share_knowledge.js
 
   skipBtn.addEventListener('click', handleSkipAction);
+
+  // Initialize share knowledge functionality
+  initShareKnowledge();
 
   // Update button states based on current game state
   updateButtonStates();
@@ -114,6 +119,9 @@ export function updateButtonStates() {
       buildBtn.disabled = true;
     }
   }
+
+  // Update share knowledge button state
+  updateShareKnowledgeButtonState();
 
   // For now, all other buttons are enabled
   enableAllButtons();
