@@ -1,8 +1,8 @@
 class City
   include GameStateConfig
 
-  attr_reader :name, :color, :connections
-  attr_accessor :disease_cubes, :has_research_station
+  attr_reader :name, :color, :connections, :disease_cubes
+  attr_accessor :has_research_station
 
   def initialize(name, color, connections = [])
     @name = name
@@ -10,5 +10,10 @@ class City
     @connections = connections
     @disease_cubes = 0 # Simple counter instead of hash
     @has_research_station = false
+  end
+
+  def disease_cubes=(value)
+    raise "Illegal value #{value}" unless [0,1,2,3].include?(value)
+    @disease_cubes = value
   end
 end

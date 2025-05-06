@@ -1,27 +1,52 @@
 // events.js
-import { loadCities, loadGameState } from './game_state.js';
+import { prepareMapForRendering, renderPandemicCities } from './map.js';
+import { initScrolling, cleanupScrolling } from './scrolling.js';
+import { loadCities, loadGameState, CITIES } from './game_state.js';
 import { initActionButtons } from './action_buttons.js';
 import { initMoveActions } from './player_actions.js';
 import { initializeCurrentPlayer } from './current_player.js';
 
-// Initialize the game when the DOM is fully loaded
-document.addEventListener('DOMContentLoaded', async () => {
-  console.log('Initializing Pandemic game...');
+// Initialize the pandemic map
+async function initializePandemicMap() {
+  try {
+    console.log('Initializing Pandemic game...');
 
-  // First load cities data
-  await loadCities();
+    // First load cities data
+    await loadCities();
 
-  // Then load initial game state
-  await loadGameState();
+    if (CITIES) {
+      // Prepare the map data for rendering
+      const renderableMap = prepareMapForRendering(CITIES);
 
-  // Initialize current player display
-  initializeCurrentPlayer();
+      // Render the cities
+      renderPandemicCities(renderableMap);
 
-  // Initialize action buttons
-  initActionButtons();
+      // Initialize the scrolling functionality
+      initScrolling();
 
-  // Initialize move actions (includes build station functionality)
-  initMoveActions();
+      // Load the game state from the server
+      await loadGameState();
 
-  console.log('Game initialization complete.');
+      // Initialize current player display
+      initializeCurrentPlayer();
+
+      // Initialize action buttons
+      initActionButtons();
+
+      // Initialize move actions (includes build station functionality)
+      initMoveActions();
+
+      console.log('Game initialization complete.');
+    }
+  } catch (error) {
+    console.error('Error initializing map:', error);
+    document.querySelector('.map-container').innerHTML =
+      `<div class="error-message">Failed to initialize map: ${error.message}</div>`;
+  }
+}
+
+// Setup DOM event listeners when the document is ready
+document.addEventListener('DOMContentLoaded', function() {
+  // Initialize the map
+  initializePandemicMap();
 });
