@@ -114,18 +114,18 @@ module EndTurnEvents
       return { type: :game_over, reason: :no_cubes, color: color }
     end
 
-    # Normal case - add cubes
-    city.disease_cubes += count
-    @disease_cubes[color] -= count
-
-    # Check if an outbreak is needed
-    return trigger_outbreak(city_name, color) if city.disease_cubes > 3
-
-    # No outbreak needed
-    nil
+    if city.disease_cubes + count > 3
+      city.disease_cubes = 3
+      trigger_outbreak(city_name)
+    else
+      # Normal case - add cubes
+      city.disease_cubes += count
+      @disease_cubes[color] -= count
+      nil
+    end
   end
 
-  def trigger_outbreak(city_name, color, outbreak_chain = [])
+  def trigger_outbreak(city_name, outbreak_chain = [])
     # Prevent chain reactions in the same city
     return nil if outbreak_chain.include?(city_name)
 
@@ -144,6 +144,7 @@ module EndTurnEvents
 
     # Spread disease to connected cities
     city = @cities[city_name]
+    color = city.color
     city.connections.each do |connected_city_name|
       # Skip if connected city has quarantine specialist protection
       next if has_quarantine_specialist_protection?(connected_city_name)
@@ -169,21 +170,22 @@ module EndTurnEvents
       end
 
       # Normal case - add cubes
+
+      if connected_city.disease_cubes < 3 and @disease_cubes[color] == 1
+        @disease_cubes[color] = 0
+        @game_over = true
+        @game_over_reason = :no_cubes
+        return { type: :game_over, reason: :no_cubes, color: color }
+      end
+
       outbreak = connected_city.disease_cubes == 3
       if connected_city.disease_cubes < 3
-        if @disease_cubes[color] == 1
-          @disease_cubes[color] = 0
-          @game_over = true
-          @game_over_reason = :no_cubes
-          return { type: :game_over, reason: :no_cubes, color: color }
-        else
-          @disease_cubes[color] -= 1
-          connected_city.disease_cubes += 1
-        end
+        @disease_cubes[color] -= 1
+        connected_city.disease_cubes += 1
       end
 
       if outbreak
-        event = trigger_outbreak(connected_city_name, color, outbreak_chain)
+        event = trigger_outbreak(connected_city_name, outbreak_chain)
         return event if event && event[:type] == :game_over
         outbreak_chain = event[:outbreak_chain] if event
       end
