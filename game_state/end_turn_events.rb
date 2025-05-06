@@ -6,13 +6,12 @@ module EndTurnEvents
     # Draw 2 player cards
     2.times do
       draw_event = draw_player_card(@current_player_index)
-      if draw_event
-        events << draw_event
-        return { game_over: true, reason: @game_over_reason, events: events } if @game_over
-        if draw_event[:type] == :epidemic
-          events.concat(draw_event[:epidemic_events]) # Add epidemic events
-        end
+      if draw_event[:type] == :epidemic
+        epidemic_events = handle_epidemic
+        draw_event[:epidemic_events] = epidemic_events
       end
+      events << draw_event
+      return { game_over: true, reason: @game_over_reason, events: events } if @game_over
     end
 
     # Infect cities
@@ -42,11 +41,7 @@ module EndTurnEvents
     player = @players[player_index]
     event = { type: :draw_card, player: player_index, card: card.description }
 
-    if card.type == :epidemic
-      epidemic_events = handle_epidemic
-      event[:type] = :epidemic
-      event[:epidemic_events] = epidemic_events # Attach epidemic events to the draw event
-    else
+    if card.type != :epidemic
       player.hand << card
 
       # Check hand limit (7 cards)
@@ -80,9 +75,9 @@ module EndTurnEvents
     epidemic_events << { type: :infect_city, city: city.name, color: city.color, count: 3, epidemic: true }
 
     # Intensify: shuffle the infection discard pile and put it on top of infection deck
-    @infection_deck = @infection_discard.shuffle + @infection_deck
+    # We draw cards via pop, so shuffled cards at the end.
+    @infection_deck = @infection_deck + @infection_discard.shuffle
     @infection_discard = []
-    epidemic_events << { type: :intensify }
 
     epidemic_events
   end

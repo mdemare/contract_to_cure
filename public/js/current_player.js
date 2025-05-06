@@ -1,11 +1,13 @@
 // Update the current player indicator
 export function updateCurrentPlayer(gameState) {
+  console.log("updateCurrentPlayer")
+  console.log(gameState)
   if (!gameState || !gameState.players || !Array.isArray(gameState.players)) {
     return;
   }
 
   // Find the current player based on turn index
-  const currentPlayerIndex = gameState.gameStatus?.currentPlayer || 0;
+  const currentPlayerIndex = gameState.gameStatus?.currentPlayerIndex || 0;
   const currentPlayer = gameState.players[currentPlayerIndex];
 
   if (!currentPlayer || !currentPlayer.role) {
@@ -44,7 +46,7 @@ function formatRoleText(role) {
   // Convert to string and split by capitals
   const words = String(role)
     .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .split(' ')
+    .split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
     .join(' ');
 
