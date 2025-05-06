@@ -1,21 +1,43 @@
 module PlayerActions
   include GameStateConfig
 
-  def move_pawn(player_index, destination)
+  def move(player_index, destination)
     player = @players[player_index]
     current_location = player.location
 
     # Check if move is valid
-    if @cities[current_location].connections.include?(destination) ||
-       (@research_stations.include?(current_location) && @research_stations.include?(destination)) ||
-       has_city_card?(player_index, destination) ||
-       has_city_card?(player_index, current_location) && player.role == :operations_expert
+    if @cities[current_location].connections.include?(destination)
+      move_type = 'drive / ferry'
+    elsif @research_stations.include?(current_location) && @research_stations.include?(destination)
+      move_type = 'shuttle flight'
+    elsif has_city_card?(player_index, destination)
+      move_type = 'direct flight'
 
-      player.location = destination
-      return true
+      # Check if player has the destination city card for direct flight
+      card_index = player.hand.find_index do |card|
+        card.type == :city && card.name == destination
+      end
+
+      discard_player_card(player_index, card_index)
+    elsif has_city_card?(player_index, current_location)
+      move_type = 'charter flight'
+
+      # Check if player has the destination city card for direct flight
+      card_index = player.hand.find_index do |card|
+        card.type == :city && card.name == current_location
+      end
+
+      discard_player_card(player_index, card_index)
+    else
+      return { success: false, status: 'error', message: "Cannot move player to destination #{destination} from #{current_location}" }
     end
 
-    false
+    player.location = destination
+
+    # Handle medic ability
+    medic_move(player, destination)
+
+    after_action(true, "Successfully moved #{player.role} from #{current_location} to #{destination} via #{move_type}")
   end
 
   def build_research_station(player_index, city_name)
@@ -136,98 +158,6 @@ module PlayerActions
 
     # Return success
     after_action(true, "Successfully discovered a cure for the #{color} disease!")
-  end
-
-  def move_drive_ferry(player_index, destination)
-    # Validate destination exists
-    return { success: false, status: 'error', message: 'Invalid destination city' } unless @cities.key?(destination)
-
-    # Check if it's the player's turn or if current player is dispatcher
-    current_player = @players[@current_player_index]
-    requested_player = @players[player_index]
-
-    # If not the current player's turn and current player is not dispatcher
-    return { success: false, status: 'error', message: 'Cannot move another player unless you are the dispatcher' } if player_index != @current_player_index && current_player.role != :dispatcher
-
-    # Check if destination is connected to current city
-    current_city = @cities[requested_player.location]
-    return { success: false, status: 'error', message: "#{destination} is not connected to #{requested_player.location}" } unless current_city.connections.include?(destination)
-
-    # All checks passed, perform the move
-    old_location = requested_player.location
-    requested_player.location = destination
-
-    # Handle medic ability
-    medic_move(requested_player, destination)
-
-    # Return success with appropriate message
-    after_action(true, "Successfully moved #{requested_player.role} from #{old_location} to #{destination} via drive/ferry")
-  end
-
-  def move_direct_flight(player_index, destination)
-    # Validate destination exists
-    return { success: false, status: 'error', message: 'Invalid destination city' } unless @cities.key?(destination)
-
-    # Check if it's the player's turn or if current player is dispatcher
-    current_player = @players[@current_player_index]
-    requested_player = @players[player_index]
-
-    # If not the current player's turn and current player is not dispatcher
-    return { success: false, status: 'error', message: 'Cannot move another player unless you are the dispatcher' } if player_index != @current_player_index && current_player.role != :dispatcher
-
-    # Check if player has the destination city card for direct flight
-    card_index = requested_player.hand.find_index do |card|
-      card.type == :city && card.name == destination
-    end
-
-    return { success: false, status: 'error', message: "Player does not have the #{destination} city card for direct flight, he only has #{requested_player.hand.select { _1.type == :city }.inspect}" } unless card_index
-
-    # All checks passed, perform the move
-    # Discard the city card
-    discard_player_card(player_index, card_index)
-
-    # Move the player
-    old_location = requested_player.location
-    requested_player.location = destination
-
-    # Automatic medic ability: remove cubes of cured diseases
-    medic_move(requested_player, destination)
-
-    # Return success
-    after_action(true, "Successfully moved #{requested_player.role} from #{old_location} to #{destination} via direct flight")
-  end
-
-  def move_charter_flight(player_index, destination)
-    # Validate destination exists
-    return { success: false, status: 'error', message: 'Invalid destination city' } unless @cities.key?(destination)
-
-    # Check if it's the player's turn or if current player is dispatcher
-    current_player = @players[@current_player_index]
-    requested_player = @players[player_index]
-
-    # If not the current player's turn and current player is not dispatcher
-    return { success: false, status: 'error', message: 'Cannot move another player unless you are the dispatcher' } if player_index != @current_player_index && current_player.role != :dispatcher
-
-    # Check if player has the source city card for direct flight
-    card_index = requested_player.hand.find_index do |card|
-      card.type == :city && card.name == requested_player.location
-    end
-
-    return { success: false, status: 'error', message: "Player does not have the #{requested_player.location} city card for charter flight, he only has #{requested_player.hand.select { _1.type == :city }.inspect}" } unless card_index
-
-    # All checks passed, perform the move
-    # Discard the city card
-    discard_player_card(player_index, card_index)
-
-    # Move the player
-    old_location = requested_player.location
-    requested_player.location = destination
-
-    # Automatic medic ability: remove cubes of cured diseases
-    medic_move(requested_player, destination)
-
-    # Return success
-    after_action(true, "Successfully moved #{requested_player.role} from #{old_location} to #{destination} via charter flight")
   end
 
   private
