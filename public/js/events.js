@@ -2,7 +2,7 @@ import { prepareMapForRendering, renderPandemicCities } from './map.js';
 import { initScrolling } from './scrolling.js';
 import { loadGameState, loadCities, CITIES } from './game_state.js';
 import { initActionButtons } from './action_buttons.js';
-import { initMoveActions } from './move_actions.js';
+import { initMoveActions } from './player_actions.js';
 
 // Function to zoom the map
 function zoomMap(factor) {

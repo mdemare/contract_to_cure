@@ -77,8 +77,17 @@ module PlayerActions
       status: "success",
       message: "Treated #{color} disease in #{city.name}",
       cubes_removed: cubes_removed,
-      end_turn: @actions_remaining <= 0
+      actions_remaining: @actions_remaining,
+      end_turn: @actions_remaining == 0
     }
+
+    # End turn if no actions remaining
+    if @actions_remaining == 0
+      end_turn_events = end_turn
+      return rvalue.merge({end_turn_events: end_turn_events})
+    else
+      return rvalue
+    end
 
     end_turn if @actions_remaining <= 0
     return rvalue

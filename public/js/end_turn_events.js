@@ -8,17 +8,28 @@ export function handleEndOfTurnEvents(endTurnData) {
     return;
   }
 
-  // Filter draw card events
+  // Filter card events by type
   const drawCardEvents = endTurnData.events.filter(event => event.type === 'draw_card');
+  const infectCardEvents = endTurnData.events.filter(event => event.type === 'infect_city');
 
-  // Animate drawing each card with a delay between them
+  // First animate drawing player cards
   if (drawCardEvents.length > 0) {
-    animateCardDraws(drawCardEvents);
+    animateCardDraws(drawCardEvents, 'player', () => {
+      // After player cards are drawn, animate infection cards
+      if (infectCardEvents.length > 0) {
+        setTimeout(() => {
+          animateCardDraws(infectCardEvents, 'infection');
+        }, 1000); // 1 second delay between player cards and infection cards
+      }
+    });
+  } else if (infectCardEvents.length > 0) {
+    // If no player cards but infection cards exist
+    animateCardDraws(infectCardEvents, 'infection');
   }
 }
 
 // Function to animate card draws
-function animateCardDraws(drawEvents) {
+function animateCardDraws(drawEvents, cardType, completionCallback) {
   // Create a container for the animation if it doesn't exist
   let animContainer = document.querySelector('.card-draw-animation-container');
   if (!animContainer) {
@@ -33,12 +44,12 @@ function animateCardDraws(drawEvents) {
   // Add player info text before the cards
   const playerInfo = document.createElement('div');
   playerInfo.classList.add('player-info');
-  playerInfo.textContent = 'Drawing Cards';
+  playerInfo.textContent = cardType === 'player' ? 'Drawing Player Cards' : 'Infecting Cities';
   animContainer.appendChild(playerInfo);
 
   // Create all card elements at once for horizontal layout
   drawEvents.forEach(event => {
-    const cardElement = createCardElement(event);
+    const cardElement = createCardElement(event, cardType);
     animContainer.appendChild(cardElement);
   });
 
@@ -53,53 +64,83 @@ function animateCardDraws(drawEvents) {
         cardElements[index].classList.add('drawn');
 
         // Play sound effect
-        playCardDrawSound();
+        playCardDrawSound(cardType);
 
-        // If this is the last card, set a timer to hide the animation
+        // If this is the last card and no callback is provided, set a timer to hide the animation
         if (index === drawEvents.length - 1) {
-          setTimeout(() => {
-            animContainer.style.display = 'none';
-          }, 2000); // 2 seconds after last card is drawn
+          if (completionCallback) {
+            setTimeout(() => {
+              completionCallback();
+              animContainer.style.display = 'none';
+            }, 1500);
+          } else {
+            setTimeout(() => {
+              animContainer.style.display = 'none';
+            }, 2000); // 2 seconds after last card is drawn
+          }
         }
       }
-    }, index * 1500); // 1.5 second delay between cards
+    }, index * 1200); // 1.2 second delay between cards
   });
 }
 
 // Function to create a card element
-function createCardElement(drawEvent) {
-  const { player, card } = drawEvent;
+function createCardElement(event, cardType) {
+  if (cardType === 'player') {
+    const { player, card } = event;
 
-  // Create the card element
-  const cardElement = document.createElement('div');
-  cardElement.classList.add('animated-card');
+    // Create the card element
+    const cardElement = document.createElement('div');
+    cardElement.classList.add('animated-card');
 
-  // Add appropriate class based on card type
-  if (card.type === 'city') {
-    cardElement.classList.add('city-card', card.color);
-  } else if (card.type === 'event') {
-    cardElement.classList.add('event-card');
-  } else if (card.type === 'epidemic') {
-    cardElement.classList.add('epidemic-card');
+    // Add appropriate class based on card type
+    if (card.type === 'city') {
+      cardElement.classList.add('city-card', card.color);
+    } else if (card.type === 'event') {
+      cardElement.classList.add('event-card');
+    } else if (card.type === 'epidemic') {
+      cardElement.classList.add('epidemic-card');
+    }
+
+    // Card content
+    const cardHeader = document.createElement('div');
+    cardHeader.classList.add('card-header');
+    cardHeader.textContent = card.type === 'city' ? 'City' : card.type;
+
+    const cardTitle = document.createElement('div');
+    cardTitle.classList.add('card-title');
+    cardTitle.textContent = card.name;
+
+    cardElement.appendChild(cardHeader);
+    cardElement.appendChild(cardTitle);
+
+    return cardElement;
+  } else if (cardType === 'infection') {
+    // Create an infection card
+    const { city, color } = event;
+
+    const cardElement = document.createElement('div');
+    cardElement.classList.add('animated-card', 'infection-card', color);
+
+    // Card content
+    const cardHeader = document.createElement('div');
+    cardHeader.classList.add('card-header');
+    cardHeader.textContent = 'Infection';
+
+    const cardTitle = document.createElement('div');
+    cardTitle.classList.add('card-title');
+    cardTitle.textContent = city;
+
+    cardElement.appendChild(cardHeader);
+    cardElement.appendChild(cardTitle);
+
+    return cardElement;
   }
-
-  // Card content
-  const cardHeader = document.createElement('div');
-  cardHeader.classList.add('card-header');
-  cardHeader.textContent = card.type === 'city' ? 'City' : card.type;
-
-  const cardTitle = document.createElement('div');
-  cardTitle.classList.add('card-title');
-  cardTitle.textContent = card.name;
-
-  cardElement.appendChild(cardHeader);
-  cardElement.appendChild(cardTitle);
-
-  return cardElement;
 }
 
 // Play a card draw sound effect
-function playCardDrawSound() {
+function playCardDrawSound(cardType) {
   // In a real implementation, you would add sound effects
-  console.log('Card draw sound played');
+  // Different sounds for player vs infection cards
+  console.log(`${cardType === 'player' ? 'Player card' : 'Infection card'} draw sound played`);
 }
