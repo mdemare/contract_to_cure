@@ -69,6 +69,14 @@ post '/share_knowledge' do
 end
 
 # Build research station endpoint
+post '/pass' do
+  content_type :json
+
+  # Perform the action and get result
+  game_state.pass.to_json
+end
+
+# Build research station endpoint
 post '/build_research_station' do
   content_type :json
   request.body.rewind

@@ -66,6 +66,11 @@ module PlayerActions
     after_action(false, "Player does not have the #{city_name} city card")
   end
 
+  def pass
+    @actions_remaining = 1
+    return after_action(true, "Passed for the rest of the turn")
+  end
+
   def treat_disease
     player = @players[@current_player_index]
     city = @cities[player.location]
@@ -75,33 +80,11 @@ module PlayerActions
     return { success: false, message: "No #{color} disease cubes to treat in #{city.name}" } if city.disease_cubes.zero?
 
     # Medic can remove all cubes
-    if player.role == :medic || @cures[color]
-      cubes_removed = city.disease_cubes
-      city.disease_cubes = 0
-    else
-      cubes_removed = 1
-      city.disease_cubes -= 1
-    end
+    cubes_removed = (player.role == :medic || @cures[color]) ? city.disease_cubes : 1
+    city.disease_cubes -= cubes_removed
     @disease_cubes[color] += cubes_removed
 
-    # Consume an action
-    @actions_remaining -= 1
-
-    # Prepare response
-    rvalue = {
-      success: true,
-      status: 'success',
-      message: "Treated #{color} disease in #{city.name}",
-      cubes_removed: cubes_removed,
-      actions_remaining: @actions_remaining,
-      end_turn: @actions_remaining.zero?
-    }
-
-    # End turn if no actions remaining
-    return rvalue unless @actions_remaining.zero?
-
-    end_turn_events = end_turn
-    rvalue.merge({ end_turn_events: end_turn_events })
+    return after_action(true, "Treated #{color} disease in #{city.name}", {cubes_removed: cubes_removed})
   end
 
   def share_knowledge(giving_player_index, receiving_player_index, city_name)
