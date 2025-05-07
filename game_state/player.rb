@@ -11,6 +11,10 @@ class Player
     @role_abilities = set_role_abilities(role)
   end
 
+  def sorted_hand
+    @hand.sort_by { [it.type, it.color] }
+  end
+
   private
 
   def set_role_abilities(role)

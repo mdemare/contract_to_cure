@@ -57,7 +57,7 @@ module JsonGenerator
           role: player.role,
           location: player.location,
           index: player.index,
-          hand: player.hand.map { |card| { type: card.type, name: card.name, color: card.color } }
+          hand: player.sorted_hand.map { |card| { type: card.type, name: card.name, color: card.color } }
         }
       end,
       current_player: @current_player_index,

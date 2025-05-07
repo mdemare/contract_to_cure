@@ -10,6 +10,7 @@ module Setup
 
     # Initialize players
     @players = init_players(players_count)
+    @current_player = @players.first
 
     # Initialize decks
     raise unless @cities.size == 48

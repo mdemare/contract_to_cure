@@ -1,6 +1,6 @@
 // action_buttons.js
 import { getCurrentGameState } from './game_state.js';
-import { getCityColor } from './player_actions.js';
+import { getCityColor, treatDisease } from './player_actions.js';
 import { initShareKnowledge, updateShareKnowledgeButtonState } from './share_knowledge.js';
 
 // Game mode state to track which action is currently selected
@@ -18,7 +18,7 @@ export function initActionButtons() {
 
   // Add click event listeners
   moveBtn.addEventListener('click', () => toggleMode('move'));
-  treatBtn.addEventListener('click', () => treatDisease(cityName));
+  treatBtn.addEventListener('click', () => treatDisease());
   cureBtn.addEventListener('click', () => toggleMode('cure'));
   shareBtn.addEventListener('click', () => toggleMode('trade'));
   // Build button is handled by player_actions.js
