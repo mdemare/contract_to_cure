@@ -43,30 +43,8 @@ module JsonGenerator
         }
       end,
       decks: {
-        playerDeck: {
-          draw: @player_deck.map do |card|
-            if card.type == :event
-              "Action:#{card.name}"
-            elsif card.type == :epidemic
-              'Epidemic'
-            else
-              card.name
-            end
-          end,
-          discard: @player_discard.map do |card|
-            if card.type == :event
-              "Action:#{card.name}"
-            elsif card.type == :epidemic
-              'Epidemic'
-            else
-              card.name
-            end
-          end
-        },
-        infectionDeck: {
-          draw: @infection_deck.map(&:name),
-          discard: @infection_discard.map(&:name)
-        }
+        playerDeck: @player_deck.size,
+        infectionDeck: @infection_deck.size
       }
     }.to_json
   end
