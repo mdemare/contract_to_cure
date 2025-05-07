@@ -62,7 +62,7 @@ module EndTurnEvents
     @infection_rate = INFECTION_RATE_TRACK[@infection_rate_marker] if @infection_rate_marker < INFECTION_RATE_TRACK.size
     epidemic_events << { type: :increase_infection_rate, new_rate: @infection_rate }
 
-    # Infect: draw bottom card from infection deck
+    # Infect: draw bottom card from infection deck (a stack)
     return epidemic_events unless @infection_deck.any?
 
     bottom_card = @infection_deck.shift
@@ -118,6 +118,7 @@ module EndTurnEvents
 
     if city.disease_cubes + count > 3
       city.disease_cubes = 3
+      @disease_cubes[color] -= 3 - city.disease_cubes
       trigger_outbreak(city_name)
     else
       # Normal case - add cubes

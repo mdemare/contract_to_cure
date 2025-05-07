@@ -3,7 +3,7 @@ class Card
   attr_reader :type, :name, :color
 
   def initialize(type, name, color = nil)
-    @type = type # :city, :event, :epidemic
+    @type = type # :city, :event, :epidemic, :action
     @name = name
     @color = color # Only for city cards
   end

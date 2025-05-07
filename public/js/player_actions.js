@@ -160,7 +160,7 @@ async function movePlayer(playerIndex, destination) {
 
 
 // Treat disease at the current location
-async function pass() {
+export async function pass() {
   try {
     // Process the treat action
     await processAPIRequest(
@@ -193,18 +193,12 @@ async function treatDisease(cityName) {
 }
 
 // Build a research station
-async function buildResearchStation(playerIndex, cityName) {
+async function buildResearchStation() {
   try {
-    // Prepare the request data
-    const buildData = {
-      player_index: playerIndex,
-      card_name: cityName
-    };
-
     // Process the build action
     await processAPIRequest(
       '/build_research_station',
-      buildData,
+      {},
       `Built a research station in ${cityName}`,
       'Failed to build research station'
     );

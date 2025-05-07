@@ -79,15 +79,7 @@ end
 # Build research station endpoint
 post '/build_research_station' do
   content_type :json
-  request.body.rewind
-  data = JSON.parse(request.body.read)
-
-  player_index = data['player_index'].to_i
-  card_name = data['card_name'] # Optional for operations expert
-
-  # Validate required parameters
-  return { status: 'error', message: 'Missing required parameters' }.to_json unless player_index
 
   # Perform the action and get result
-  game_state.build_research_station(player_index, card_name).to_json
+  game_state.build_research_station.to_json
 end
