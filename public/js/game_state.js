@@ -177,7 +177,7 @@ function prepareMapWithGameState(citiesData, gameState) {
   // Add player pawns
   if (gameState.players && Array.isArray(gameState.players)) {
     let nrPlayers = gameState.players.length;
-    let orderedPlayers = gameState.players;
+    let orderedPlayers = gameState.players.map(item => item);
     orderedPlayers.forEach((pl,idx) => { pl.order = (nrPlayers + pl.index - gameState.gameStatus.currentPlayerIndex) % nrPlayers });
     orderedPlayers.sort((a, b) => a.order - b.order).forEach((player, idx) => {
       if (player && player.location) {

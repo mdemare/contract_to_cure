@@ -35,6 +35,8 @@ post '/move' do
   player_index = data['player_index'].to_i
   destination = data['destination']
 
+  puts data.inspect
+
   # Validate required parameters
   return { status: 'error', message: 'Missing required parameters' }.to_json unless player_index && destination
 
@@ -47,6 +49,19 @@ post '/treat' do
   content_type :json
 
   game_state.treat_disease.to_json
+end
+
+# Treat disease endpoint
+post '/cure_disease' do
+  content_type :json
+
+  request.body.rewind
+  data = JSON.parse(request.body.read)
+
+  color = data['color'].to_sym
+  indices = data['card_indices']
+
+  game_state.cure_disease(color, indices).to_json
 end
 
 # Share knowledge endpoint

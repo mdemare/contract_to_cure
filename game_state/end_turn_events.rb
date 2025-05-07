@@ -27,6 +27,7 @@ module EndTurnEvents
 
     # Go to next player
     @current_player_index = (@current_player_index + 1) % @players.size
+    @current_player = @players[@current_player_index]
     @actions_remaining = 4
 
     { game_over: false, events: events } # Return events if game is not over

@@ -19,7 +19,7 @@ export function initActionButtons() {
   // Add click event listeners
   moveBtn.addEventListener('click', () => toggleMode('move'));
   treatBtn.addEventListener('click', () => treatDisease());
-  cureBtn.addEventListener('click', () => toggleMode('cure'));
+  cureBtn.addEventListener('click', () => cureDisease());
   shareBtn.addEventListener('click', () => toggleMode('trade'));
   // Build button is handled by player_actions.js
   // Share button is handled by share_knowledge.js

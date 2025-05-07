@@ -18,7 +18,7 @@ class GameState
   attr_reader :cities, :players, :current_player_index, :infection_deck, :infection_discard,
               :player_deck, :player_discard, :research_stations, :disease_cubes, :cures,
               :outbreak_count, :infection_rate, :infection_rate_marker, :game_over,
-              :game_over_reason, :difficulty_level
+              :game_over_reason, :difficulty_level, :current_player
 
   # Initialize a new game state
   def initialize(players_count, difficulty_level = :normal)

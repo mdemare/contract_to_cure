@@ -42,22 +42,22 @@ module PlayerActions
   end
 
   def build_research_station
+    city_name = current_player.location
+
     return after_action(false, 'Maximum number of research stations reached') if @research_stations.size >= MAX_RESEARCH_STATIONS
     return after_action(false, "Research station already exists in #{city_name}") if @research_stations.include?(city_name)
 
-    city_name = @current_player.location
-
     # Check if player is at the city
-    return after_action(false, "Player must be in #{city_name} to build a research station") unless @current_player.location == city_name
+    return after_action(false, "Player must be in #{city_name} to build a research station") unless current_player.location == city_name
 
     # Operations expert can build without a card
-    if @current_player.role == :operations_expert
+    if current_player.role == :operations_expert
       @research_stations << city_name
       return after_action(true, "Successfully built a research station in #{city_name} (Operations Expert ability)")
     end
 
     # Otherwise, player needs the city card
-    player_card_index = @current_player.hand.find_index { |card| card.type == :city && card.name == city_name }
+    player_card_index = current_player.hand.find_index { |card| card.type == :city && card.name == city_name }
     if player_card_index
       discard_player_card(player_index, player_card_index)
       @research_stations << city_name
@@ -73,14 +73,15 @@ module PlayerActions
   end
 
   def treat_disease
-    city = @cities[@current_player.location]
+    puts "treat_disease, current player",current_player.inspect
+    city = @cities[current_player.location]
     color = city.color
 
     # Check if there are any cubes of this color to treat
     return { success: false, message: "No #{color} disease cubes to treat in #{city.name}" } if city.disease_cubes.zero?
 
     # Medic can remove all cubes
-    cubes_removed = (@current_player.role == :medic || @cures[color]) ? city.disease_cubes : 1
+    cubes_removed = (current_player.role == :medic || @cures[color]) ? city.disease_cubes : 1
     city.disease_cubes -= cubes_removed
     @disease_cubes[color] += cubes_removed
 
@@ -113,15 +114,16 @@ module PlayerActions
     after_action(true, "Successfully shared #{card.name} card from #{giving_player.role} to #{receiving_player.role}")
   end
 
-  def discover_cure(color, card_indices)
+  def cure_disease(color, card_indices)
+    raise "color must be a symbol" unless color.is_a?(Symbol)
     # Player must be at a research station
-    return after_action(false, 'Player must be at a research station to discover a cure') unless @research_stations.include?(@current_player.location)
+    return after_action(false, 'Player must be at a research station to discover a cure') unless @research_stations.include?(current_player.location)
 
     # Cure must not already be discovered
     return after_action(false, "The #{color} disease is already cured") if @cures[color]
 
     # Determine number of cards needed
-    cards_needed = @current_player.role == :scientist ? CARDS_NEEDED_FOR_CURE[:scientist] : CARDS_NEEDED_FOR_CURE[:default]
+    cards_needed = current_player.role == :scientist ? CARDS_NEEDED_FOR_CURE[:scientist] : CARDS_NEEDED_FOR_CURE[:default]
     return after_action(false, "Need #{cards_needed} cards of the same color to discover a cure") if card_indices.size != cards_needed
 
     # Check if all selected cards are of the right color
@@ -132,7 +134,7 @@ module PlayerActions
     return after_action(false, "All selected cards must be #{color} city cards") if selected_cards.size != cards_needed
 
     # Discard the cards
-    card_indices.sort.reverse.each { |idx| discard_player_card(@current_player.index, idx) }
+    card_indices.sort.reverse.each { |idx| discard_player_card(current_player.index, idx) }
 
     # Mark the cure as discovered
     @cures[color] = true

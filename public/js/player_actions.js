@@ -1,6 +1,5 @@
 // player_actions.js
 import { getCurrentGameState, loadGameState, CITIES } from './game_state.js';
-import { getCurrentMode } from './action_buttons.js';
 import { handleEndOfTurnEvents } from './end_turn_events.js';
 
 // Map click handler - initialize city click events
@@ -40,6 +39,7 @@ function initBuildStation() {
 
 // Handle build station button click
 async function handleBuildStationClick() {
+  console.log("handleBuildStationClick")
   // Get current game state
   const gameState = getCurrentGameState();
   if (!gameState) return;
@@ -47,6 +47,9 @@ async function handleBuildStationClick() {
   // Get current player
   const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
   const currentPlayer = gameState.players[currentPlayerIndex];
+  console.log("handleBuildStationClick")
+  console.log(currentPlayerIndex)
+  console.log(gameState.players)
 
   if (!currentPlayer) return;
 
@@ -81,58 +84,23 @@ async function handleCityClick(event) {
   const cityElement = event.currentTarget;
   const cityName = cityElement.dataset.cityName;
 
-  // Get the current action mode
-  const currentMode = getCurrentMode();
-
-  // Only process city clicks if in move mode or no mode selected
-  // (default behavior will be to move when directly clicking cities)
-  if (currentMode && currentMode !== 'move') {
-    return;
-  }
-
   if (!cityName) {
     return;
   }
 
-  // Get the current game state
-  const gameState = getCurrentGameState();
-  if (!gameState) {
-    return;
-  }
-
   // Get the current player
+  const gameState = getCurrentGameState();
   const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
-  const currentPlayer = gameState.players[currentPlayerIndex];
-
-  if (!currentPlayer) {
-    return;
-  }
+  const currentPlayer = gameState.players.find(player => player.index === currentPlayerIndex);
+  console.log("currentPlayer");
+  console.log(currentPlayer);
 
   // Check if the clicked city is the current city (for treat disease)
   if (cityName === currentPlayer.location) {
     await treatDisease(cityName);
-    return;
+  } else {
+    await movePlayer(currentPlayerIndex, cityName);
   }
-
-  // Check if the player has a card for this city (direct flight)
-  const canDirectFlight = currentPlayer.hand.includes(cityName);
-
-  // Check if the city is adjacent (drive/ferry)
-  const isAdjacent = isCityAdjacent(currentPlayer.location, cityName);
-
-  await movePlayer(currentPlayerIndex, cityName);
-}
-
-// Helper function to check if a city is adjacent to another
-function isCityAdjacent(fromCity, toCity) {
-  // Check if the cities exist in the data
-  if (!CITIES[fromCity] || !CITIES[toCity]) {
-    return false;
-  }
-
-  // Check if toCity is in the connections array of fromCity
-  const connections = CITIES[fromCity].connections;
-  return connections.includes(toCity);
 }
 
 // Unified movement function that handles different move types
@@ -157,7 +125,28 @@ async function movePlayer(playerIndex, destination) {
   }
 }
 
+// Treat disease at the current location
+export async function cureDisease() {
+  try {
+    const gameState = getCurrentGameState();
+    const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
+    const currentPlayer = gameState.players.find(player => player.index === currentPlayerIndex);
+    // TODO convert the hand of the player to an array of {color, index} where index is the index in currentPlayer.hand
+    // Action cards must be removed.
+    // Find a color with at least 5 cards.
+    // Produce an array with the indices of the first 5 cards in that color.
 
+    // Process the cure action
+    await processAPIRequest(
+      '/cure_disease',
+      {color: color, indices: {}},
+      "Passed for the rest of the turn",
+      'Pass failed'
+    );
+  } catch (error) {
+    showErrorMessage(`Network error: ${error.message}`);
+  }
+}
 
 // Treat disease at the current location
 export async function pass() {
@@ -175,7 +164,7 @@ export async function pass() {
 }
 
 // Treat disease at the current location
-async function treatDisease(cityName) {
+export async function treatDisease(cityName) {
   try {
     // Get the city's color
     let diseaseColor = getCityColor(cityName);
@@ -199,7 +188,7 @@ async function buildResearchStation() {
     await processAPIRequest(
       '/build_research_station',
       {},
-      `Built a research station in ${cityName}`,
+      `Built a research station`,
       'Failed to build research station'
     );
   } catch (error) {
