@@ -30,7 +30,7 @@ function createCityOnPanel(cityData, cityName, panel) {
   // City label (positioned below the dot)
   const label = document.createElement('div');
   label.classList.add('city-label');
-  label.textContent = cityName;
+  label.textContent = cityName.replace(/ /g, '\u00A0');
   city.appendChild(label);
 
   // Disease cubes (if any)

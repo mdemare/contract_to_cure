@@ -127,10 +127,9 @@
 /* Player hand styles */
 .player-hand-container {
   position: absolute;
-  top: 625px;
+  top: -45px;
   width: 100%;
   padding: 10px 0;
-  border-top: 1px solid rgba(255, 255, 255, 0.2);
 }
 
 .player-hand {
