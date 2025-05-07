@@ -21,7 +21,6 @@ export async function loadCities() {
     }
     // Parse the cities data
     CITIES = await response.json();
-    console.log(CITIES)
   } catch (error) {
     console.error('Error loading cities:', error);
     document.querySelector('.map-container').innerHTML =
@@ -177,12 +176,15 @@ function prepareMapWithGameState(citiesData, gameState) {
 
   // Add player pawns
   if (gameState.players && Array.isArray(gameState.players)) {
-    gameState.players.forEach((player, index) => {
+    let nrPlayers = gameState.players.length;
+    let orderedPlayers = gameState.players;
+    orderedPlayers.forEach((pl,idx) => { pl.order = (nrPlayers + pl.index - gameState.gameStatus.currentPlayerIndex) % nrPlayers });
+    orderedPlayers.sort((a, b) => a.order - b.order).forEach((player, idx) => {
       if (player && player.location) {
         const cityName = player.location;
         if (updatedMap[cityName]) {
           // Use the player's role or index as an identifier
-          const pawnIdentifier = player.role ? String(player.role).toLowerCase() : `player${index}`;
+          const pawnIdentifier = String(player.role).toLowerCase();
           updatedMap[cityName].pawns.push(pawnIdentifier);
         }
       }

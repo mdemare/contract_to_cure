@@ -57,8 +57,8 @@ module Setup
     roles = ROLES.shuffle.take(count)
 
     players = []
-    roles.each do |role|
-      players << Player.new(role)
+    roles.each_with_index do |role, index|
+      players << Player.new(role, index)
     end
 
     players

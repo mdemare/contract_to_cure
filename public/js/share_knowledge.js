@@ -38,8 +38,6 @@ export function updateShareKnowledgeButtonState() {
   // Get applicable cards that can be shared
   // Store the state for later use
   applicableCards = getApplicableCards(gameState, currentPlayerIndex, playersInSameLocation);
-  console.log("applicableCards")
-  console.log(applicableCards)
   eligiblePlayers = playersInSameLocation;
 
   // Enable or disable the button based on whether sharing is possible
@@ -122,7 +120,6 @@ function getApplicableCards(gameState, currentPlayerIndex, playersInSameLocation
   });
 
   // If the current player is a Researcher, they can give any card from their hand
-  console.log("ROLE:"+currentPlayer.role)
   if (currentPlayer.role === 'researcher') {
     currentPlayer.hand.forEach((cardName, index) => {
       // Skip the current location card as it's already been added

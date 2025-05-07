@@ -32,6 +32,7 @@ module JsonGenerator
       players: @players.map do |player|
         {
           role: player.role,
+          index: player.index,
           location: player.location,
           hand: player.hand.map do |card|
             if card.type == :event
@@ -55,6 +56,7 @@ module JsonGenerator
         {
           role: player.role,
           location: player.location,
+          index: player.index,
           hand: player.hand.map { |card| { type: card.type, name: card.name, color: card.color } }
         }
       end,

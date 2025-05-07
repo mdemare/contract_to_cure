@@ -52,13 +52,15 @@ function createCityOnPanel(cityData, cityName, panel) {
     const pawns = document.createElement('div');
     pawns.classList.add('pawns');
 
-    // cityData.pawns might contain role names instead of colors
-    cityData.pawns.forEach((role, index) => {
+    // cityData.pawns contain role names
+    // It's a stack, visually, so the first pawn in the array should be the last element in the div.
+    for (let i = cityData.pawns.length - 1; i >= 0; i--) {
+      let role = cityData.pawns[i];
       const pawn = document.createElement('div');
       pawn.classList.add('pawn', role.replaceAll('_','-')); // Use the role directly as the class
       pawn.textContent = '♟';
       pawns.appendChild(pawn);
-    });
+    };
 
     city.appendChild(pawns);
   }

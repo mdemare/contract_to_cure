@@ -205,7 +205,6 @@ export async function executeShareKnowledge(cityName, givingPlayerIndex, receivi
       giving_player_index: givingPlayerIndex,
       receiving_player_index: receivingPlayerIndex
     };
-    console.log(shareData)
 
     // Process the build action
     await processAPIRequest(
