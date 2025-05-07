@@ -11,7 +11,7 @@ let currentGameState = null;
 export let CITIES = null;
 
 export async function loadCities() {
-  const jsonUrl = 'cities.json';
+  const jsonUrl = '/cities.json';
 
   try {
     // Load cities data

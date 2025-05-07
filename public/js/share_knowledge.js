@@ -164,7 +164,7 @@ function closeShareModal() {
 }
 
 // Create and show the share knowledge modal
-function showShareKnowledgeModal(cards, players) {
+export function showShareKnowledgeModal(cards, players) {
   // Create modal backdrop
   const modalBackdrop = document.createElement('div');
   modalBackdrop.classList.add('modal-backdrop');
