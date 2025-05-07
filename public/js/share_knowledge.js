@@ -5,6 +5,7 @@ import { executeShareKnowledge, getCityColor } from './player_actions.js';
 // State to track which players can share knowledge
 let applicableCards = [];
 let eligiblePlayers = [];
+let activeModalBackdrop = null;
 
 // Initialize the share knowledge functionality
 export function initShareKnowledge() {
@@ -154,11 +155,22 @@ function handleShareKnowledgeClick() {
   showShareKnowledgeModal(applicableCards, eligiblePlayers);
 }
 
+// Close the share knowledge modal
+function closeShareModal() {
+  if (activeModalBackdrop) {
+    document.body.removeChild(activeModalBackdrop);
+    activeModalBackdrop = null;
+  }
+}
+
 // Create and show the share knowledge modal
 function showShareKnowledgeModal(cards, players) {
   // Create modal backdrop
   const modalBackdrop = document.createElement('div');
   modalBackdrop.classList.add('modal-backdrop');
+
+  // Store reference to the modal backdrop
+  activeModalBackdrop = modalBackdrop;
 
   // Create modal content
   const modalContent = document.createElement('div');
@@ -218,7 +230,7 @@ function showShareKnowledgeModal(cards, players) {
   closeButton.textContent = 'Cancel';
   closeButton.classList.add('cancel-btn');
   closeButton.addEventListener('click', () => {
-    document.body.removeChild(modalBackdrop);
+    closeShareModal();
   });
 
   modalContent.appendChild(closeButton);
@@ -228,7 +240,7 @@ function showShareKnowledgeModal(cards, players) {
   document.body.appendChild(modalBackdrop);
 }
 
-function shareKnowledge(cityName, otherPlayerIndex, action) {
+async function shareKnowledge(cityName, otherPlayerIndex, action) {
   let currentPlayerIndex = getCurrentGameState().gameStatus.currentPlayerIndex;
   let givingPlayerIndex, receivingPlayerIndex;
 
@@ -239,7 +251,29 @@ function shareKnowledge(cityName, otherPlayerIndex, action) {
     givingPlayerIndex = otherPlayerIndex;
     receivingPlayerIndex = currentPlayerIndex;
   }
-  return executeShareKnowledge(cityName, givingPlayerIndex, receivingPlayerIndex);
+
+  try {
+    // Execute the share knowledge action
+    await executeShareKnowledge(cityName, givingPlayerIndex, receivingPlayerIndex);
+
+    // Always close the modal after sharing a card
+    closeShareModal();
+
+    // Reset any active mode
+    resetActiveMode();
+
+    return true;
+  } catch (error) {
+    showErrorMessage(`Failed to share knowledge: ${error.message}`);
+    return false;
+  }
+}
+
+// Reset any active mode
+function resetActiveMode() {
+  // Dispatch event to notify that the mode has been reset
+  const modeResetEvent = new CustomEvent('actionModeReset');
+  document.dispatchEvent(modeResetEvent);
 }
 
 // Create a card element for the share knowledge modal
@@ -295,8 +329,9 @@ function createCardElement(card, players) {
         const playerOption = document.createElement('div');
         playerOption.classList.add('player-option');
         playerOption.textContent = player.role || `Player ${player.index + 1}`;
-        playerOption.addEventListener('click', () => {
-            shareKnowledge(card.cardName, player.index, 'give');
+        playerOption.addEventListener('click', async () => {
+          await shareKnowledge(card.cardName, player.index, 'give');
+          playerList.style.display = 'none';
         });
         playerList.appendChild(playerOption);
       });
@@ -311,15 +346,15 @@ function createCardElement(card, players) {
     } else if (players.length === 1) {
       // If there's only one player, direct action
       shareButton.textContent = `Give to ${players[0].role || 'Player ' + (players[0].index + 1)}`;
-      shareButton.addEventListener('click', () => {
-        shareKnowledge(card.cardName, players[0].index, 'give');
+      shareButton.addEventListener('click', async () => {
+        await shareKnowledge(card.cardName, players[0].index, 'give');
       });
     }
   } else {
     // For take actions, direct action with the player shown
     shareButton.textContent = `Take from ${playerName}`;
-    shareButton.addEventListener('click', () => {
-      shareKnowledge(card.cardName, card.playerIndex, 'take');
+    shareButton.addEventListener('click', async () => {
+      await shareKnowledge(card.cardName, card.playerIndex, 'take');
     });
   }
 
@@ -358,25 +393,4 @@ function showNotification(message, type = 'info') {
       notification.remove();
     }, 500);
   }, 3000);
-}
-
-// Import the loadGameState function directly here to avoid circular dependencies
-async function loadGameState() {
-  try {
-    const response = await fetch('/game_state.json');
-
-    if (!response.ok) {
-      throw new Error(`Failed to load game state: ${response.status} ${response.statusText}`);
-    }
-
-    const gameState = await response.json();
-
-    // After loading the game state, update the share knowledge button state
-    updateShareKnowledgeButtonState();
-
-    return gameState;
-  } catch (error) {
-    console.error('Error loading game state:', error);
-    return null;
-  }
 }
