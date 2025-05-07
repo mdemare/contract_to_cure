@@ -125,23 +125,86 @@ async function movePlayer(playerIndex, destination) {
   }
 }
 
-// Treat disease at the current location
+// Cure disease action
 export async function cureDisease() {
   try {
     const gameState = getCurrentGameState();
     const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
     const currentPlayer = gameState.players.find(player => player.index === currentPlayerIndex);
-    // TODO convert the hand of the player to an array of {color, index} where index is the index in currentPlayer.hand
-    // Action cards must be removed.
-    // Find a color with at least 5 cards.
-    // Produce an array with the indices of the first 5 cards in that color.
+
+    if (!currentPlayer) {
+      showErrorMessage("Current player not found");
+      return;
+    }
+
+    // Group cards by color
+    const cardsByColor = {};
+
+    // Initialize card collection for each color
+    ['blue', 'yellow', 'black', 'red'].forEach(color => {
+      cardsByColor[color] = [];
+    });
+
+    // Process each card in the player's hand
+    currentPlayer.hand.forEach((cardName, index) => {
+      // Skip event cards or epidemic cards
+      if (cardName.startsWith('Action:') || cardName === 'Epidemic') {
+        return;
+      }
+
+      // Get the city color
+      const cityColor = getCityColor(cardName);
+      if (cityColor) {
+        // Add card info to the appropriate color group
+        cardsByColor[cityColor].push({
+          name: cardName,
+          index: index
+        });
+      }
+    });
+
+    // Check if player is at a research station
+    const atResearchStation = gameState.researchStations &&
+                             gameState.researchStations.locations &&
+                             gameState.researchStations.locations.includes(currentPlayer.location);
+
+    if (!atResearchStation) {
+      showInvalidMoveMessage("You must be at a research station to discover a cure");
+      return;
+    }
+
+    // Calculate cards needed for cure (5 for normal players, 4 for scientists)
+    const cardsNeeded = currentPlayer.role === 'scientist' ? 4 : 5;
+
+    // Find a color with enough cards
+    let selectedColor = null;
+    let cardIndices = [];
+
+    for (const [color, cards] of Object.entries(cardsByColor)) {
+      // Skip if this disease is already cured
+      if (gameState.diseaseCubes[color].cured) {
+        continue;
+      }
+
+      if (cards.length >= cardsNeeded) {
+        selectedColor = color;
+        // Take the first cardsNeeded cards of this color
+        cardIndices = cards.slice(0, cardsNeeded).map(card => card.index);
+        break;
+      }
+    }
+
+    if (!selectedColor) {
+      showInvalidMoveMessage(`You need ${cardsNeeded} cards of the same color to discover a cure`);
+      return;
+    }
 
     // Process the cure action
     await processAPIRequest(
       '/cure_disease',
-      {color: color, indices: {}},
-      "Passed for the rest of the turn",
-      'Pass failed'
+      {color: selectedColor, card_indices: cardIndices},
+      `Discovered a cure for ${selectedColor} disease!`,
+      'Failed to discover cure'
     );
   } catch (error) {
     showErrorMessage(`Network error: ${error.message}`);

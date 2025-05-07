@@ -1,16 +1,21 @@
 module PlayerActions
   include GameStateConfig
 
-  # Not necessarily the current player
   def move(player_index, destination)
     player = @players[player_index]
     current_location = player.location
-
     # Check if move is valid
     if @cities[current_location].connections.include?(destination)
       move_type = 'drive / ferry'
     elsif @research_stations.include?(current_location) && @research_stations.include?(destination)
       move_type = 'shuttle flight'
+    elsif current_player.role == :dispatcher
+      # The dispatcher can bring players together
+      if @players.any? { |p| p.location == destination && p.index != player_index }
+        move_type = 'dispatcher special move'
+      else
+        return { success: false, status: 'error', message: "Dispatcher can only move pawns to cities with other pawns" }
+      end
     elsif has_city_card?(player_index, destination)
       move_type = 'direct flight'
 
@@ -23,7 +28,7 @@ module PlayerActions
     elsif has_city_card?(player_index, current_location)
       move_type = 'charter flight'
 
-      # Check if player has the destination city card for direct flight
+      # Check if player has the current location city card for charter flight
       card_index = player.hand.find_index do |card|
         card.type == :city && card.name == current_location
       end
@@ -59,7 +64,7 @@ module PlayerActions
     # Otherwise, player needs the city card
     player_card_index = current_player.hand.find_index { |card| card.type == :city && card.name == city_name }
     if player_card_index
-      discard_player_card(player_index, player_card_index)
+      discard_player_card(current_player_index, player_card_index)
       @research_stations << city_name
       return after_action(true, "Successfully built a research station in #{city_name}")
     end
@@ -73,7 +78,6 @@ module PlayerActions
   end
 
   def treat_disease
-    puts "treat_disease, current player",current_player.inspect
     city = @cities[current_player.location]
     color = city.color
 
