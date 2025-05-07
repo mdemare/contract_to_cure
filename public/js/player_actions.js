@@ -157,6 +157,23 @@ async function movePlayer(playerIndex, destination) {
   }
 }
 
+
+
+// Treat disease at the current location
+async function pass() {
+  try {
+    // Process the treat action
+    await processAPIRequest(
+      '/pass',
+      {},
+      "Passed for the rest of the turn",
+      'Pass failed'
+    );
+  } catch (error) {
+    showErrorMessage(`Network error: ${error.message}`);
+  }
+}
+
 // Treat disease at the current location
 async function treatDisease(cityName) {
   try {

@@ -14,17 +14,17 @@ export function initActionButtons() {
   const cureBtn = document.getElementById('cure-btn');
   const buildBtn = document.getElementById('build-btn');
   const shareBtn = document.getElementById('share-btn');
-  const skipBtn = document.getElementById('skip-btn');
+  const passBtn = document.getElementById('pass-btn');
 
   // Add click event listeners
   moveBtn.addEventListener('click', () => toggleMode('move'));
-  treatBtn.addEventListener('click', () => toggleMode('treat'));
+  treatBtn.addEventListener('click', () => treatDisease(cityName));
   cureBtn.addEventListener('click', () => toggleMode('cure'));
   shareBtn.addEventListener('click', () => toggleMode('trade'));
   // Build button is handled by player_actions.js
   // Share button is handled by share_knowledge.js
 
-  skipBtn.addEventListener('click', handleSkipAction);
+  passBtn.addEventListener('click', handlePassAction);
 
   // Initialize share knowledge functionality
   initShareKnowledge();
@@ -51,12 +51,6 @@ function toggleMode(mode) {
   updateActiveModeUI();
 
   console.log(`Mode switched to: ${mode}`);
-
-  // Dispatch event to notify that the mode has changed
-  const modeChangedEvent = new CustomEvent('actionModeChanged', {
-    detail: { mode: mode }
-  });
-  document.dispatchEvent(modeChangedEvent);
 }
 
 // Reset the current mode
@@ -127,14 +121,9 @@ export function updateButtonStates() {
   enableAllButtons();
 }
 
-// Handler for skip action
-function handleSkipAction() {
-  console.log('Skip action clicked');
-  // Reset the current mode
-  resetMode();
-
-  // In a full implementation, we'd send a skip action to the server
-  // and then update the game state
+// Handler for pass action
+function handlePassAction() {
+  pass();
 }
 
 // Helper functions for game actions
