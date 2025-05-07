@@ -1,6 +1,6 @@
 // share_knowledge.js
 import { getCurrentGameState } from './game_state.js';
-import { getCityColor } from './player_actions.js';
+import { executeShareKnowledge, getCityColor } from './player_actions.js';
 
 // State to track which players can share knowledge
 let applicableCards = [];
@@ -35,14 +35,14 @@ export function updateShareKnowledgeButtonState() {
   const playersInSameLocation = getPlayersInSameLocation(gameState, currentPlayer.location);
 
   // Get applicable cards that can be shared
-  const cards = getApplicableCards(gameState, currentPlayerIndex, playersInSameLocation);
-
   // Store the state for later use
-  applicableCards = cards;
+  applicableCards = getApplicableCards(gameState, currentPlayerIndex, playersInSameLocation);
+  console.log("applicableCards")
+  console.log(applicableCards)
   eligiblePlayers = playersInSameLocation;
 
   // Enable or disable the button based on whether sharing is possible
-  if (playersInSameLocation.length > 0 && cards.length > 0) {
+  if (playersInSameLocation.length > 0 && applicableCards.length > 0) {
     shareBtn.classList.remove('disabled');
     shareBtn.disabled = false;
   } else {
@@ -101,7 +101,7 @@ function getApplicableCards(gameState, currentPlayerIndex, playersInSameLocation
     }
 
     // If the other player is a Researcher, they can give any card from their hand
-    if (player.role === 'Researcher') {
+    if (player.role === 'researcher') {
       player.hand.forEach((cardName, index) => {
         // Skip the current location card as it's already been added
         if (cardName !== currentLocation) {
@@ -118,26 +118,27 @@ function getApplicableCards(gameState, currentPlayerIndex, playersInSameLocation
         }
       });
     }
-
-    // If the current player is a Researcher, they can give any card from their hand
-    if (currentPlayer.role === 'Researcher') {
-      currentPlayer.hand.forEach((cardName, index) => {
-        // Skip the current location card as it's already been added
-        if (cardName !== currentLocation && currentLocationCardIndex !== index) {
-          // Skip non-city cards (like Event or Epidemic cards)
-          if (!cardName.startsWith('Action:') && cardName !== 'Epidemic') {
-            result.push({
-              cardName: cardName,
-              action: 'give',
-              playerIndex: currentPlayerIndex,
-              cardIndex: index,
-              fromResearcher: true
-            });
-          }
-        }
-      });
-    }
   });
+
+  // If the current player is a Researcher, they can give any card from their hand
+  console.log("ROLE:"+currentPlayer.role)
+  if (currentPlayer.role === 'researcher') {
+    currentPlayer.hand.forEach((cardName, index) => {
+      // Skip the current location card as it's already been added
+      if (cardName !== currentLocation && currentLocationCardIndex !== index) {
+        // Skip non-city cards (like Event or Epidemic cards)
+        if (!cardName.startsWith('Action:') && cardName !== 'Epidemic') {
+          result.push({
+            cardName: cardName,
+            action: 'give',
+            playerIndex: currentPlayerIndex,
+            cardIndex: index,
+            fromResearcher: true
+          });
+        }
+      }
+    });
+  }
 
   return result;
 }
@@ -227,6 +228,20 @@ function showShareKnowledgeModal(cards, players) {
   document.body.appendChild(modalBackdrop);
 }
 
+function shareKnowledge(cityName, otherPlayerIndex, action) {
+  let currentPlayerIndex = getCurrentGameState().gameStatus.currentPlayerIndex;
+  let givingPlayerIndex, receivingPlayerIndex;
+
+  if (action === 'give') {
+    givingPlayerIndex = currentPlayerIndex;
+    receivingPlayerIndex = otherPlayerIndex;
+  } else { // action === 'take'
+    givingPlayerIndex = otherPlayerIndex;
+    receivingPlayerIndex = currentPlayerIndex;
+  }
+  return executeShareKnowledge(cityName, givingPlayerIndex, receivingPlayerIndex);
+}
+
 // Create a card element for the share knowledge modal
 function createCardElement(card, players) {
   const cardElement = document.createElement('div');
@@ -281,7 +296,7 @@ function createCardElement(card, players) {
         playerOption.classList.add('player-option');
         playerOption.textContent = player.role || `Player ${player.index + 1}`;
         playerOption.addEventListener('click', () => {
-          executeShareKnowledge(card, player.index, 'give');
+            shareKnowledge(card.cardName, player.index, 'give');
         });
         playerList.appendChild(playerOption);
       });
@@ -297,14 +312,14 @@ function createCardElement(card, players) {
       // If there's only one player, direct action
       shareButton.textContent = `Give to ${players[0].role || 'Player ' + (players[0].index + 1)}`;
       shareButton.addEventListener('click', () => {
-        executeShareKnowledge(card, players[0].index, 'give');
+        shareKnowledge(card.cardName, players[0].index, 'give');
       });
     }
   } else {
     // For take actions, direct action with the player shown
     shareButton.textContent = `Take from ${playerName}`;
     shareButton.addEventListener('click', () => {
-      executeShareKnowledge(card, card.playerIndex, 'take');
+      shareKnowledge(card.cardName, card.playerIndex, 'take');
     });
   }
 
@@ -314,73 +329,6 @@ function createCardElement(card, players) {
   cardElement.appendChild(shareButton);
 
   return cardElement;
-}
-
-// Execute the share knowledge action
-async function executeShareKnowledge(card, otherPlayerIndex, action) {
-  const gameState = getCurrentGameState();
-  if (!gameState) return;
-
-  const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
-
-  // Determine giving and receiving players based on the action
-  let givingPlayerIndex, receivingPlayerIndex;
-
-  if (action === 'give') {
-    givingPlayerIndex = currentPlayerIndex;
-    receivingPlayerIndex = otherPlayerIndex;
-  } else { // action === 'take'
-    givingPlayerIndex = otherPlayerIndex;
-    receivingPlayerIndex = currentPlayerIndex;
-  }
-
-  try {
-    // Prepare the request data
-    const shareData = {
-      city_name: card.cardName,
-      giving_player_index: givingPlayerIndex,
-      receiving_player_index: receivingPlayerIndex
-    };
-
-    // Make the API call
-    const response = await fetch('/share_knowledge', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify(shareData)
-    });
-
-    // Close the modal
-    const modalBackdrop = document.querySelector('.modal-backdrop');
-    if (modalBackdrop) {
-      document.body.removeChild(modalBackdrop);
-    }
-
-    if (response.ok) {
-      try {
-        const result = await response.json();
-
-        if (result.status === 'success') {
-          // Refresh the game state
-          await loadGameState();
-
-          // Show success message
-          showSuccessMessage(result.message || `Successfully shared ${card.cardName} card.`);
-        } else {
-          showErrorMessage(result.message || 'Failed to share knowledge.');
-        }
-      } catch (parseError) {
-        // If JSON parsing fails, handle as success anyway since response was ok
-        await loadGameState();
-        showSuccessMessage(`Successfully shared ${card.cardName} card.`);
-      }
-    } else {
-      showErrorMessage(`Failed to share knowledge (${response.status}). The backend might not be implemented yet.`);
-    }
-  } catch (error) {
-    showErrorMessage(`Network error: ${error.message}`);
-  }
 }
 
 // Display notifications to the user
@@ -395,7 +343,7 @@ function showErrorMessage(message) {
 function showNotification(message, type = 'info') {
   // Create notification element
   const notification = document.createElement('div');
-  notification.classList.add('game-notification', type);
+  notification.classList.add('share-notification', type);
   notification.textContent = message;
 
   // Append to body

@@ -1,7 +1,7 @@
 // game_state.js
 import { renderPandemicCities } from './map.js';
 import { updatePlayerHand } from './action_buttons.js';
-import { updateCurrentPlayer, initializeCurrentPlayer } from './current_player.js';
+import { updateCurrentPlayer } from './current_player.js';
 
 // Define color keys for disease tracking
 const COLOR_KEYS = ['blue', 'yellow', 'black', 'red'];

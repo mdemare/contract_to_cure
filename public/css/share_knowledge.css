@@ -148,7 +148,7 @@
 }
 
 /* Notification styles */
-.game-notification {
+.share-notification {
   position: fixed;
   bottom: 20px;
   right: 20px;
@@ -160,15 +160,15 @@
   max-width: 300px;
 }
 
-.game-notification.success {
+.share-notification.success {
   background-color: #4CAF50;
 }
 
-.game-notification.error {
+.share-notification.error {
   background-color: #f44336;
 }
 
-.game-notification.warning {
+.share-notification.warning {
   background-color: #ff9800;
 }
 

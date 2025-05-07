@@ -66,7 +66,7 @@ async function handleBuildStationClick() {
   // Check if player has the city card
   const hasCityCard = currentPlayer.hand.includes(currentLocation);
 
-  if (!hasCityCard) {
+  if (!hasCityCard && currentPlayer.role !== 'operations_expert') {
     showInvalidMoveMessage(`You need the ${currentLocation} city card to build a research station here.`);
     return;
   }
@@ -196,6 +196,29 @@ async function buildResearchStation(playerIndex, cityName) {
   }
 }
 
+// Execute the share knowledge action
+export async function executeShareKnowledge(cityName, givingPlayerIndex, receivingPlayerIndex) {
+  try {
+    // Prepare the request data
+    const shareData = {
+      city_name: cityName,
+      giving_player_index: givingPlayerIndex,
+      receiving_player_index: receivingPlayerIndex
+    };
+    console.log(shareData)
+
+    // Process the build action
+    await processAPIRequest(
+      '/share_knowledge',
+      shareData,
+      `Share cards in ${cityName}`,
+      'Failed to share cards'
+    );
+  } catch (error) {
+    showErrorMessage(`Network error: ${error.message}`);
+  }
+}
+
 // Generic handler for API requests and responses
 async function processAPIRequest(endpoint, requestData, successMessage, failurePrefix, eventData = null) {
   try {
@@ -210,42 +233,36 @@ async function processAPIRequest(endpoint, requestData, successMessage, failureP
 
     // Process the response
     if (response.ok) {
-      try {
-        // Try to parse JSON
-        const result = await response.json();
+      // Try to parse JSON
+      const result = await response.json();
 
-        if (result.status === 'success') {
-          // Check for end of turn events
-          if (result.end_turn && result.end_turn_events) {
-            handleEndOfTurnEvents(result.end_turn_events);
-          }
-
-          // Refresh the game state
-          await loadGameState();
-
-          // Dispatch event if provided
-          if (eventData) {
-            const moveEvent = new CustomEvent('playerMoved', {
-              detail: {
-                playerIndex: eventData.playerIndex,
-                destination: eventData.destination,
-                success: true,
-                moveType: eventData.moveType,
-                endTurn: result.end_turn || false
-              }
-            });
-            document.dispatchEvent(moveEvent);
-          }
-
-          // Show success message
-          showSuccessMessage(result.message || successMessage);
-        } else {
-          showErrorMessage(result.message);
+      if (result.status === 'success') {
+        // Check for end of turn events
+        if (result.end_turn && result.end_turn_events) {
+          handleEndOfTurnEvents(result.end_turn_events);
         }
-      } catch (parseError) {
-        // If JSON parsing fails, handle as success anyway since response was ok
+
+        // Refresh the game state
         await loadGameState();
-        showSuccessMessage(successMessage);
+
+        // Dispatch event if provided
+        if (eventData) {
+          const moveEvent = new CustomEvent('playerMoved', {
+            detail: {
+              playerIndex: eventData.playerIndex,
+              destination: eventData.destination,
+              success: true,
+              moveType: eventData.moveType,
+              endTurn: result.end_turn || false
+            }
+          });
+          document.dispatchEvent(moveEvent);
+        }
+
+        // Show success message
+        showSuccessMessage(result.message || successMessage);
+      } else {
+        showErrorMessage(result.message);
       }
     } else {
       showErrorMessage(`${failurePrefix} (${response.status}). The backend might not be implemented yet.`);

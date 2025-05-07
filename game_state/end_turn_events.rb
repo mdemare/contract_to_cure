@@ -15,6 +15,8 @@ module EndTurnEvents
     end
 
     # Infect cities
+    puts "Epidemic deck: #{@infection_deck.map(&:name).join(?,)}"
+    puts "Epidemic discard: #{@infection_discard.map(&:name).join(?,)}"
     @infection_rate.times do
       infect_event = infect_city
       if infect_event
@@ -160,10 +162,14 @@ module EndTurnEvents
       next if @cures[color] && @disease_cubes[color] == MAX_DISEASE_CUBES_PER_COLOR
 
       # Check if adding cubes would cause game over
-      if @disease_cubes[color] <= 1
+      if @disease_cubes[color] == 1
         # Adding all remaining cubes then game over
-        connected_city.disease_cubes += @disease_cubes[color]
+        connected_city.disease_cubes += 1
+        add_disease_cubes(connected_city_name, color, 1)
         @disease_cubes[color] = 0
+      end
+
+      if @disease_cubes[color] == 0
         @game_over = true
         @game_over_reason = :no_cubes
         return { type: :game_over, reason: :no_cubes, color: color }
