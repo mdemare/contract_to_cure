@@ -43,6 +43,10 @@ export async function loadGameState() {
     // Update the UI with the new game state
     updateGameUI(gameState);
 
+    document.dispatchEvent(new CustomEvent('gameStateLoaded', {
+      detail: { gameState: gameState }
+    }));
+
     return gameState;
   } catch (error) {
     console.error('Error loading game state:', error);
