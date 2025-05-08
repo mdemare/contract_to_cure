@@ -2,6 +2,7 @@
 import { renderPandemicCities } from './map.js';
 import { updatePlayerHand } from './action_buttons.js';
 import { updateCurrentPlayer } from './current_player.js';
+import { checkGameOver } from './game_over.js';
 
 // Define color keys for disease tracking
 const COLOR_KEYS = ['blue', 'yellow', 'black', 'red'];
@@ -28,7 +29,7 @@ export async function loadCities() {
   }
 }
 
-// Load the game state from the server
+// Then update the loadGameState function to add game over check
 export async function loadGameState() {
   try {
     const response = await fetch('/game_state.json');
@@ -42,6 +43,9 @@ export async function loadGameState() {
 
     // Update the UI with the new game state
     updateGameUI(gameState);
+
+    // Check if the game is over
+    checkGameOver(gameState);
 
     document.dispatchEvent(new CustomEvent('gameStateLoaded', {
       detail: { gameState: gameState }

@@ -6,7 +6,9 @@ module JsonGenerator
   def to_json_state
     {
       gameStatus: {
-        turn: @current_player_index + 1,
+        actions_remaining: @actions_remaining,
+        turn: @turn,
+        gameOver: @game_over,
         outbreaks: @outbreak_count,
         infectionRate: @infection_rate,
         infectionRatePosition: @infection_rate_marker,

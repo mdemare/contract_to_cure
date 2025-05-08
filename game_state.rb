@@ -32,6 +32,7 @@ class GameState
     @infection_rate_marker = 0
     @infection_rate = INFECTION_RATE_TRACK[@infection_rate_marker]
     @game_over = false
+    @turn = 1
     @game_over_reason = nil
     @actions_remaining = 4
 
