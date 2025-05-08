@@ -132,7 +132,7 @@ module PlayerActions
 
     # Check if all selected cards are of the right color
     selected_cards = card_indices.map do |idx|
-      player.hand[idx]
+      current_player.hand[idx]
     end.select { |card| card.type == :city && card.color == color }
 
     return after_action(false, "All selected cards must be #{color} city cards") if selected_cards.size != cards_needed

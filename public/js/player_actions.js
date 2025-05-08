@@ -62,7 +62,7 @@ async function handleBuildStationClick() {
                     gameState.researchStations.locations.includes(currentLocation);
 
   if (hasStation) {
-    showInvalidMoveMessage(`${currentLocation} already has a research station.`);
+    showInvalidActionMessage(`${currentLocation} already has a research station.`);
     return;
   }
 
@@ -70,7 +70,7 @@ async function handleBuildStationClick() {
   const hasCityCard = currentPlayer.hand.includes(currentLocation);
 
   if (!hasCityCard && currentPlayer.role !== 'operations_expert') {
-    showInvalidMoveMessage(`You need the ${currentLocation} city card to build a research station here.`);
+    showInvalidActionMessage(`You need the ${currentLocation} city card to build a research station here.`);
     return;
   }
 
@@ -127,87 +127,93 @@ async function movePlayer(playerIndex, destination) {
 
 // Cure disease action
 export async function cureDisease() {
-  try {
-    const gameState = getCurrentGameState();
-    const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
-    const currentPlayer = gameState.players.find(player => player.index === currentPlayerIndex);
+  const gameState = getCurrentGameState();
+  const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
+  const currentPlayer = gameState.players.find(player => player.index === currentPlayerIndex);
 
-    if (!currentPlayer) {
-      showErrorMessage("Current player not found");
+  if (!currentPlayer) {
+    showErrorMessage("Current player not found");
+    return;
+  }
+
+  // Group cards by color
+  const cardsByColor = {};
+
+  // Initialize card collection for each color
+  ['blue', 'yellow', 'black', 'red'].forEach(color => {
+    cardsByColor[color] = [];
+  });
+
+  // Process each card in the player's hand
+  currentPlayer.hand.forEach((cardName, index) => {
+    // Skip event cards or epidemic cards
+    if (cardName.startsWith('Action:') || cardName === 'Epidemic') {
       return;
     }
 
-    // Group cards by color
-    const cardsByColor = {};
+    // Get the city color
+    const cityColor = getCityColor(cardName);
+    if (cityColor) {
+      // Add card info to the appropriate color group
+      cardsByColor[cityColor].push({
+        name: cardName,
+        index: index
+      });
+    }
+  });
 
-    // Initialize card collection for each color
-    ['blue', 'yellow', 'black', 'red'].forEach(color => {
-      cardsByColor[color] = [];
-    });
+  // Check if player is at a research station
+  const atResearchStation = gameState.researchStations &&
+                            gameState.researchStations.locations &&
+                            gameState.researchStations.locations.includes(currentPlayer.location);
 
-    // Process each card in the player's hand
-    currentPlayer.hand.forEach((cardName, index) => {
-      // Skip event cards or epidemic cards
-      if (cardName.startsWith('Action:') || cardName === 'Epidemic') {
-        return;
-      }
+  if (!atResearchStation) {
+    showInvalidActionMessage("You must be at a research station to discover a cure");
+    return;
+  }
 
-      // Get the city color
-      const cityColor = getCityColor(cardName);
-      if (cityColor) {
-        // Add card info to the appropriate color group
-        cardsByColor[cityColor].push({
-          name: cardName,
-          index: index
-        });
-      }
-    });
+  // Calculate cards needed for cure (5 for normal players, 4 for scientists)
+  const cardsNeeded = currentPlayer.role === 'scientist' ? 4 : 5;
 
-    // Check if player is at a research station
-    const atResearchStation = gameState.researchStations &&
-                             gameState.researchStations.locations &&
-                             gameState.researchStations.locations.includes(currentPlayer.location);
+  // Find a color with enough cards
+  let selectedColor = null;
+  let colorCards = null;
 
-    if (!atResearchStation) {
-      showInvalidMoveMessage("You must be at a research station to discover a cure");
-      return;
+  let cureWithIndices = (cardIndices, selectedColor) => {
+    try {
+      processAPIRequest(
+        '/cure_disease',
+        {color: selectedColor, card_indices: cardIndices},
+        `Discovered a cure for ${selectedColor} disease!`,
+        'Failed to discover cure'
+      );
+    } catch (error) {
+      showErrorMessage(`Network error: ${error.message}`);
+    }
+  }
+
+  for (const [color, cards] of Object.entries(cardsByColor)) {
+    // Skip if this disease is already cured
+    if (gameState.diseaseCubes[color].cured) {
+      continue;
     }
 
-    // Calculate cards needed for cure (5 for normal players, 4 for scientists)
-    const cardsNeeded = currentPlayer.role === 'scientist' ? 4 : 5;
-
-    // Find a color with enough cards
-    let selectedColor = null;
-    let cardIndices = [];
-
-    for (const [color, cards] of Object.entries(cardsByColor)) {
-      // Skip if this disease is already cured
-      if (gameState.diseaseCubes[color].cured) {
-        continue;
-      }
-
-      if (cards.length >= cardsNeeded) {
-        selectedColor = color;
-        // Take the first cardsNeeded cards of this color
-        cardIndices = cards.slice(0, cardsNeeded).map(card => card.index);
-        break;
-      }
+    if (cards.length >= cardsNeeded) {
+      selectedColor = color;
+      colorCards = cards;
+      break
     }
+  }
 
-    if (!selectedColor) {
-      showInvalidMoveMessage(`You need ${cardsNeeded} cards of the same color to discover a cure`);
-      return;
+  if (!selectedColor || !colorCards || colorCards.length < cardsNeeded) {
+    showInvalidActionMessage(`You need ${cardsNeeded} cards of the same color to discover a cure`);
+  } else {
+    let selectableCards = colorCards.map(card => card.index)
+    if (colorCards.length == cardsNeeded) {
+      cureWithIndices(selectableCards, selectedColor);
+    } else {
+      showCardSelectionModal(cardsNeeded, selectableCards, (indices) => { cureWithIndices(indices, selectedColor) });
     }
-
-    // Process the cure action
-    await processAPIRequest(
-      '/cure_disease',
-      {color: selectedColor, card_indices: cardIndices},
-      `Discovered a cure for ${selectedColor} disease!`,
-      'Failed to discover cure'
-    );
-  } catch (error) {
-    showErrorMessage(`Network error: ${error.message}`);
   }
 }
 
@@ -376,6 +382,6 @@ function showErrorMessage(message) {
 }
 
 // Display invalid move message
-function showInvalidMoveMessage(message) {
+function showInvalidActionMessage(message) {
   showNotification(message, 'warning');
 }

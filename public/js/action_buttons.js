@@ -1,6 +1,6 @@
 // action_buttons.js
 import { getCurrentGameState } from './game_state.js';
-import { getCityColor, treatDisease, pass } from './player_actions.js';
+import { getCityColor, treatDisease, pass, cureDisease } from './player_actions.js';
 import { initShareKnowledge, updateShareKnowledgeButtonState } from './share_knowledge.js';
 
 // Game mode state to track which action is currently selected

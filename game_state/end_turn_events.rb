@@ -15,8 +15,6 @@ module EndTurnEvents
     end
 
     # Infect cities
-    puts "Epidemic deck: #{@infection_deck.map(&:name).join(?,)}"
-    puts "Epidemic discard: #{@infection_discard.map(&:name).join(?,)}"
     @infection_rate.times do
       infect_event = infect_city
       if infect_event
