@@ -21,12 +21,19 @@ class GameState
               :game_over_reason, :difficulty_level, :current_player
 
   # Initialize a new game state
-  def initialize(players_count, difficulty_level = :normal)
-    raise ArgumentError, 'Player count must be 2-4' unless (2..4).include?(players_count)
-    raise ArgumentError, 'Difficulty must be :introductory, :normal, :heroic' unless %i[introductory normal
-                                                                                        heroic].include?(difficulty_level)
+  def initialize(players_count, difficulty_level = :heroic)
+    @players_count = players_count
+    reset_game(difficulty_level)
+  end
 
-    @difficulty_level = difficulty_level
+  # Reset the game to its initial state
+  def reset_game(difficulty_level)
+    @difficulty_level = difficulty_level || @difficulty_level
+    raise ArgumentError, 'Player count must be 2-4' unless (2..4).include?(@players_count)
+    if difficulty_level
+      raise ArgumentError, 'Difficulty must be :introductory, :normal, :heroic' unless %i[introductory normal heroic].include?(difficulty_level)
+    end
+
     @current_player_index = 0
     @outbreak_count = 0
     @infection_rate_marker = 0
@@ -45,7 +52,10 @@ class GameState
     COLORS.each { |color| @cures[color] = false }
 
     # Initialize game components (delegates to Setup module)
-    initialize_game(players_count)
+    initialize_game(@players_count)
+
+    # Return success response
+    { status: 'success', message: 'Game restarted successfully' }
   end
 
   # Helper methods
@@ -58,6 +68,7 @@ class GameState
   def discard_player_card(player_index, card_index)
     player = @players[player_index]
     card = player.hand.delete_at(card_index)
+    player.hand = player.sorted_hand
     @player_discard << card if card
   end
 

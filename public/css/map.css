@@ -37,19 +37,19 @@
   z-index: 5;
 }
 
-.city {
+.map-inner .city {
   position: absolute;
   transform: none;
   cursor: pointer;
   z-index: 10;
 }
 
-.city:hover .dot {
+.map-inner .city:hover .dot {
   transform: translate(-50%, -50%) scale(1.2);
   z-index: 20;
 }
 
-.city .dot {
+.map-inner .city .dot {
   position: absolute;
   width: 14px;
   height: 14px;
@@ -63,7 +63,7 @@
   transition: all 0.2s ease;
 }
 
-.city-label {
+.map-inner .city-label {
   position: absolute;
   color: #333;
   font-size: 11px;
@@ -81,16 +81,16 @@
   pointer-events: none;
 }
 
-.city.blue .dot { background-color: var(--blue-disease); }
-.city.yellow .dot { background-color: var(--yellow-disease); }
-.city.black .dot { background-color: var(--black-disease); }
-.city.red .dot { background-color: var(--red-disease); }
+.map-inner .city.blue .dot { background-color: var(--blue-disease); }
+.map-inner .city.yellow .dot { background-color: var(--yellow-disease); }
+.map-inner .city.black .dot { background-color: var(--black-disease); }
+.map-inner .city.red .dot { background-color: var(--red-disease); }
 
-.city .cubes {
+.map-inner .city .cubes {
   position: absolute;
   display: flex;
   gap: 2px;
-  top: 35px;
+  top: 30px;
   left: 0;
   transform: translateX(-50%);
   z-index: 20;

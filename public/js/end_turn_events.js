@@ -63,9 +63,6 @@ function animateCardDraws(drawEvents, cardType, completionCallback) {
       if (cardElements[index]) {
         cardElements[index].classList.add('drawn');
 
-        // Play sound effect
-        playCardDrawSound(cardType);
-
         // If this is the last card and no callback is provided, set a timer to hide the animation
         if (index === drawEvents.length - 1) {
           if (completionCallback) {
@@ -136,11 +133,4 @@ function createCardElement(event, cardType) {
 
     return cardElement;
   }
-}
-
-// Play a card draw sound effect
-function playCardDrawSound(cardType) {
-  // In a real implementation, you would add sound effects
-  // Different sounds for player vs infection cards
-  console.log(`${cardType === 'player' ? 'Player card' : 'Infection card'} draw sound played`);
 }

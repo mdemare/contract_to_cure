@@ -34,6 +34,7 @@ post '/move' do
 
   player_index = data['player_index'].to_i
   destination = data['destination']
+  card_index = data['card_index']&.to_i
 
   puts data.inspect
 
@@ -41,7 +42,7 @@ post '/move' do
   return { status: 'error', message: 'Missing required parameters' }.to_json unless player_index && destination
 
   # Perform the move and get result
-  game_state.move(player_index, destination).to_json
+  game_state.move(player_index, destination, card_index).to_json
 end
 
 # Treat disease endpoint
@@ -97,4 +98,18 @@ post '/build_research_station' do
 
   # Perform the action and get result
   game_state.build_research_station.to_json
+end
+
+# Restart game endpoint
+post '/restart_game' do
+  content_type :json
+
+  request.body.rewind
+  data = JSON.parse(request.body.read) rescue {}
+
+  # Extract difficulty level from request if provided, otherwise use current difficulty
+  difficulty_level = data['difficulty_level'] ? data['difficulty_level'].to_sym : nil
+
+  # Restart the game and return result
+  game_state.reset_game(difficulty_level).to_json
 end

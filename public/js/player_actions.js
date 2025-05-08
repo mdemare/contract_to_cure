@@ -1,6 +1,7 @@
 // player_actions.js
 import { getCurrentGameState, loadGameState, CITIES } from './game_state.js';
 import { handleEndOfTurnEvents } from './end_turn_events.js';
+import { showCardSelectionModal } from './select_cards.js';
 
 // Map click handler - initialize city click events
 export function initMoveActions() {

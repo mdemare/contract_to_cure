@@ -80,12 +80,12 @@ function updateGameUI(gameState) {
     }
 
     // Update player cards count
-    if (gameState.decks && gameState.decks.playerDeck && Array.isArray(gameState.decks.playerDeck.draw)) {
+    if (gameState.decks && gameState.decks.playerDeck) {
       document.getElementById('player-cards').textContent = gameState.decks.playerDeck;
     }
 
     // Update infection cards count
-    if (gameState.decks && gameState.decks.infectionDeck && Array.isArray(gameState.decks.infectionDeck.draw)) {
+    if (gameState.decks && gameState.decks.infectionDeck) {
       document.getElementById('infection-cards').textContent = gameState.decks.infectionDeck;
     }
 

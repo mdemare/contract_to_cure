@@ -1,5 +1,4 @@
 // game_over.js
-import { getCurrentGameState } from './game_state.js';
 
 // Initialize game over functionality
 export function initGameOver() {
@@ -164,7 +163,13 @@ function showGameOverDialog(gameState) {
   document.getElementById('outbreaks-stat').textContent = outbreaks;
   document.getElementById('cures-stat').textContent = curesDiscovered;
 
-  // Show the dialog with animation
+  // Show the dialog
+  overlay.style.display = 'flex'; // Make it visible first
+
+  // Trigger reflow to ensure the transition works
+  void overlay.offsetWidth;
+
+  // Add visible class to fade in
   overlay.classList.add('visible');
 }
 
@@ -173,6 +178,13 @@ function hideGameOverDialog() {
   const overlay = document.querySelector('.game-over-overlay');
   if (overlay) {
     overlay.classList.remove('visible');
+
+    // Wait for the transition to complete before setting display: none
+    setTimeout(() => {
+      if (!overlay.classList.contains('visible')) {
+        overlay.style.display = 'none';
+      }
+    }, 500); // Match this to the transition duration in CSS
   }
 }
 

@@ -106,6 +106,7 @@ module Setup
       CARDS_PER_PLAYER[players_count].times do
         player.hand << player_deck.pop
       end
+      player.hand = player.sorted_hand
     end
 
     # Add epidemic cards

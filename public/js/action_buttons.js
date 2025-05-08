@@ -195,7 +195,7 @@ export function updatePlayerHand(gameState) {
       card.title = 'Epidemic!';
     } else {
       // City card - find the color
-      card.classList.add('city');
+      card.classList.add('city-card');
       const cityColor = getCityColor(cardName);
       if (cityColor) {
         card.classList.add(cityColor);

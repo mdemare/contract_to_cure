@@ -6,7 +6,7 @@ module EndTurnEvents
     # Draw 2 player cards
     2.times do
       draw_event = draw_player_card(@current_player_index)
-      if draw_event[:card][:type] == :epidemic
+      if not @game_over and draw_event[:card][:type] == :epidemic
         epidemic_events = handle_epidemic
         draw_event[:epidemic_events] = epidemic_events
       end
@@ -45,6 +45,7 @@ module EndTurnEvents
 
     if card.type != :epidemic
       player.hand << card
+      player.hand = player.sorted_hand
 
       # Check hand limit (7 cards)
       if player.hand.size > 7
@@ -87,7 +88,8 @@ module EndTurnEvents
 
   def infect_city
     return nil if @infection_deck.empty? # Return nil if no city infected
-
+    puts "infection deck",@infection_deck.map(&:name).join(?,)
+    puts "infection discard",@infection_discard.map(&:name).join(?,)
     card = @infection_deck.pop
     @infection_discard << card
 
@@ -165,7 +167,7 @@ module EndTurnEvents
       # Check if adding cubes would cause game over
       if @disease_cubes[color] == 1
         # Adding all remaining cubes then game over
-        connected_city.disease_cubes += 1
+        connected_city.disease_cubes = [3, connected_city.disease_cubes + 1].min
         add_disease_cubes(connected_city_name, color, 1)
         @disease_cubes[color] = 0
       end

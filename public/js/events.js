@@ -6,6 +6,7 @@ import { initActionButtons } from './action_buttons.js';
 import { initMoveActions } from './player_actions.js';
 import { initializeCurrentPlayer } from './current_player.js';
 import { initShareKnowledge } from './share_knowledge.js';
+import { initGameOver } from './game_over.js';
 
 // Initialize the pandemic map
 async function initializePandemicMap() {
@@ -24,6 +25,8 @@ async function initializePandemicMap() {
 
       // Initialize the scrolling functionality
       initScrolling();
+
+      initGameOver();
 
       // Load the game state from the server
       await loadGameState();

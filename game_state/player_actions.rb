@@ -1,7 +1,7 @@
 module PlayerActions
   include GameStateConfig
 
-  def move(player_index, destination)
+  def move(player_index, destination, card_index = nil)
     player = @players[player_index]
     current_location = player.location
     # Check if move is valid
@@ -9,22 +9,34 @@ module PlayerActions
       move_type = 'drive / ferry'
     elsif @research_stations.include?(current_location) && @research_stations.include?(destination)
       move_type = 'shuttle flight'
-    elsif current_player.role == :dispatcher
+    elsif current_player.role == :operations_expert and @research_stations.include?(current_location) and card_index and current_player.hand[card_index].type == :city
+      # The operation expert can go anywhere from a research station by discarding a city card
+      move_type = 'operation researcher special move'
+      discard_player_card(@current_player_index, card_index)
+    elsif current_player.role == :dispatcher and @players.any? { |p| p.location == destination && p.index != player_index }
       # The dispatcher can bring players together
-      if @players.any? { |p| p.location == destination && p.index != player_index }
-        move_type = 'dispatcher special move'
-      else
-        return { success: false, status: 'error', message: "Dispatcher can only move pawns to cities with other pawns" }
-      end
+      move_type = 'dispatcher special move'
     elsif has_city_card?(player_index, destination)
-      move_type = 'direct flight'
+      hand = current_player.hand
+      if has_city_card?(player_index, current_location)
+        if card_index and hand[card_index] == destination
+          move_type = 'direct flight'
+        elsif card_index and hand[card_index] == current_location
+          move_type = 'charter_flight'
+        else
+          return after_action(false, "Specify if you want a charter flight or a direct flight.")
+        end
+        discard_player_card(player_index, card_index)
+      else
+        move_type = 'direct flight'
 
-      # Check if player has the destination city card for direct flight
-      card_index = player.hand.find_index do |card|
-        card.type == :city && card.name == destination
+        # Check if player has the destination city card for direct flight
+        card_index = player.hand.find_index do |card|
+          card.type == :city && card.name == destination
+        end
+
+        discard_player_card(player_index, card_index)
       end
-
-      discard_player_card(player_index, card_index)
     elsif has_city_card?(player_index, current_location)
       move_type = 'charter flight'
 
@@ -112,7 +124,9 @@ module PlayerActions
 
     # Move the card
     giving_player.hand.delete_at(card_index)
+    giving_player.hand = giving_player.sorted_hand
     receiving_player.hand << card
+    receiving_player.hand = receiving_player.sorted_hand
 
     # Return success
     after_action(true, "Successfully shared #{card.name} card from #{giving_player.role} to #{receiving_player.role}")
