@@ -10,9 +10,11 @@ module EndTurnEvents
       draw_event = draw_player_card(@current_player_index)
       if not @game_over and draw_event[:card][:type] == :epidemic
         epidemic_events = handle_epidemic
-        draw_event[:epidemic_events] = epidemic_events
+        events << draw_event
+        epidemic_events.each { events << it }
+      else
+        events << draw_event
       end
-      events << draw_event
       if @game_over
         # Save final game state when the game is over
         save_game_state
@@ -157,7 +159,7 @@ module EndTurnEvents
 
     # Add card to discard pile
     @infection_discard << bottom_card
-    epidemic_events << { type: :infect_city, city: city.name, color: city.color, count: 3, epidemic: true }
+    epidemic_events << { type: :infect_new_city, city: city.name, color: city.color, count: 3, epidemic: true }
 
     # Intensify: shuffle the infection discard pile and put it on top of infection deck
     # We draw cards via pop, so shuffled cards at the end.
