@@ -109,9 +109,9 @@ module EndTurnEvents
     return if city.color != color
 
     # Check if adding cubes would cause game over
-    if count >= @disease_cubes[color]
+    if count >= @disease_cubes[color] and city.disease_cubes < 3
       # Adding all remaining cubes then game over
-      city.disease_cubes += @disease_cubes[color]
+      city.disease_cubes = [3, city.disease_cubes + count].min
       @disease_cubes[color] = 0
       @game_over = true
       @game_over_reason = :no_cubes

@@ -31,20 +31,20 @@
   },
   "London": {
     "color": "blue",
-    "x": 500,
-    "y": 250,
+    "x": 490,
+    "y": 240,
     "connections": ["New York", "Barcelona", "Stockholm", "Paris"]
   },
   "Barcelona": {
     "color": "blue",
-    "x": 480,
+    "x": 460,
     "y": 300,
     "connections": ["London", "New York", "Paris", "Sao Paulo", "Casablanca"]
   },
   "Paris": {
     "color": "blue",
     "x": 530,
-    "y": 280,
+    "y": 270,
     "connections": ["Casablanca", "Stockholm", "Barcelona", "Rome"]
   },
   "Stockholm": {
@@ -56,13 +56,13 @@
   "Rome": {
     "color": "blue",
     "x": 580,
-    "y": 260,
+    "y": 280,
     "connections": ["Stockholm", "Paris", "Istanbul"]
   },
   "Moscow": {
     "color": "blue",
-    "x": 620,
-    "y": 250,
+    "x": 640,
+    "y": 230,
     "connections": ["Stockholm", "Istanbul", "Kyiv"]
   },
   "San Francisco": {
@@ -129,15 +129,15 @@
     "color": "yellow",
     "x": 600,
     "y": 500,
-    "connections": ["Lagos", "Kinshasa", "Johannesburg", "Cairo"]
+    "connections": ["Lagos", "Kinshasa", "Cape Town", "Cairo"]
   },
   "Kinshasa": {
     "color": "yellow",
     "x": 530,
     "y": 580,
-    "connections": ["Lagos", "Nairobi", "Johannesburg"]
+    "connections": ["Lagos", "Nairobi", "Cape Town"]
   },
-  "Johannesburg": {
+  "Cape Town": {
     "color": "yellow",
     "x": 600,
     "y": 630,
@@ -152,7 +152,7 @@
   "Istanbul": {
     "color": "black",
     "x": 600,
-    "y": 300,
+    "y": 330,
     "connections": ["Rome", "Casablanca", "Moscow", "Cairo", "Baghdad", "Kyiv"]
   },
   "Cairo": {
@@ -164,7 +164,7 @@
   "Kyiv": {
     "color": "black",
     "x": 650,
-    "y": 300,
+    "y": 290,
     "connections": ["Moscow", "Istanbul", "Tehran"]
   },
   "Baghdad": {

@@ -113,7 +113,7 @@ function createCardElement(event, cardType) {
 
     return cardElement;
   } else if (cardType === 'infection') {
-    // Create an infection card (keeping the original styling)
+    // Create an infection card with the new styling
     const { city, color } = event;
 
     const cardElement = document.createElement('div');
