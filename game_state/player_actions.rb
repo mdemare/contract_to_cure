@@ -9,24 +9,42 @@ module PlayerActions
       move_type = 'drive / ferry'
     elsif @research_stations.include?(current_location) && @research_stations.include?(destination)
       move_type = 'shuttle flight'
-    elsif current_player.role == :operations_expert and @research_stations.include?(current_location) and card_index and current_player.hand[card_index].type == :city
-      # The operation expert can go anywhere from a research station by discarding a city card
-      move_type = 'operation researcher special move'
-      discard_player_card(@current_player_index, card_index)
+    elsif current_player.role == :operations_expert and @research_stations.include?(current_location) and not current_player.city_cards.empty?
+      if card_index and current_player.hand[card_index].type == :city
+        # The operation expert can go anywhere from a research station by discarding a city card
+        move_type = 'operation researcher special move'
+        discard_player_card(@current_player_index, card_index)
+      else
+        # Request card index for operations expert move
+        return { 
+          success: false, 
+          status: 'card_required', 
+          message: "Operations Expert requires a city card to move from a research station to any city",
+          movement_type: 'operations_expert_special'
+        }
+      end
     elsif current_player.role == :dispatcher and @players.any? { |p| p.location == destination && p.index != player_index }
       # The dispatcher can bring players together
       move_type = 'dispatcher special move'
     elsif has_city_card?(player_index, destination)
       hand = current_player.hand
       if has_city_card?(player_index, current_location)
-        if card_index and hand[card_index] == destination
+        if card_index and hand[card_index].type == :city and hand[card_index].name == destination
           move_type = 'direct flight'
-        elsif card_index and hand[card_index] == current_location
-          move_type = 'charter_flight'
+          discard_player_card(player_index, card_index)
+        elsif card_index and hand[card_index].type == :city and hand[card_index].name == current_location
+          move_type = 'charter flight'
+          discard_player_card(player_index, card_index)
         else
-          return after_action(false, "Specify if you want a charter flight or a direct flight.")
+          # Request card selection when player has both current location and destination cards
+          return { 
+            success: false, 
+            status: 'card_required', 
+            message: "You can use either a direct flight (discard destination card) or a charter flight (discard current location card)",
+            movement_type: 'flight_choice',
+            options: ['direct_flight', 'charter_flight']
+          }
         end
-        discard_player_card(player_index, card_index)
       else
         move_type = 'direct flight'
 

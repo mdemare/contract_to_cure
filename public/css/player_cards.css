@@ -52,7 +52,6 @@
 /* ===== Card Color Schemes ===== */
 /* City card colors */
 .card-blue,
-.blue,
 .city-card.blue,
 .selectable-card.city.blue,
 .share-card.blue {
@@ -61,7 +60,6 @@
 }
 
 .card-yellow,
-.yellow,
 .city-card.yellow,
 .selectable-card.city.yellow,
 .share-card.yellow {
@@ -70,7 +68,6 @@
 }
 
 .card-black,
-.black,
 .city-card.black,
 .selectable-card.city.black,
 .share-card.black {
@@ -79,7 +76,6 @@
 }
 
 .card-red,
-.red,
 .city-card.red,
 .selectable-card.city.red,
 .share-card.red {
