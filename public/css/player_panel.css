@@ -137,33 +137,33 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* Use the same role colors as in current_player.css */
+/* Match role colors with the game's colors */
 .player-pawn.medic {
-  background: #ea5c0a;
+  background: #ff8d1e; /* Orange */
 }
 
 .player-pawn.scientist {
-  background: #ffffff;
+  background: #ffffff; /* White */
 }
 
 .player-pawn.operations-expert {
-  background: #14d528;
+  background: #2dd53d; /* Lime green */
 }
 
 .player-pawn.dispatcher {
-  background: #bd22d2;
+  background: #d022bd; /* Pink/Purple */
 }
 
 .player-pawn.researcher {
-  background: #7c643a;
+  background: #8b4513; /* Brown */
 }
 
 .player-pawn.quarantine-specialist {
-  background: #2c6c0a;
+  background: #4ca64c; /* Forest green */
 }
 
 .player-pawn.contingency-planner {
-  background: #0cd8d1;
+  background: #00b7b7; /* Teal */
 }
 
 .player-name {

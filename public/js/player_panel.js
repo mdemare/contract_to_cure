@@ -161,11 +161,11 @@ function createPlayerItem(player, isCurrent) {
   // Create player name/role text
   const nameElement = document.createElement('div');
   nameElement.className = 'player-name';
-  nameElement.textContent = player.name || `Player ${player.index + 1}`;
+  nameElement.textContent = roleText; // Use the role name instead of "Player X"
 
   const roleElement = document.createElement('div');
   roleElement.className = 'player-role';
-  roleElement.textContent = roleText;
+  roleElement.textContent = `Player ${player.index + 1}`; // Move player number to the subtitle
 
   // Create current player indicator
   const currentIndicator = document.createElement('div');

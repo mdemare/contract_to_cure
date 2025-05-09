@@ -6,13 +6,10 @@ import { getCityColor } from '/js/player_actions.js';
 export function showCardSelectionModal(count, cardIndices, completionFunction, customTitle, playerIndex) {
   // Get current game state to show player's cards
   const gameState = getCurrentGameState();
-  if (!gameState) {
-    return;
-  }
 
   // Use specified player index or default to current player
   const currentPlayerIndex = playerIndex !== undefined ? playerIndex : gameState.gameStatus.currentPlayerIndex;
-  const currentPlayer = gameState.players[currentPlayerIndex];
+  const currentPlayer = gameState.getCurrentPlayer();
 
   if (!currentPlayer || !currentPlayer.hand || !Array.isArray(currentPlayer.hand)) {
     return;
