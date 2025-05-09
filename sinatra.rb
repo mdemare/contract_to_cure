@@ -1,11 +1,47 @@
 require 'sinatra'
 require 'json'
 require_relative 'game_state'
+require 'optparse'
+
+# Parse command line options
+options = {
+  difficulty: :heroic,  # Default to heroic difficulty
+  new_game: false       # Default to loading from saved state if available
+}
+
+OptionParser.new do |opts|
+  opts.banner = "Usage: ruby sinatra.rb [options]"
+
+  opts.on("-d", "--difficulty DIFFICULTY", [:introductory, :normal, :heroic], 
+          "Set game difficulty (introductory, normal, heroic)") do |d|
+    options[:difficulty] = d
+  end
+
+  opts.on("-n", "--new", "Start a new game (ignore saved state)") do
+    options[:new_game] = true
+  end
+  
+  opts.on("-h", "--help", "Show this help message") do
+    puts opts
+    exit
+  end
+end.parse!
+
+puts "Game Settings:"
+puts "  Difficulty: #{options[:difficulty]}"
+puts "  New Game: #{options[:new_game]}"
 
 # Serve static files from the 'public' folder
 set :public_folder, "#{File.dirname(__FILE__)}/public"
 
-game_state = GameState.new(4, :normal)
+# Initialize game state based on options
+if options[:new_game] || !File.exist?('current_game.yaml')
+  puts "Starting new game with difficulty: #{options[:difficulty]}"
+  game_state = GameState.new(4, options[:difficulty])
+else
+  puts "Loading game from saved state"
+  game_state = GameState.load_from_yaml || GameState.new(4, options[:difficulty])
+end
 
 # Serve game state as JSON
 get '/game_state.json' do
@@ -100,6 +136,27 @@ post '/build_research_station' do
   game_state.build_research_station.to_json
 end
 
+# Discard card endpoint for hand limit
+post '/discard_cards' do
+  content_type :json
+  request.body.rewind
+  data = JSON.parse(request.body.read)
+
+  player_index = data['player_index'].to_i
+  card_indices = data['card_indices']
+
+  # Validate required parameters
+  return { status: 'error', message: 'Missing required parameters' }.to_json unless player_index.is_a?(Integer) && card_indices.is_a?(Array)
+
+  # Sort indices in descending order to avoid issues when removing from array
+  card_indices.sort.reverse.each do |card_index|
+    game_state.discard_player_card(player_index, card_index.to_i)
+  end
+
+  # Return success response
+  { status: 'success', message: "Successfully discarded #{card_indices.length} card(s)" }.to_json
+end
+
 # Restart game endpoint
 post '/restart_game' do
   content_type :json
@@ -111,5 +168,10 @@ post '/restart_game' do
   difficulty_level = data['difficulty_level'] ? data['difficulty_level'].to_sym : nil
 
   # Restart the game and return result
-  game_state.reset_game(difficulty_level).to_json
+  result = game_state.reset_game(difficulty_level)
+  
+  # Save the new game state
+  game_state.save_game_state
+  
+  result.to_json
 end

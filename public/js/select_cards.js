@@ -3,15 +3,15 @@ import { getCurrentGameState } from '/js/game_state.js';
 import { getCityColor } from '/js/player_actions.js';
 
 // Function to show a card selection modal
-export function showCardSelectionModal(count, cardIndices, completionFunction) {
+export function showCardSelectionModal(count, cardIndices, completionFunction, customTitle, playerIndex) {
   // Get current game state to show player's cards
   const gameState = getCurrentGameState();
   if (!gameState) {
     return;
   }
 
-  // Get current player's hand
-  const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
+  // Use specified player index or default to current player
+  const currentPlayerIndex = playerIndex !== undefined ? playerIndex : gameState.gameStatus.currentPlayerIndex;
   const currentPlayer = gameState.players[currentPlayerIndex];
 
   if (!currentPlayer || !currentPlayer.hand || !Array.isArray(currentPlayer.hand)) {
@@ -28,13 +28,15 @@ export function showCardSelectionModal(count, cardIndices, completionFunction) {
 
   // Add title
   const modalTitle = document.createElement('h3');
-  modalTitle.textContent = `Select ${count} Card${count !== 1 ? 's' : ''}`;
+  modalTitle.textContent = customTitle || `Select ${count} Card${count !== 1 ? 's' : ''}`;
   modalContent.appendChild(modalTitle);
 
   // Add instructions
   const instructions = document.createElement('p');
   instructions.classList.add('modal-instructions');
-  instructions.textContent = `Please select ${count} card${count !== 1 ? 's' : ''} from your hand.`;
+  instructions.textContent = customTitle 
+    ? `Please select ${count} card${count !== 1 ? 's' : ''} from your hand.`
+    : `Please select ${count} card${count !== 1 ? 's' : ''} from your hand.`;
   modalContent.appendChild(instructions);
 
   // Create card selection container
@@ -142,4 +144,73 @@ export function showCardSelectionModal(count, cardIndices, completionFunction) {
       document.body.removeChild(modalBackdrop);
     }
   }
+}
+
+// Function to handle hand limit checks and discard cards
+export function handleHandLimitCheck(playerIndex, discardCount, completionCallback) {
+  const gameState = getCurrentGameState();
+  if (!gameState) {
+    console.error('Game state not available for hand limit check');
+    if (completionCallback) completionCallback();
+    return;
+  }
+
+  const player = gameState.players[playerIndex];
+  if (!player || !player.hand) {
+    console.error('Player data not available for hand limit check');
+    if (completionCallback) completionCallback();
+    return;
+  }
+
+  // Get player name/role for the message
+  const playerName = player.role;
+
+  // Create title for the modal
+  const title = `${playerName} must discard ${discardCount} card${discardCount > 1 ? 's' : ''} (Hand limit: 7)`;
+
+  // Get all card indices
+  const cardIndices = player.hand.map((_, index) => index);
+
+  // Show card selection modal
+  showCardSelectionModal(discardCount, cardIndices, async (selectedIndices) => {
+    // Make API call to discard the selected cards
+    try {
+      const response = await fetch('/discard_cards', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          player_index: playerIndex,
+          card_indices: selectedIndices
+        })
+      });
+
+      if (response.ok) {
+        // Refresh game state after discard
+        const gameStateResponse = await fetch('/game_state.json');
+        if (gameStateResponse.ok) {
+          await gameStateResponse.json(); // This will update the game state through the event listeners
+        }
+
+        // Show success message
+        const notification = document.createElement('div');
+        notification.classList.add('game-notification', 'success');
+        notification.textContent = `${playerName} discarded ${discardCount} card${discardCount > 1 ? 's' : ''}`;
+        document.body.appendChild(notification);
+
+        setTimeout(() => {
+          notification.classList.add('fade-out');
+          setTimeout(() => {
+            notification.remove();
+          }, 500);
+        }, 3000);
+      }
+    } catch (error) {
+      console.error('Error discarding cards:', error);
+    }
+
+    // Call completion callback
+    if (completionCallback) completionCallback();
+  }, title, playerIndex);
 }

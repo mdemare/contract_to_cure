@@ -1,5 +1,6 @@
 // end_turn_events.js
 import { getCurrentGameState } from './game_state.js';
+import { handleHandLimitCheck } from './select_cards.js';
 
 // Function to handle end of turn events
 export function handleEndOfTurnEvents(endTurnData) {
@@ -12,11 +13,25 @@ export function handleEndOfTurnEvents(endTurnData) {
   const drawCardEvents = endTurnData.events.filter(event => event.type === 'draw_card');
   const infectCardEvents = endTurnData.events.filter(event => event.type === 'infect_city');
 
+  // Check for hand limit exceeded
+  const handLimitEvent = drawCardEvents.find(event => event.exceeded_hand_limit);
+
   // First animate drawing player cards
   if (drawCardEvents.length > 0) {
     animateCardDraws(drawCardEvents, 'player', () => {
-      // After player cards are drawn, animate infection cards
-      if (infectCardEvents.length > 0) {
+      // Check for hand limit after animations
+      if (handLimitEvent) {
+        handleHandLimitCheck(handLimitEvent.player_index, handLimitEvent.discard_count, () => {
+          // After hand limit is resolved, continue with infection cards
+          if (infectCardEvents.length > 0) {
+            setTimeout(() => {
+              animateCardDraws(infectCardEvents, 'infection');
+            }, 1000); // 1 second delay between player cards and infection cards
+          }
+        });
+      }
+      // If no hand limit issues, just proceed with infection cards
+      else if (infectCardEvents.length > 0) {
         setTimeout(() => {
           animateCardDraws(infectCardEvents, 'infection');
         }, 1000); // 1 second delay between player cards and infection cards

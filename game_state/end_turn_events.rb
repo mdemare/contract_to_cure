@@ -1,3 +1,5 @@
+require 'yaml'
+
 module EndTurnEvents
   include GameStateConfig
   def end_turn
@@ -11,7 +13,11 @@ module EndTurnEvents
         draw_event[:epidemic_events] = epidemic_events
       end
       events << draw_event
-      return { game_over: true, reason: @game_over_reason, events: events } if @game_over
+      if @game_over
+        # Save final game state when the game is over
+        save_game_state
+        return { game_over: true, reason: @game_over_reason, events: events }
+      end
     end
 
     # Infect cities
@@ -19,7 +25,11 @@ module EndTurnEvents
       infect_event = infect_city
       if infect_event
         events << infect_event
-        return { game_over: true, reason: @game_over_reason, events: events } if @game_over
+        if @game_over
+          # Save final game state when the game is over
+          save_game_state
+          return { game_over: true, reason: @game_over_reason, events: events }
+        end
       end
     end
 
@@ -29,7 +39,77 @@ module EndTurnEvents
     @actions_remaining = 4
     @turn += 1
 
+    # Save game state after turn is complete
+    save_game_state
+
     { game_over: false, events: events } # Return events if game is not over
+  end
+
+  # Public method to save game state from outside
+  def save_game_state
+    begin
+      # Create a hash with all game state, including hidden information like decks
+      game_state = {
+        game_status: {
+          actions_remaining: @actions_remaining,
+          turn: @turn,
+          game_over: @game_over,
+          game_over_reason: @game_over_reason,
+          outbreaks: @outbreak_count,
+          infection_rate: @infection_rate,
+          infection_rate_position: @infection_rate_marker,
+          current_player_index: @current_player_index
+        },
+        disease_cubes: COLORS.each_with_object({}) do |color, hash|
+          hash[color] = {
+            cured: @cures[color],
+            eradicated: @cures[color] && @disease_cubes[color] == MAX_DISEASE_CUBES_PER_COLOR,
+            in_supply: @disease_cubes[color]
+          }
+        end,
+        cities: @cities.transform_values do |city|
+          {
+            name: city.name,
+            color: city.color,
+            connections: city.connections,
+            disease_cubes: city.disease_cubes,
+            has_research_station: city.has_research_station
+          }
+        end,
+        research_stations: {
+          available: MAX_RESEARCH_STATIONS - @research_stations.size,
+          locations: @research_stations
+        },
+        players: @players.map do |player|
+          {
+            role: player.role,
+            index: player.index,
+            location: player.location,
+            hand: player.hand.map { |card| card_to_hash(card) }
+          }
+        end,
+        decks: {
+          player_deck: @player_deck.map { |card| card_to_hash(card) },
+          player_discard: @player_discard.map { |card| card_to_hash(card) },
+          infection_deck: @infection_deck.map { |card| card_to_hash(card) },
+          infection_discard: @infection_discard.map { |card| card_to_hash(card) }
+        }
+      }
+
+      # Write to the file
+      File.write('current_game.yaml', game_state.to_yaml)
+    rescue => e
+      puts "Error saving game state to file: #{e.message}"
+    end
+  end
+
+  # Helper method to convert a card to a hash
+  def card_to_hash(card)
+    {
+      type: card.type,
+      name: card.name,
+      color: card.respond_to?(:color) ? card.color : nil
+    }
   end
 
   def draw_player_card(player_index)
@@ -49,7 +129,9 @@ module EndTurnEvents
 
       # Check hand limit (7 cards)
       if player.hand.size > 7
-        # TODO: Prompt player to discard down to 7 cards (this needs separate UI interaction)
+        event[:exceeded_hand_limit] = true
+        event[:discard_count] = player.hand.size - 7
+        event[:player_index] = player_index
       end
     end
     event # Return the draw event (which may include epidemic events)

@@ -4,6 +4,7 @@ module PlayerActions
   def move(player_index, destination, card_index = nil)
     player = @players[player_index]
     current_location = player.location
+    puts "city cards: ",current_player.city_cards.inspect
     # Check if move is valid
     if @cities[current_location].connections.include?(destination)
       move_type = 'drive / ferry'
@@ -16,9 +17,9 @@ module PlayerActions
         discard_player_card(@current_player_index, card_index)
       else
         # Request card index for operations expert move
-        return { 
-          success: false, 
-          status: 'card_required', 
+        return {
+          success: false,
+          status: 'card_required',
           message: "Operations Expert requires a city card to move from a research station to any city",
           movement_type: 'operations_expert_special'
         }
@@ -37,9 +38,9 @@ module PlayerActions
           discard_player_card(player_index, card_index)
         else
           # Request card selection when player has both current location and destination cards
-          return { 
-            success: false, 
-            status: 'card_required', 
+          return {
+            success: false,
+            status: 'card_required',
             message: "You can use either a direct flight (discard destination card) or a charter flight (discard current location card)",
             movement_type: 'flight_choice',
             options: ['direct_flight', 'charter_flight']
@@ -146,8 +147,19 @@ module PlayerActions
     receiving_player.hand << card
     receiving_player.hand = receiving_player.sorted_hand
 
-    # Return success
-    after_action(true, "Successfully shared #{card.name} card from #{giving_player.role} to #{receiving_player.role}")
+    # Check hand limit (7 cards)
+    exceeded_limit = nil
+    if receiving_player.hand.size > 7
+      exceeded_limit = {
+        player_index: receiving_player_index,
+        discard_count: receiving_player.hand.size - 7
+      }
+    end
+
+    # Return success with hand limit info if applicable
+    response = after_action(true, "Successfully shared #{card.name} card from #{giving_player.role} to #{receiving_player.role}")
+    response[:exceeded_hand_limit] = exceeded_limit if exceeded_limit
+    response
   end
 
   def cure_disease(color, card_indices)
@@ -207,6 +219,9 @@ module PlayerActions
     if @actions_remaining.zero?
       end_turn_events = end_turn
       response[:end_turn_events] = end_turn_events
+    else
+      # Save game state after every action (not just at end of turn)
+      save_game_state
     end
 
     response

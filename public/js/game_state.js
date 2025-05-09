@@ -206,3 +206,40 @@ function prepareMapWithGameState(citiesData, gameState) {
 export function getCurrentGameState() {
   return currentGameState;
 }
+
+/**
+ * Get the current player object
+ * @returns {Object} The current player object
+ * @throws {Error} If game state is not loaded or current player cannot be found
+ * @description This function is guaranteed to return a valid player object or throw an error
+ */
+export function getCurrentPlayer() {
+  if (!currentGameState || !currentGameState.gameStatus) {
+    throw new Error('Game state not loaded or invalid');
+  }
+  
+  const currentPlayerIndex = currentGameState.gameStatus.currentPlayerIndex;
+  const currentPlayer = currentGameState.players.find(player => player.index === currentPlayerIndex);
+  
+  if (!currentPlayer) {
+    throw new Error('Current player not found');
+  }
+  
+  return currentPlayer;
+}
+
+/**
+ * Get the current player's location
+ * @returns {string} The city name where the current player is located
+ * @throws {Error} If game state is not loaded or current player cannot be found
+ * @description This function is guaranteed to return a valid location or throw an error
+ */
+export function getCurrentLocation() {
+  const currentPlayer = getCurrentPlayer();
+  
+  if (!currentPlayer.location) {
+    throw new Error('Current player location is undefined');
+  }
+  
+  return currentPlayer.location;
+}

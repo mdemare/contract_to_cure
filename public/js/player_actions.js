@@ -1,7 +1,7 @@
 // player_actions.js
-import { getCurrentGameState, loadGameState, CITIES } from './game_state.js';
+import { getCurrentGameState, loadGameState, CITIES, getCurrentLocation, getCurrentPlayer } from './game_state.js';
 import { handleEndOfTurnEvents } from './end_turn_events.js';
-import { showCardSelectionModal } from './select_cards.js';
+import { showCardSelectionModal, handleHandLimitCheck } from './select_cards.js';
 
 // Map click handler - initialize city click events
 export function initMoveActions() {
@@ -40,19 +40,11 @@ function initBuildStation() {
 
 // Handle build station button click
 async function handleBuildStationClick() {
-  console.log("handleBuildStationClick")
   // Get current game state
   const gameState = getCurrentGameState();
-  if (!gameState) return;
 
   // Get current player
-  const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
-  const currentPlayer = gameState.players[currentPlayerIndex];
-  console.log("handleBuildStationClick")
-  console.log(currentPlayerIndex)
-  console.log(gameState.players)
-
-  if (!currentPlayer) return;
+  const currentPlayer = getCurrentPlayer();
 
   // Get current location
   const currentLocation = currentPlayer.location;
@@ -76,7 +68,7 @@ async function handleBuildStationClick() {
   }
 
   // All checks passed, proceed with building the station
-  await buildResearchStation(currentPlayerIndex, currentLocation);
+  await buildResearchStation(currentPlayer.index, currentLocation);
 }
 
 // Handle a city click event
@@ -90,17 +82,13 @@ async function handleCityClick(event) {
   }
 
   // Get the current player
-  const gameState = getCurrentGameState();
-  const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
-  const currentPlayer = gameState.players.find(player => player.index === currentPlayerIndex);
-  console.log("currentPlayer");
-  console.log(currentPlayer);
+  const currentPlayer = getCurrentPlayer();
 
   // Check if the clicked city is the current city (for treat disease)
   if (cityName === currentPlayer.location) {
-    await treatDisease(cityName);
+    await treatDisease();
   } else {
-    await movePlayer(currentPlayerIndex, cityName);
+    await movePlayer(currentPlayer.index, cityName);
   }
 }
 
@@ -129,13 +117,7 @@ async function movePlayer(playerIndex, destination) {
 // Cure disease action
 export async function cureDisease() {
   const gameState = getCurrentGameState();
-  const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
-  const currentPlayer = gameState.players.find(player => player.index === currentPlayerIndex);
-
-  if (!currentPlayer) {
-    showErrorMessage("Current player not found");
-    return;
-  }
+  const currentPlayer = getCurrentPlayer();
 
   // Group cards by color
   const cardsByColor = {};
@@ -234,8 +216,11 @@ export async function pass() {
 }
 
 // Treat disease at the current location
-export async function treatDisease(cityName) {
+export async function treatDisease() {
   try {
+    // Get the current player's location (will throw if unavailable)
+    const cityName = getCurrentLocation();
+
     // Get the city's color
     let diseaseColor = getCityColor(cityName);
 
@@ -247,7 +232,8 @@ export async function treatDisease(cityName) {
       'Treatment failed'
     );
   } catch (error) {
-    showErrorMessage(`Network error: ${error.message}`);
+    // Handle errors from getCurrentLocation or network errors
+    showErrorMessage(error.message);
   }
 }
 
@@ -306,6 +292,16 @@ async function processAPIRequest(endpoint, requestData, successMessage, failureP
       const result = await response.json();
 
       if (result.status === 'success') {
+        // Check if we need to handle hand limit
+        if (result.exceeded_hand_limit) {
+          const { player_index, discard_count } = result.exceeded_hand_limit;
+
+          // Handle hand limit exceeded
+          await new Promise(resolve => {
+            handleHandLimitCheck(player_index, discard_count, resolve);
+          });
+        }
+
         // Check for end of turn events
         if (result.end_turn && result.end_turn_events) {
           handleEndOfTurnEvents(result.end_turn_events);
@@ -330,6 +326,16 @@ async function processAPIRequest(endpoint, requestData, successMessage, failureP
 
         // Show success message
         showSuccessMessage(result.message || successMessage);
+      } else if (result.status === 'card_required' && endpoint === '/move') {
+        // Handle operations expert special move card selection
+        if (result.movement_type === 'operations_expert_special') {
+          handleOperationsExpertMove(requestData.player_index, requestData.destination);
+        } else if (result.movement_type === 'flight_choice') {
+          handleFlightChoice(requestData.player_index, requestData.destination);
+        } else {
+          // Handle other card selection scenarios if needed
+          showErrorMessage(result.message);
+        }
       } else {
         showErrorMessage(result.message);
       }
@@ -385,4 +391,87 @@ function showErrorMessage(message) {
 // Display invalid move message
 function showInvalidActionMessage(message) {
   showNotification(message, 'warning');
+}
+
+// Handle Operations Expert special move that requires a city card
+async function handleOperationsExpertMove(playerIndex, destination) {
+  const gameState = getCurrentGameState();
+  const currentPlayer = gameState.players[playerIndex];
+
+  // Get all city cards from player's hand
+  const cityCardIndices = currentPlayer.hand
+    .map((cardName, index) => {
+      // Skip non-city cards
+      if (cardName.startsWith('Action:') || cardName === 'Epidemic') {
+        return null;
+      }
+      return index;
+    })
+    .filter(index => index !== null);
+
+  // Show card selection modal
+  showCardSelectionModal(1, cityCardIndices, async (selectedIndices) => {
+    // Re-submit the move with the selected card
+    const moveData = {
+      player_index: playerIndex,
+      destination: destination,
+      card_index: selectedIndices[0]
+    };
+
+    // Process the move action with the selected card
+    await processAPIRequest(
+      '/move',
+      moveData,
+      `Moved to ${destination}`,
+      'Move failed',
+      { playerIndex, destination }
+    );
+  });
+}
+
+// Handle flight choice when player has both current location and destination cards
+async function handleFlightChoice(playerIndex, destination) {
+  const gameState = getCurrentGameState();
+  const currentPlayer = gameState.players[playerIndex];
+  const currentLocation = currentPlayer.location;
+  
+  // Find the indices of the current location card and destination card in hand
+  const flightCardIndices = currentPlayer.hand
+    .map((cardName, index) => {
+      // We only want the current location or destination city cards
+      if (cardName === currentLocation || cardName === destination) {
+        return {
+          index: index,
+          name: cardName
+        };
+      }
+      return null;
+    })
+    .filter(card => card !== null);
+  
+  // Extract just the indices for the modal
+  const selectionIndices = flightCardIndices.map(card => card.index);
+  
+  // Show card selection modal
+  showCardSelectionModal(1, selectionIndices, async (selectedIndices) => {
+    // Re-submit the move with the selected card
+    const moveData = {
+      player_index: playerIndex,
+      destination: destination,
+      card_index: selectedIndices[0]
+    };
+
+    // Process the move action with the selected card
+    await processAPIRequest(
+      '/move',
+      moveData,
+      `Moved to ${destination}`,
+      'Move failed',
+      { 
+        playerIndex, 
+        destination,
+        moveType: 'flight' 
+      }
+    );
+  }, "Choose a card to discard for flight");
 }

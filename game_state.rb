@@ -25,6 +25,107 @@ class GameState
     @players_count = players_count
     reset_game(difficulty_level)
   end
+  
+  # Load game state from a YAML file if it exists
+  def self.load_from_yaml(file_path = 'current_game.yaml')
+    require 'yaml'
+    
+    if File.exist?(file_path)
+      begin
+        puts "Loading game state from #{file_path}"
+        saved_state = YAML.load_file(file_path)
+        
+        # Create a new instance without initialization
+        game = allocate
+        
+        # Set up instance variables from the saved state
+        game.send(:load_state_from_hash, saved_state)
+        
+        return game
+      rescue => e
+        puts "Error loading game state from file: #{e.message}"
+        puts e.backtrace
+        return nil
+      end
+    else
+      puts "No saved game state found at #{file_path}"
+      return nil
+    end
+  end
+  
+  private
+  
+  # Set up instance variables from the saved state hash
+  def load_state_from_hash(state)
+    # Basic game state
+    @actions_remaining = state[:game_status][:actions_remaining]
+    @turn = state[:game_status][:turn]
+    @game_over = state[:game_status][:game_over]
+    @game_over_reason = state[:game_status][:game_over_reason]
+    @outbreak_count = state[:game_status][:outbreaks]
+    @infection_rate = state[:game_status][:infection_rate]
+    @infection_rate_marker = state[:game_status][:infection_rate_position]
+    @current_player_index = state[:game_status][:current_player_index]
+    
+    # Rebuild cities
+    @cities = {}
+    state[:cities].each do |name, city_data|
+      @cities[name] = City.new(
+        city_data[:name],
+        city_data[:color],
+        city_data[:connections]
+      )
+      @cities[name].disease_cubes = city_data[:disease_cubes]
+      @cities[name].has_research_station = city_data[:has_research_station]
+    end
+    
+    # Disease state
+    @disease_cubes = {}
+    @cures = {}
+    state[:disease_cubes].each do |color, data|
+      @disease_cubes[color] = data[:in_supply]
+      @cures[color] = data[:cured]
+    end
+    
+    # Research stations
+    @research_stations = state[:research_stations][:locations]
+    
+    # Players
+    @players = []
+    state[:players].each do |player_data|
+      player = Player.new(player_data[:role], player_data[:index])
+      player.location = player_data[:location]
+      player.hand = player_data[:hand].map do |card_data|
+        Card.new(card_data[:type], card_data[:name], card_data[:color])
+      end
+      @players << player
+    end
+    
+    # Current player reference
+    @current_player = @players[@current_player_index]
+    
+    # Decks
+    @player_deck = state[:decks][:player_deck].map do |card_data|
+      Card.new(card_data[:type], card_data[:name], card_data[:color])
+    end
+    
+    @player_discard = state[:decks][:player_discard].map do |card_data|
+      Card.new(card_data[:type], card_data[:name], card_data[:color])
+    end
+    
+    @infection_deck = state[:decks][:infection_deck].map do |card_data|
+      Card.new(card_data[:type], card_data[:name], card_data[:color])
+    end
+    
+    @infection_discard = state[:decks][:infection_discard].map do |card_data|
+      Card.new(card_data[:type], card_data[:name], card_data[:color])
+    end
+    
+    # Determine player count and difficulty level
+    @players_count = @players.size
+    # We don't have the difficulty level stored, so we'll default to normal
+    @difficulty_level = :normal
+  end
 
   # Reset the game to its initial state
   def reset_game(difficulty_level)
