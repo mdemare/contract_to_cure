@@ -86,17 +86,17 @@ function createCardElement(event, cardType) {
   if (cardType === 'player') {
     const { player, card } = event;
 
-    // Create the card element
+    // Create the card element with card-base class from cards.css
     const cardElement = document.createElement('div');
-    cardElement.classList.add('animated-card');
+    cardElement.classList.add('animated-card', 'card-base');
 
     // Add appropriate class based on card type
     if (card.type === 'city') {
-      cardElement.classList.add('city-card', card.color);
+      cardElement.classList.add('city-card', `card-${card.color}`);
     } else if (card.type === 'event') {
-      cardElement.classList.add('event-card');
+      cardElement.classList.add('card-event');
     } else if (card.type === 'epidemic') {
-      cardElement.classList.add('epidemic-card');
+      cardElement.classList.add('card-epidemic');
     }
 
     // Card content
@@ -113,7 +113,7 @@ function createCardElement(event, cardType) {
 
     return cardElement;
   } else if (cardType === 'infection') {
-    // Create an infection card
+    // Create an infection card (keeping the original styling)
     const { city, color } = event;
 
     const cardElement = document.createElement('div');

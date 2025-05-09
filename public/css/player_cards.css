@@ -1,0 +1,454 @@
+/* cards.css - Consolidated card styles */
+
+/* ===== Card Variables ===== */
+:root {
+  --blue-disease: #3b90ff;
+  --yellow-disease: #ffd700;
+  --black-disease: #444;
+  --red-disease: #ff5e5e;
+  --event-color: #9c6edb;
+  --epidemic-color: #ff3333;
+}
+
+/* ===== Card Base Styles ===== */
+.card-base {
+  display: flex;
+  flex-direction: column;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  position: relative;
+  overflow: hidden;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.card-header {
+  font-family: 'Roboto Slab', serif;
+  font-weight: bold;
+  text-transform: uppercase;
+  font-size: 14px;
+  padding: 5px;
+  text-align: center;
+  border-bottom: 1px solid #ccc;
+}
+
+.card-title, .card-name {
+  font-family: 'Montserrat', sans-serif;
+  font-weight: bold;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.card-title {
+  font-size: 20px;
+  margin-top: 15px;
+  flex-grow: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ===== Card Color Schemes ===== */
+/* City card colors */
+.card-blue,
+.blue,
+.city-card.blue,
+.selectable-card.city.blue,
+.share-card.blue {
+  background-color: #e6f0ff;
+  border-color: #3b90ff;
+}
+
+.card-yellow,
+.yellow,
+.city-card.yellow,
+.selectable-card.city.yellow,
+.share-card.yellow {
+  background-color: #fffbe6;
+  border-color: #ffd700;
+}
+
+.card-black,
+.black,
+.city-card.black,
+.selectable-card.city.black,
+.share-card.black {
+  background-color: #e6e6e6;
+  border-color: #444;
+}
+
+.card-red,
+.red,
+.city-card.red,
+.selectable-card.city.red,
+.share-card.red {
+  background-color: #ffe6e6;
+  border-color: #ff5e5e;
+}
+
+/* Event card styles */
+.card-event,
+.event-card,
+.hand-card-preview.event,
+.selectable-card.action {
+  background-color: #f0e6ff;
+  border-color: #9c6edb;
+}
+
+/* Epidemic card styles */
+.card-epidemic,
+.epidemic-card,
+.hand-card-preview.epidemic,
+.selectable-card.epidemic {
+  background-color: #ffe6e6;
+  border-color: #ff3333;
+}
+
+/* Card text colors */
+.card-blue .card-header,
+.card-blue .card-title,
+.card-blue .card-name,
+.city-card.blue .card-header,
+.city-card.blue .card-title {
+  color: #3b90ff;
+}
+
+.card-yellow .card-header,
+.card-yellow .card-title,
+.card-yellow .card-name,
+.city-card.yellow .card-header,
+.city-card.yellow .card-title {
+  color: #d4a900;
+}
+
+.card-black .card-header,
+.card-black .card-title,
+.card-black .card-name,
+.city-card.black .card-header,
+.city-card.black .card-title {
+  color: #444;
+}
+
+.card-red .card-header,
+.card-red .card-title,
+.card-red .card-name,
+.city-card.red .card-header,
+.city-card.red .card-title {
+  color: #ff5e5e;
+}
+
+.card-event .card-header,
+.card-event .card-title,
+.card-event .card-name,
+.event-card .card-header,
+.event-card .card-title {
+  color: #7a4cb5;
+}
+
+.card-epidemic .card-header,
+.card-epidemic .card-title,
+.card-epidemic .card-name,
+.epidemic-card .card-header,
+.epidemic-card .card-title {
+  color: #cc0000;
+}
+
+/* ===== Full Card Styles (used in animations and modals) ===== */
+.animated-card {
+  width: 180px;
+  height: 250px;
+  background-color: #fff;
+  border-radius: 10px;
+  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+  display: flex;
+  flex-direction: column;
+  padding: 10px;
+  transform: scale(0.5) translateX(-50vw);
+  opacity: 0;
+  transition: transform 1s ease-out, opacity 0.8s ease-out;
+  position: relative;
+  margin-right: 30px;
+  border: 2px solid #333;
+}
+
+.animated-card.drawn {
+  transform: scale(1) translateX(0);
+  opacity: 1;
+}
+
+/* Add a glow effect for drawn cards */
+.animated-card.drawn::after {
+  content: '';
+  position: absolute;
+  top: -10px;
+  left: -10px;
+  right: -10px;
+  bottom: -10px;
+  border-radius: 15px;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
+  z-index: -1;
+  animation: glow 1.5s ease-out;
+}
+
+@keyframes glow {
+  0% {
+    opacity: 0;
+    transform: scale(0.9);
+  }
+  50% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.1);
+  }
+}
+
+/* ===== Card Preview Styles (used in player panel sidebar) ===== */
+.hand-card-preview {
+  height: 24px; /* Slightly shorter for compact view */
+  border-radius: 3px;
+  position: relative;
+  background-color: #f5f5f5;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  padding: 0 10px;
+  justify-content: space-between;
+  font-size: 12px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.hand-card-preview:hover {
+  transform: translateY(-3px);
+  z-index: 5;
+}
+
+.hand-card-preview.blue {
+  border-left: 5px solid var(--blue-disease);
+}
+
+.hand-card-preview.yellow {
+  border-left: 5px solid var(--yellow-disease);
+}
+
+.hand-card-preview.black {
+  border-left: 5px solid var(--black-disease);
+}
+
+.hand-card-preview.red {
+  border-left: 5px solid var(--red-disease);
+}
+
+.hand-card-preview.event {
+  border-left: 5px solid #2196f3;
+  background-color: #e3f2fd;
+}
+
+.hand-card-preview.epidemic {
+  border-left: 5px solid #d32f2f;
+  background-color: #ffebee;
+}
+
+/* ===== Share Card Styles ===== */
+.share-card {
+  display: flex;
+  align-items: center;
+  padding: 10px;
+  border-radius: 4px;
+  background-color: #f5f5f5;
+  position: relative;
+}
+
+.share-card.blue {
+  background-color: rgba(51, 102, 255, 0.2);
+  border-left: 5px solid #36f;
+}
+
+.share-card.yellow {
+  background-color: rgba(255, 204, 0, 0.2);
+  border-left: 5px solid #fc0;
+}
+
+.share-card.black {
+  background-color: rgba(80, 80, 80, 0.2);
+  border-left: 5px solid #505050;
+}
+
+.share-card.red {
+  background-color: rgba(255, 51, 51, 0.2);
+  border-left: 5px solid #f55;
+}
+
+/* ===== Selectable Card Styles ===== */
+.selectable-card {
+  background-color: white;
+  border-radius: 8px;
+  height: 100px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 10px;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  position: relative;
+  transition: all 0.2s ease;
+  border: 2px solid transparent;
+  overflow: hidden;
+}
+
+.selectable-card.city.blue {
+  border-top: 5px solid var(--blue-disease);
+}
+
+.selectable-card.city.yellow {
+  border-top: 5px solid var(--yellow-disease);
+}
+
+.selectable-card.city.black {
+  border-top: 5px solid var(--black-disease);
+}
+
+.selectable-card.city.red {
+  border-top: 5px solid var(--red-disease);
+}
+
+.selectable-card.action {
+  border-top: 5px solid #9c6edb;
+}
+
+.selectable-card.epidemic {
+  border-top: 5px solid #ff3333;
+}
+
+/* Card hover effect */
+.selectable-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 10px rgba(0, 0, 0, 0.3);
+}
+
+/* Selected card styling */
+.selectable-card.selected {
+  border: 2px solid #4CAF50;
+  box-shadow: 0 0 10px rgba(76, 175, 80, 0.5);
+}
+
+.selectable-card.selected::after {
+  content: '✓';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 22px;
+  height: 22px;
+  background-color: #4CAF50;
+  color: white;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+}
+
+.selectable-card .card-name {
+  font-weight: bold;
+  text-align: center;
+  font-size: 0.9rem;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* ===== Player Hand Card Styles (from interface.css) ===== */
+.player-hand {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  padding: 0 20px;
+  overflow-x: auto;
+  min-height: 40px;
+}
+
+.hand-card {
+  background-color: rgba(255, 255, 255, 0.9);
+  border-radius: 5px 5px 0 0;
+  min-width: 80px;
+  height: 35px;
+  padding: 5px;
+  text-align: center;
+  font-size: 12px;
+  position: relative;
+  border: 1px solid rgba(0, 0, 0, 0.2);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  transition: transform 0.2s ease;
+  cursor: pointer;
+}
+
+.hand-card:hover {
+  transform: translateY(-5px);
+  z-index: 10;
+}
+
+.hand-card.city-card {
+  border-top: 4px solid;
+}
+
+.hand-card.city-card.blue {
+  border-top-color: var(--blue-disease);
+}
+
+.hand-card.city-card.yellow {
+  border-top-color: var(--yellow-disease);
+}
+
+.hand-card.city-card.black {
+  border-top-color: var(--black-disease);
+}
+
+.hand-card.city-card.red {
+  border-top-color: var(--red-disease);
+}
+
+.hand-card.event {
+  background-color: #e8f4fd;
+  border-top: 4px solid #2196f3;
+}
+
+.hand-card.epidemic {
+  background-color: #ffebee;
+  border-top: 4px solid #d32f2f;
+}
+
+.card-name {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 100%;
+}
+
+/* ===== Responsive adjustments ===== */
+@media (max-width: 768px) {
+  .selectable-card {
+    height: 80px;
+    padding: 8px;
+  }
+
+  .selectable-card .card-name {
+    font-size: 0.8rem;
+  }
+
+  .player-hand {
+    gap: 3px;
+  }
+
+  .hand-card {
+    min-width: 60px;
+    height: 30px;
+    font-size: 11px;
+  }
+}
