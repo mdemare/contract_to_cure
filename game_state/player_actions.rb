@@ -197,6 +197,43 @@ module PlayerActions
     after_action(true, "Successfully discovered a cure for the #{color} disease!")
   end
 
+  # Government Grant action card
+  # Allows a player to build a research station in any city without discarding a city card
+  def use_government_grant(player_index, card_index, city_name)
+    player = @players[player_index]
+
+    # Verify card is in player's hand and is the Government Grant action card
+    card = player.hand[card_index]
+    return { success: false, message: "Card not found in player's hand" } unless card
+    return { success: false, message: "Card is not Government Grant" } unless card.type == :event && card.name == "Government Grant"
+
+    # Check maximum research stations limit
+    return { success: false, message: "Maximum number of research stations reached" } if @research_stations.size >= MAX_RESEARCH_STATIONS
+
+    # Check if city already has a research station
+    return { success: false, message: "Research station already exists in #{city_name}" } if @research_stations.include?(city_name)
+
+    # Check if city exists
+    return { success: false, message: "City '#{city_name}' does not exist" } unless @cities[city_name]
+
+    # Build the research station and discard the card
+    @research_stations << city_name
+    discard_player_card(player_index, card_index)
+
+    # This doesn't consume an action, so don't call after_action
+    response = {
+      success: true,
+      status: 'success',
+      message: "Successfully built a research station in #{city_name} using Government Grant",
+      game_state: to_json_state
+    }
+
+    # Save game state after the action
+    save_game_state
+
+    return response
+  end
+
   private
 
   # Common after-action method to handle action consumption, end of turn, and response creation

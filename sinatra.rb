@@ -157,6 +157,33 @@ post '/discard_cards' do
   { status: 'success', message: "Successfully discarded #{card_indices.length} card(s)" }.to_json
 end
 
+# Action Card endpoint
+post '/action-card' do
+  content_type :json
+
+  request.body.rewind
+  data = JSON.parse(request.body.read)
+
+  card_name = data['card']
+  city_name = data['city']
+  player_index = data['player_index'].to_i
+  card_index = data['card_index'].to_i
+
+  # Validate required parameters
+  return { status: 'error', message: 'Missing required parameters' }.to_json unless card_name && city_name
+
+  result = case card_name
+  when 'Government Grant'
+    # Add a research station to the specified city without using a city card
+    game_state.use_government_grant(player_index, card_index, city_name)
+  # Add cases for other action cards as they are implemented
+  else
+    { status: 'error', message: "Unknown action card: #{card_name}" }
+  end
+
+  result.to_json
+end
+
 # Restart game endpoint
 post '/restart_game' do
   content_type :json
@@ -169,9 +196,9 @@ post '/restart_game' do
 
   # Restart the game and return result
   result = game_state.reset_game(difficulty_level)
-  
+
   # Save the new game state
   game_state.save_game_state
-  
+
   result.to_json
 end

@@ -2,8 +2,73 @@
 import { getCurrentGameState } from '/js/game_state.js';
 import { getCityColor } from '/js/player_actions.js';
 
+/**
+ * Creates a selectable card element for the card selection modal
+ *
+ * @param {string} cardName - The name of the card
+ * @param {number} index - The index of the card
+ * @param {Set} selectedCards - Set to track selected card indices
+ * @param {number} count - Number of cards that need to be selected
+ * @param {HTMLElement} confirmButton - The confirm button to enable/disable
+ * @returns {HTMLElement} The created card element
+ */
+function createSelectableCard(cardName, index, selectedCards, count, confirmButton) {
+  const card = document.createElement('div');
+  card.classList.add('selectable-card');
+
+  // Determine card type and color
+  if (cardName.startsWith('Action:')) {
+    card.classList.add('action');
+  } else if (cardName === 'Epidemic') {
+    card.classList.add('epidemic');
+  } else {
+    // City card - find the color
+    card.classList.add('city');
+    const cityColor = getCityColor(cardName);
+    if (cityColor) {
+      card.classList.add(cityColor);
+    }
+  }
+
+  // Create card content
+  const cardNameElement = document.createElement('div');
+  cardNameElement.classList.add('card-name');
+  cardNameElement.textContent = cardName.replace('Action:', '');
+  card.appendChild(cardNameElement);
+
+  // Add data attribute for card index
+  card.dataset.cardIndex = index;
+
+  // Add click handler for card selection
+  card.addEventListener('click', () => {
+    // Toggle selection state
+    if (selectedCards.has(index)) {
+      selectedCards.delete(index);
+      card.classList.remove('selected');
+    } else {
+      // Only allow selection if under the count limit
+      if (selectedCards.size < count) {
+        selectedCards.add(index);
+        card.classList.add('selected');
+      }
+    }
+
+    // Enable/disable confirm button based on selection count
+    if (selectedCards.size === count) {
+      confirmButton.disabled = false;
+      confirmButton.classList.remove('disabled');
+    } else {
+      confirmButton.disabled = true;
+      confirmButton.classList.add('disabled');
+    }
+  });
+
+  return card;
+}
+
 // Function to show a card selection modal
 export function showCardSelectionModal(count, cardIndices, completionFunction, customTitle, playerIndex) {
+
   // Get current game state to show player's cards
   const gameState = getCurrentGameState();
 
@@ -14,7 +79,9 @@ export function showCardSelectionModal(count, cardIndices, completionFunction, c
   if (!currentPlayer || !currentPlayer.hand || !Array.isArray(currentPlayer.hand)) {
     return;
   }
-
+  showGeneralCardSelectionModal(count, currentPlayer.hand, completionFunction, customTitle);
+}
+export function showGeneralCardSelectionModal(count, cards, completionFunction, customTitle) {
   // Create modal backdrop
   const modalBackdrop = document.createElement('div');
   modalBackdrop.classList.add('modal-backdrop');
@@ -31,7 +98,7 @@ export function showCardSelectionModal(count, cardIndices, completionFunction, c
   // Add instructions
   const instructions = document.createElement('p');
   instructions.classList.add('modal-instructions');
-  instructions.textContent = customTitle 
+  instructions.textContent = customTitle
     ? `Please select ${count} card${count !== 1 ? 's' : ''} from your hand.`
     : `Please select ${count} card${count !== 1 ? 's' : ''} from your hand.`;
   modalContent.appendChild(instructions);
@@ -42,65 +109,6 @@ export function showCardSelectionModal(count, cardIndices, completionFunction, c
 
   // Track selected cards
   const selectedCards = new Set();
-
-  // Create card elements for selection
-  currentPlayer.hand.forEach((cardName, index) => {
-    if (cardIndices && !cardIndices.includes(index)) { return }
-
-    const card = document.createElement('div');
-    card.classList.add('selectable-card');
-
-    // Determine card type and color
-    if (cardName.startsWith('Action:')) {
-      card.classList.add('action');
-    } else if (cardName === 'Epidemic') {
-      card.classList.add('epidemic');
-    } else {
-      // City card - find the color
-      card.classList.add('city');
-      const cityColor = getCityColor(cardName);
-      if (cityColor) {
-        card.classList.add(cityColor);
-      }
-    }
-
-    // Create card content
-    const cardNameElement = document.createElement('div');
-    cardNameElement.classList.add('card-name');
-    cardNameElement.textContent = cardName.replace('Action:', '');
-    card.appendChild(cardNameElement);
-
-    // Add data attribute for card index
-    card.dataset.cardIndex = index;
-
-    // Add click handler for card selection
-    card.addEventListener('click', () => {
-      // Toggle selection state
-      if (selectedCards.has(index)) {
-        selectedCards.delete(index);
-        card.classList.remove('selected');
-      } else {
-        // Only allow selection if under the count limit
-        if (selectedCards.size < count) {
-          selectedCards.add(index);
-          card.classList.add('selected');
-        }
-      }
-
-      // Enable/disable confirm button based on selection count
-      if (selectedCards.size === count) {
-        confirmButton.disabled = false;
-        confirmButton.classList.remove('disabled');
-      } else {
-        confirmButton.disabled = true;
-        confirmButton.classList.add('disabled');
-      }
-    });
-
-    cardSelectionContainer.appendChild(card);
-  });
-
-  modalContent.appendChild(cardSelectionContainer);
 
   // Add button container
   const buttonContainer = document.createElement('div');
@@ -130,6 +138,14 @@ export function showCardSelectionModal(count, cardIndices, completionFunction, c
   buttonContainer.appendChild(cancelButton);
   buttonContainer.appendChild(confirmButton);
   modalContent.appendChild(buttonContainer);
+
+  // Create card elements for selection
+  cards.forEach((cardName, index) => {
+    const card = createSelectableCard(cardName, index, selectedCards, count, confirmButton);
+    cardSelectionContainer.appendChild(card);
+  });
+
+  modalContent.appendChild(cardSelectionContainer);
 
   // Assemble and show the modal
   modalBackdrop.appendChild(modalContent);

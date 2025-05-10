@@ -86,10 +86,18 @@
 /* Event card styles */
 .card-event,
 .event-card,
-.hand-card-preview.event,
-.selectable-card.action {
+.hand-card-preview.event {
   background-color: #f0e6ff;
   border-color: #9c6edb;
+}
+
+/* Action cards styling - portrait mode */
+.selectable-card.action {
+  background-color: #fff8e1;
+  border-color: #ffa000;
+  height: 150px;
+  width: 110px;
+  padding: 5px;
 }
 
 /* Epidemic card styles */
@@ -140,6 +148,13 @@
 .event-card .card-header,
 .event-card .card-title {
   color: #7a4cb5;
+}
+
+/* Action card text colors */
+.selectable-card.action .card-header,
+.selectable-card.action .card-title,
+.selectable-card.action .card-name {
+  color: #e65100;
 }
 
 .card-epidemic .card-header,
@@ -241,8 +256,8 @@
 }
 
 .hand-card-preview.event {
-  border-left: 5px solid #2196f3;
-  background-color: #e3f2fd;
+  border-left: 5px solid rgba(255, 140, 0, 0.7);
+  background-color: rgba(255, 255, 240);
 }
 
 .hand-card-preview.epidemic {
@@ -315,7 +330,11 @@
 }
 
 .selectable-card.action {
-  border-top: 5px solid #9c6edb;
+  border-top: 5px solid #ffa000;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  justify-content: space-between;
+  padding-top: 25px; /* Added space for the header */
 }
 
 .selectable-card.epidemic {
@@ -358,6 +377,24 @@
   max-width: 100%;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+/* Add special styling for action card headers */
+.selectable-card.action::before {
+  content: 'ACTION';
+  display: block;
+  background-color: #ffa000;
+  color: white;
+  font-size: 10px;
+  font-weight: bold;
+  text-align: center;
+  padding: 2px 0;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  border-top-left-radius: 8px;
+  border-top-right-radius: 8px;
 }
 
 /* ===== Player Hand Card Styles (from interface.css) ===== */
@@ -421,9 +458,7 @@
 }
 
 .card-name {
-  white-space: nowrap;
   overflow: hidden;
-  text-overflow: ellipsis;
   max-width: 100%;
 }
 
@@ -446,5 +481,44 @@
     min-width: 60px;
     height: 30px;
     font-size: 11px;
+  }
+}
+
+/* ===== Action Card Gameplay UI ===== */
+/* Action notification for events like Government Grant */
+.action-notification {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  background-color: rgba(25, 135, 84, 0.9);
+  color: white;
+  padding: 10px;
+  text-align: center;
+  font-size: 16px;
+  font-weight: bold;
+  z-index: 1000;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.2);
+}
+
+/* Selectable cities for action cards */
+.city-marker.selectable {
+  cursor: pointer;
+  animation: pulse 1.5s infinite;
+  filter: brightness(1.3);
+}
+
+@keyframes pulse {
+  0% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0.7);
+  }
+  70% {
+    transform: scale(1.05);
+    box-shadow: 0 0 0 10px rgba(255, 255, 255, 0);
+  }
+  100% {
+    transform: scale(1);
+    box-shadow: 0 0 0 0 rgba(255, 255, 255, 0);
   }
 }
