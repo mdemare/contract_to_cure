@@ -224,6 +224,6 @@ module PlayerActions
       save_game_state
     end
 
-    response
+    response.merge(game_state: to_json_state)
   end
 end
