@@ -187,7 +187,7 @@ class GameState
     end
   end
 
-  def medic_move(requested_player, destination)
+  def medic_ability(requested_player, destination)
     raise unless requested_player.is_a?(Player)
 
     # Automatic medic ability: remove cubes of cured diseases

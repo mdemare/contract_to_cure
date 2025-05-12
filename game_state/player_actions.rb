@@ -72,7 +72,7 @@ module PlayerActions
     player.location = destination
 
     # Handle medic ability
-    medic_move(player, destination)
+    medic_ability(player, destination)
 
     after_action(true, "Successfully moved #{player.role} from #{current_location} to #{destination} via #{move_type}")
   end
@@ -186,6 +186,14 @@ module PlayerActions
 
     # Mark the cure as discovered
     @cures[color] = true
+
+    # Activate medic ability if any player is a medic
+    @players.each do |player|
+      if player.role == :medic
+        # Use the medic_ability method to automatically remove cubes of the cured disease
+        medic_ability(player, player.location)
+      end
+    end
 
     # Check if all cures are discovered (victory condition)
     if @cures.values.all?
