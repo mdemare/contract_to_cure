@@ -1,7 +1,7 @@
 // player_actions.js
 import { getCurrentGameState, loadGameState, CITIES, getCurrentLocation, getCurrentPlayer } from './game_state.js';
 import { handleEndOfTurnEvents } from './end_turn_events.js';
-import { showCardSelectionModal, handleHandLimitCheck } from './select_cards.js';
+import { showCardSelectionModal, showGeneralCardSelectionModal, handleHandLimitCheck } from './select_cards.js';
 
 // Map click handler - initialize city click events
 export function initMoveActions() {
@@ -83,6 +83,28 @@ async function handleCityClick(event) {
 
   // Get the current player
   const currentPlayer = getCurrentPlayer();
+
+  // Check if we're in Government Grant mode
+  const actionButtons = await import('./action_buttons.js');
+  if (actionButtons.getCurrentMode() === 'governmentGrant') {
+    // Reset the mode after handling the action
+    actionButtons.resetMode();
+
+    // Check if there's already a research station here
+    const gameState = getCurrentGameState();
+    const hasStation = gameState.researchStations &&
+                      gameState.researchStations.locations &&
+                      gameState.researchStations.locations.includes(cityName);
+
+    if (hasStation) {
+      showInvalidActionMessage(`${cityName} already has a research station.`);
+      return;
+    }
+
+    // Call the action card API with the selected city
+    await useGovernmentGrant(cityName);
+    return;
+  }
 
   // Check if the clicked city is the current city (for treat disease)
   if (cityName === currentPlayer.location) {
@@ -195,7 +217,7 @@ export async function cureDisease() {
     if (colorCards.length == cardsNeeded) {
       cureWithIndices(selectableCards, selectedColor);
     } else {
-      showCardSelectionModal(cardsNeeded, selectableCards, (indices) => { cureWithIndices(indices, selectedColor) });
+      showGeneralCardSelectionModal(cardsNeeded, colorCards, (indices) => { cureWithIndices(indices, selectedColor) });
     }
   }
 }
@@ -347,6 +369,38 @@ async function processAPIRequest(endpoint, requestData, successMessage, failureP
   }
 }
 
+// Use Government Grant action card
+async function useGovernmentGrant(cityName) {
+  try {
+    // Get the card source info from the action_buttons module
+    const actionButtonsModule = await import('./action_buttons.js');
+    const governmentGrantSource = actionButtonsModule.getActionCardSource();
+
+    if (!governmentGrantSource) {
+      showErrorMessage("Error: Government Grant card source information is missing");
+      return;
+    }
+
+    // Use the action card
+    await actionButtonsModule.useActionCard(
+      'Action:Government Grant',
+      cityName,
+      governmentGrantSource
+    );
+
+    // Show success message
+    showSuccessMessage(`Built a research station in ${cityName} using Government Grant`);
+
+    // Remove action notification
+    const notification = document.getElementById('action-notification');
+    if (notification) {
+      notification.remove();
+    }
+  } catch (error) {
+    showErrorMessage(`Error using Government Grant: ${error.message}`);
+  }
+}
+
 // Helper function to get a city's color
 export function getCityColor(cityName) {
   // Use existing CITIES object instead of fetching cities.json
@@ -399,18 +453,18 @@ async function handleOperationsExpertMove(playerIndex, destination) {
   const currentPlayer = gameState.players[playerIndex];
 
   // Get all city cards from player's hand
-  const cityCardIndices = currentPlayer.hand
+  const cityCards = currentPlayer.hand
     .map((cardName, index) => {
       // Skip non-city cards
       if (cardName.startsWith('Action:') || cardName === 'Epidemic') {
         return null;
       }
-      return index;
+      return cardName;
     })
     .filter(index => index !== null);
 
   // Show card selection modal
-  showCardSelectionModal(1, cityCardIndices, async (selectedIndices) => {
+  showGeneralCardSelectionModal(1, cityCards, async (selectedIndices) => {
     // Re-submit the move with the selected card
     const moveData = {
       player_index: playerIndex,
@@ -434,7 +488,7 @@ async function handleFlightChoice(playerIndex, destination) {
   const gameState = getCurrentGameState();
   const currentPlayer = gameState.players[playerIndex];
   const currentLocation = currentPlayer.location;
-  
+
   // Find the indices of the current location card and destination card in hand
   const flightCardIndices = currentPlayer.hand
     .map((cardName, index) => {
@@ -448,10 +502,10 @@ async function handleFlightChoice(playerIndex, destination) {
       return null;
     })
     .filter(card => card !== null);
-  
+
   // Extract just the indices for the modal
   const selectionIndices = flightCardIndices.map(card => card.index);
-  
+
   // Show card selection modal
   showCardSelectionModal(1, selectionIndices, async (selectedIndices) => {
     // Re-submit the move with the selected card
@@ -467,10 +521,10 @@ async function handleFlightChoice(playerIndex, destination) {
       moveData,
       `Moved to ${destination}`,
       'Move failed',
-      { 
-        playerIndex, 
+      {
+        playerIndex,
         destination,
-        moveType: 'flight' 
+        moveType: 'flight'
       }
     );
   }, "Choose a card to discard for flight");

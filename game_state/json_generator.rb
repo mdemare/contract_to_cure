@@ -49,6 +49,6 @@ module JsonGenerator
         playerDeck: @player_deck.size,
         infectionDeck: @infection_deck.size
       }
-    }.to_json
+    }
   end
 end

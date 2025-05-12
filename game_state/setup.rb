@@ -40,17 +40,22 @@ module Setup
 
       # Create a new City object
       cities[name] = City.new(name, color, connections)
+      connections.each do |connected_city|
+        if cc = cities[connected_city]
+          raise "asymmetric error city #{name}" unless cc.connections.include?(name)
+        end
+      end
+      cities.each do |cn,city|
+        if city.connections.include?(name) and not connections.include?(cn)
+          raise "asymmetric error city #{name}"
+        end
+      end
     end
 
     # Set Wuhan to have a research station
     cities['Wuhan'].has_research_station = true if cities['Wuhan']
 
     cities
-  rescue StandardError => e
-    puts "Error loading cities from JSON: #{e.message}"
-    puts e.backtrace
-    # Fall back to returning an empty hash or handling the error as needed
-    {}
   end
 
   def init_players(count)

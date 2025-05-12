@@ -1,5 +1,5 @@
 // player_panel.js
-import { getCurrentGameState, loadGameState } from './game_state.js';
+import { getCurrentGameState } from './game_state.js';
 import { getCityColor } from './player_actions.js';
 
 // DOM elements

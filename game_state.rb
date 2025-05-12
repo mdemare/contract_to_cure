@@ -81,6 +81,9 @@ class GameState
     # Initialize game components (delegates to Setup module)
     initialize_game(@players_count)
 
+    # Save the new game state
+    save_game_state
+
     # Return success response
     { status: 'success', message: 'Game restarted successfully' }
   end

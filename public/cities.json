@@ -45,7 +45,7 @@
     "color": "blue",
     "x": 530,
     "y": 270,
-    "connections": ["Casablanca", "Stockholm", "Barcelona", "Rome"]
+    "connections": ["London", "Casablanca", "Stockholm", "Barcelona", "Rome"]
   },
   "Stockholm": {
     "color": "blue",

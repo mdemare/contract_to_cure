@@ -40,7 +40,7 @@ export function initActionButtons() {
 }
 
 // Toggle action mode when a button is clicked
-function toggleMode(mode) {
+export function toggleMode(mode) {
   // If the mode is already active, deactivate it
   if (currentMode === mode) {
     resetMode();
@@ -57,7 +57,7 @@ function toggleMode(mode) {
 }
 
 // Reset the current mode
-function resetMode() {
+export function resetMode() {
   currentMode = null;
   updateActiveModeUI();
 
@@ -313,6 +313,17 @@ function updateActionCardsButtonState(gameState) {
   actionCardsBtn.style.display = hasActionCards ? 'inline-flex' : 'none';
 }
 
+// Store the current action card source for Government Grant
+let currentActionCardSource = null;
+
+/**
+ * Get the current action card source
+ * @returns {Object|null} The source of the action card
+ */
+export function getActionCardSource() {
+  return currentActionCardSource;
+}
+
 /**
  * Handle Government Grant action card
  * Allows player to build a research station in any city without using a city card
@@ -324,6 +335,9 @@ function handleGovernmentGrant(cardSource) {
     document.body.removeChild(document.querySelector('.modal-backdrop'));
   }
 
+  // Store the card source for later use
+  currentActionCardSource = cardSource;
+
   // Add notification at the top of the page
   const notification = document.createElement('div');
   notification.id = 'action-notification';
@@ -331,37 +345,8 @@ function handleGovernmentGrant(cardSource) {
   notification.classList.add('action-notification');
   document.body.insertBefore(notification, document.body.firstChild);
 
-  // Get the game state to check current research stations
-  const gameState = getCurrentGameState();
-
-  // Set up event listener for map clicks
-  const cities = document.querySelectorAll('.city-marker');
-  cities.forEach(city => {
-    // Check if city already has a research station
-    const cityName = city.getAttribute('data-city');
-    const hasStation = gameState.researchStations &&
-                      gameState.researchStations.locations &&
-                      gameState.researchStations.locations.includes(cityName);
-
-    if (!hasStation) {
-      city.classList.add('selectable');
-      city.addEventListener('click', function governmentGrantClick() {
-        // Remove event listeners from all cities
-        cities.forEach(c => {
-          c.classList.remove('selectable');
-          c.removeEventListener('click', governmentGrantClick);
-        });
-
-        // Remove notification
-        if (document.getElementById('action-notification')) {
-          document.body.removeChild(document.getElementById('action-notification'));
-        }
-
-        // Send request to server to build research station using Government Grant
-        useActionCard('Government Grant', cityName, cardSource);
-      });
-    }
-  });
+  // Set the mode to government grant
+  toggleMode('governmentGrant');
 }
 
 /**
@@ -370,9 +355,9 @@ function handleGovernmentGrant(cardSource) {
  * @param {string} cityName - The city to apply the action to
  * @param {Object} cardSource - The source of the card (player index and card index)
  */
-async function useActionCard(cardName, cityName, cardSource) {
+export async function useActionCard(cardName, cityName, cardSource) {
   try {
-    const response = await fetch('/action-card', {
+    const response = await fetch('/action_card', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'

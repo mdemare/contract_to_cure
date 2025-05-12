@@ -12,7 +12,7 @@ options = {
 OptionParser.new do |opts|
   opts.banner = "Usage: ruby sinatra.rb [options]"
 
-  opts.on("-d", "--difficulty DIFFICULTY", [:introductory, :normal, :heroic], 
+  opts.on("-d", "--difficulty DIFFICULTY", [:introductory, :normal, :heroic],
           "Set game difficulty (introductory, normal, heroic)") do |d|
     options[:difficulty] = d
   end
@@ -20,7 +20,7 @@ OptionParser.new do |opts|
   opts.on("-n", "--new", "Start a new game (ignore saved state)") do
     options[:new_game] = true
   end
-  
+
   opts.on("-h", "--help", "Show this help message") do
     puts opts
     exit
@@ -46,20 +46,7 @@ end
 # Serve game state as JSON
 get '/game_state.json' do
   content_type :json
-  game_state.to_json_state
-end
-
-# Update game state
-post '/game_state.json' do
-  request.body.rewind
-  data = JSON.parse(request.body.read)
-
-  # Save the updated game state
-  File.write('game_state.json', JSON.pretty_generate(data))
-
-  # Return success response
-  content_type :json
-  { status: 'success' }.to_json
+  game_state.to_json_state.to_json
 end
 
 # Move action endpoint
@@ -158,7 +145,7 @@ post '/discard_cards' do
 end
 
 # Action Card endpoint
-post '/action-card' do
+post '/action_card' do
   content_type :json
 
   request.body.rewind
@@ -172,7 +159,7 @@ post '/action-card' do
   # Validate required parameters
   return { status: 'error', message: 'Missing required parameters' }.to_json unless card_name && city_name
 
-  result = case card_name
+  result = case card_name.split(?:).last
   when 'Government Grant'
     # Add a research station to the specified city without using a city card
     game_state.use_government_grant(player_index, card_index, city_name)
@@ -196,9 +183,6 @@ post '/restart_game' do
 
   # Restart the game and return result
   result = game_state.reset_game(difficulty_level)
-
-  # Save the new game state
-  game_state.save_game_state
 
   result.to_json
 end

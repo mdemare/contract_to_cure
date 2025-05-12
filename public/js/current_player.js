@@ -1,7 +1,5 @@
 // Update the current player indicator
 export function updateCurrentPlayer(gameState) {
-  console.log("updateCurrentPlayer")
-  console.log(gameState)
   if (!gameState || !gameState.players || !Array.isArray(gameState.players)) {
     return;
   }

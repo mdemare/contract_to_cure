@@ -81,6 +81,7 @@ export function showCardSelectionModal(count, cardIndices, completionFunction, c
   }
   showGeneralCardSelectionModal(count, currentPlayer.hand, completionFunction, customTitle);
 }
+
 export function showGeneralCardSelectionModal(count, cards, completionFunction, customTitle) {
   // Create modal backdrop
   const modalBackdrop = document.createElement('div');
@@ -185,7 +186,7 @@ export function handleHandLimitCheck(playerIndex, discardCount, completionCallba
   const cardIndices = player.hand.map((_, index) => index);
 
   // Show card selection modal
-  showCardSelectionModal(discardCount, cardIndices, async (selectedIndices) => {
+  showCardSelectionModal(discardCount, async (selectedIndices) => {
     // Make API call to discard the selected cards
     try {
       const response = await fetch('/discard_cards', {

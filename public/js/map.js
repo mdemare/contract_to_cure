@@ -1,5 +1,5 @@
 // map.js
-import { MAP_WIDTH, COLORS } from './constants.js';
+import { MAP_WIDTH } from './constants.js';
 
 // Store the current transform state so it can be preserved during re-renders
 let currentTransform = {

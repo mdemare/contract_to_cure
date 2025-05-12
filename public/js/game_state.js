@@ -217,14 +217,14 @@ export function getCurrentPlayer() {
   if (!currentGameState || !currentGameState.gameStatus) {
     throw new Error('Game state not loaded or invalid');
   }
-  
+
   const currentPlayerIndex = currentGameState.gameStatus.currentPlayerIndex;
   const currentPlayer = currentGameState.players.find(player => player.index === currentPlayerIndex);
-  
+
   if (!currentPlayer) {
     throw new Error('Current player not found');
   }
-  
+
   return currentPlayer;
 }
 
@@ -236,10 +236,10 @@ export function getCurrentPlayer() {
  */
 export function getCurrentLocation() {
   const currentPlayer = getCurrentPlayer();
-  
+
   if (!currentPlayer.location) {
     throw new Error('Current player location is undefined');
   }
-  
+
   return currentPlayer.location;
 }
