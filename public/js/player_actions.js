@@ -329,8 +329,14 @@ async function processAPIRequest(endpoint, requestData, successMessage, failureP
           handleEndOfTurnEvents(result.end_turn_events);
         }
 
-        // Refresh the game state
-        await loadGameState();
+        // Use the game state directly from the response
+        if (result.game_state) {
+          // Update the game state in game_state.js module
+          await loadGameState(result.game_state);
+        } else {
+          // Fallback to loading game state if not provided in response
+          await loadGameState();
+        }
 
         // Dispatch event if provided
         if (eventData) {

@@ -30,15 +30,24 @@ export async function loadCities() {
 }
 
 // Then update the loadGameState function to add game over check
-export async function loadGameState() {
+export async function loadGameState(providedGameState = null) {
   try {
-    const response = await fetch('/game_state.json');
+    let gameState;
 
-    if (!response.ok) {
-      throw new Error(`Failed to load game state: ${response.status} ${response.statusText}`);
+    if (providedGameState) {
+      // Use the provided game state directly
+      gameState = providedGameState;
+    } else {
+      // Fetch the game state from the server
+      const response = await fetch('/game_state.json');
+
+      if (!response.ok) {
+        throw new Error(`Failed to load game state: ${response.status} ${response.statusText}`);
+      }
+
+      gameState = await response.json();
     }
 
-    const gameState = await response.json();
     currentGameState = gameState;
 
     // Update the UI with the new game state
