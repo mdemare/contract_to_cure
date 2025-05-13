@@ -1,3 +1,6 @@
+/* Import CSS modules */
+@import url('player_selection.css');
+
 /* Global Styles */
 :root {
   --blue-disease: #3b90ff;

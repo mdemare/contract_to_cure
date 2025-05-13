@@ -1,0 +1,114 @@
+/* Player Selection Panel for Dispatcher's Move Action */
+.player-selection-panel {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background-color: rgba(0, 0, 0, 0.9);
+  border-radius: 8px;
+  padding: 20px;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  box-shadow: inset 0 0 10px rgba(255, 255, 255, 0.1);
+}
+
+.selection-instruction {
+  color: white;
+  font-size: 18px;
+  margin-bottom: 15px;
+  text-align: center;
+}
+
+.player-buttons-container {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.player-select-btn {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  border: none;
+  border-radius: 8px;
+  background-color: #2c3e50;
+  cursor: pointer;
+  transition: transform 0.2s ease-in-out, background-color 0.2s ease-in-out;
+  width: 80px;
+}
+
+.player-select-btn:hover {
+  transform: scale(1.05);
+  background-color: #34495e;
+}
+
+.player-pawn {
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  margin-bottom: 8px;
+}
+
+/* Role-specific colors for pawns */
+.player-pawn.medic {
+  background-color: orange;
+}
+
+.player-pawn.scientist {
+  background-color: #f5f5f5;
+}
+
+.player-pawn.researcher {
+  background-color: #964B00;
+}
+
+.player-pawn.quarantine-specialist {
+  background-color: #32CD32;
+}
+
+.player-pawn.dispatcher {
+  background-color: #FF69B4;
+}
+
+.player-pawn.operations-expert {
+  background-color: #98FF98;
+}
+
+.player-pawn.contingency-planner {
+  background-color: #40E0D0;
+}
+
+.player-role {
+  color: white;
+  font-size: 12px;
+  text-align: center;
+}
+
+.cancel-button {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background-color: #e74c3c;
+  color: white;
+  border: none;
+  font-size: 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+}
+
+.cancel-button:hover {
+  background-color: #c0392b;
+}

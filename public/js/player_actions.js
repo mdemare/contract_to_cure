@@ -106,6 +106,21 @@ async function handleCityClick(event) {
     return;
   }
 
+  // Check if we're in Dispatcher's moveSelectedPlayer mode
+  if (actionButtons.getCurrentMode() === 'moveSelectedPlayer') {
+    // Get the selected player index
+    const selectedPlayerIndex = actionButtons.getSelectedPlayerIndex();
+
+    if (selectedPlayerIndex !== null) {
+      // Reset the mode after handling the action
+      actionButtons.resetMode();
+
+      // Move the selected player to the clicked city
+      await movePlayer(selectedPlayerIndex, cityName);
+      return;
+    }
+  }
+
   // Check if the clicked city is the current city (for treat disease)
   if (cityName === currentPlayer.location) {
     await treatDisease();
