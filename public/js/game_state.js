@@ -1,6 +1,6 @@
 // game_state.js
 import { renderPandemicCities } from './map.js';
-import { updatePlayerHand } from './action_buttons.js';
+import { updatePlayerHand } from './player_hand.js';
 import { updateCurrentPlayer } from './current_player.js';
 import { checkGameOver } from './game_over.js';
 

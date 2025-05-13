@@ -1,5 +1,5 @@
 // Import dependencies
-import { getCurrentGameState } from '/js/game_state.js';
+import { getCurrentGameState, getCurrentPlayer } from '/js/game_state.js';
 import { getCityColor } from '/js/player_actions.js';
 
 /**
@@ -73,8 +73,8 @@ export function showCardSelectionModal(count, cardIndices, completionFunction, c
   const gameState = getCurrentGameState();
 
   // Use specified player index or default to current player
-  const currentPlayerIndex = playerIndex !== undefined ? playerIndex : gameState.gameStatus.currentPlayerIndex;
-  const currentPlayer = gameState.getCurrentPlayer();
+  const index = playerIndex !== undefined ? playerIndex : gameState.gameStatus.currentPlayerIndex;
+  const currentPlayer = gameState.players[index];
 
   if (!currentPlayer || !currentPlayer.hand || !Array.isArray(currentPlayer.hand)) {
     return;

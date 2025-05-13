@@ -1,7 +1,15 @@
 // player_actions.js
 import { getCurrentGameState, loadGameState, CITIES, getCurrentLocation, getCurrentPlayer } from './game_state.js';
 import { handleEndOfTurnEvents } from './end_turn_events.js';
+import { useActionCard, getActionCardSource } from './action_cards.js';
 import { showCardSelectionModal, showGeneralCardSelectionModal, handleHandLimitCheck } from './select_cards.js';
+
+let selectedPlayerIndex = null;
+
+export function setSelectedPlayerIndex(index) {
+  selectedPlayerIndex = index;
+}
+
 
 // Map click handler - initialize city click events
 export function initMoveActions() {
@@ -107,10 +115,9 @@ async function handleCityClick(event) {
   }
 
   // Check if we're in Dispatcher's moveSelectedPlayer mode
+  console.log(`DISPATCHER mode ${actionButtons.getCurrentMode()}`)
   if (actionButtons.getCurrentMode() === 'moveSelectedPlayer') {
     // Get the selected player index
-    const selectedPlayerIndex = actionButtons.getSelectedPlayerIndex();
-
     if (selectedPlayerIndex !== null) {
       // Reset the mode after handling the action
       actionButtons.resetMode();
@@ -394,8 +401,7 @@ async function processAPIRequest(endpoint, requestData, successMessage, failureP
 async function useGovernmentGrant(cityName) {
   try {
     // Get the card source info from the action_buttons module
-    const actionButtonsModule = await import('./action_buttons.js');
-    const governmentGrantSource = actionButtonsModule.getActionCardSource();
+    const governmentGrantSource = getActionCardSource();
 
     if (!governmentGrantSource) {
       showErrorMessage("Error: Government Grant card source information is missing");
@@ -403,7 +409,7 @@ async function useGovernmentGrant(cityName) {
     }
 
     // Use the action card
-    await actionButtonsModule.useActionCard(
+    await useActionCard(
       'Action:Government Grant',
       cityName,
       governmentGrantSource
