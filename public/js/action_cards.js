@@ -19,7 +19,7 @@ export function initActionCardsButton() {
   }
 
   // Create the button element as a card
-  const actionCardsBtn = document.createElement('button');
+  const actionCardsBtn = document.createElement('div');
   actionCardsBtn.id = 'action-cards-btn';
   actionCardsBtn.className = 'action-btn action-cards special-action';
 

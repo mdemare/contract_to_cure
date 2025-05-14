@@ -27,7 +27,7 @@ module Setup
 
   def init_cities
     # Load cities from JSON file
-    cities_json = File.read('public/cities.json')
+    cities_json = File.read('../public/cities.json')
     cities_data = JSON.parse(cities_json)
     raise cities_data unless cities_data.size == 48
 

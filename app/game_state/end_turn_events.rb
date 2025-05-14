@@ -1,38 +1,17 @@
 require 'yaml'
+require_relative 'end_turn'
 
 module EndTurnEvents
   include GameStateConfig
   def end_turn
-    events = [] # Store events to return
-
-    # Draw 2 player cards
+    end_turn = EndTurn.new(self)
     2.times do
-      draw_event = draw_player_card(@current_player_index)
-      if not @game_over and draw_event[:card][:type] == :epidemic
-        epidemic_events = handle_epidemic
-        events << draw_event
-        epidemic_events.each { events << it }
-      else
-        events << draw_event
-      end
-      if @game_over
-        # Save final game state when the game is over
-        save_game_state
-        return { game_over: true, reason: @game_over_reason, events: events }
-      end
+      end_turn.draw_player_card
+      return if game_over
     end
-
-    # Infect cities
     @infection_rate.times do
-      infect_event = infect_city
-      if infect_event
-        events << infect_event
-        if @game_over
-          # Save final game state when the game is over
-          save_game_state
-          return { game_over: true, reason: @game_over_reason, events: events }
-        end
-      end
+      end_turn.infect_city
+      return if game_over
     end
 
     # Go to next player
@@ -44,7 +23,7 @@ module EndTurnEvents
     # Save game state after turn is complete
     save_game_state
 
-    { game_over: false, events: events } # Return events if game is not over
+    { game_over: false, events: end_turn.events } # Return events if game is not over
   end
 
   # Public method to save game state from outside
@@ -114,104 +93,21 @@ module EndTurnEvents
     }
   end
 
-  def draw_player_card(player_index)
-    if @player_deck.empty?
-      @game_over = true
-      @game_over_reason = :no_player_cards
-      return { type: :game_over, reason: @game_over_reason }
-    end
-
-    card = @player_deck.pop
-    player = @players[player_index]
-    event = { type: :draw_card, player: player_index, card: card.description }
-
-    if card.type != :epidemic
-      player.hand << card
-      player.hand = player.sorted_hand
-
-      # Check hand limit (7 cards)
-      if player.hand.size > 7
-        event[:exceeded_hand_limit] = true
-        event[:discard_count] = player.hand.size - 7
-        event[:player_index] = player_index
-      end
-    end
-    event # Return the draw event (which may include epidemic events)
+  def out_of_cubes(color)
+    disease_cubes[color] = 0
+    @game_state.game_over = true
+    @game_state.game_over_reason = :no_cubes
   end
 
-  def handle_epidemic
-    epidemic_events = []
-
-    # Increase infection rate
+  def increase_infection_rate
     @infection_rate_marker += 1
     @infection_rate = INFECTION_RATE_TRACK[@infection_rate_marker] if @infection_rate_marker < INFECTION_RATE_TRACK.size
-    epidemic_events << { type: :increase_infection_rate, new_rate: @infection_rate }
+  end
 
-    # Infect: draw bottom card from infection deck (a stack)
-    return epidemic_events unless @infection_deck.any?
-
-    bottom_card = @infection_deck.shift
-    city = @cities[bottom_card.name]
-
-    # Add 3 cubes of the city's color
-    infection_event = add_disease_cubes(city.name, city.color, 3)
-    epidemic_events << infection_event if infection_event
-
-    # Add card to discard pile
-    @infection_discard << bottom_card
-    epidemic_events << { type: :infect_new_city, city: city.name, color: city.color, count: 3, epidemic: true }
-
-    # Intensify: shuffle the infection discard pile and put it on top of infection deck
-    # We draw cards via pop, so shuffled cards at the end.
+  def intensify
     @infection_discard.shuffle!
     @infection_deck += @infection_discard
     @infection_discard = []
-
-    epidemic_events
-  end
-
-  def infect_city
-    return nil if @infection_deck.empty? # Return nil if no city infected
-    puts "infection deck",@infection_deck.map(&:name).join(?,)
-    puts "infection discard",@infection_discard.map(&:name).join(?,)
-    card = @infection_deck.pop
-    @infection_discard << card
-
-    city = @cities[card.name]
-    infection_event = add_disease_cubes(city.name, city.color, 1)
-    return infection_event if infection_event&.dig(:type) == :game_over # Propagate game over event
-
-    { type: :infect_city, city: city.name, color: city.color } # Return infection event
-  end
-
-  def add_disease_cubes(city_name, color, count)
-    # Early returns for protection cases
-    return if has_quarantine_specialist_protection?(city_name)
-    return if @cures[color] && @disease_cubes[color] == MAX_DISEASE_CUBES_PER_COLOR
-
-    city = @cities[city_name]
-    return if city.color != color
-
-    # Check if adding cubes would cause game over
-    if count >= @disease_cubes[color] and city.disease_cubes < 3
-      # Adding all remaining cubes then game over
-      city.disease_cubes = [3, city.disease_cubes + count].min
-      @disease_cubes[color] = 0
-      @game_over = true
-      @game_over_reason = :no_cubes
-      return { type: :game_over, reason: :no_cubes, color: color }
-    end
-
-    if city.disease_cubes + count > 3
-      city.disease_cubes = 3
-      @disease_cubes[color] -= 3 - city.disease_cubes
-      trigger_outbreak(city_name)
-    else
-      # Normal case - add cubes
-      city.disease_cubes += count
-      @disease_cubes[color] -= count
-      nil
-    end
   end
 
   def trigger_outbreak(city_name, outbreak_chain = [])

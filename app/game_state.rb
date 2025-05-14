@@ -53,6 +53,13 @@ class GameState
     end
   end
 
+  def game_over!(reason)
+    self.game_over = true
+    self.game_over_reason = reason
+    save_game_state
+    return { type: :game_over, reason: game_over_reason }
+  end
+
   # Reset the game to its initial state
   def reset_game(difficulty_level)
     @difficulty_level = difficulty_level || @difficulty_level
@@ -86,6 +93,17 @@ class GameState
 
     # Return success response
     { status: 'success', message: 'Game restarted successfully' }
+  end
+
+  def has_quarantine_specialist_protection?(city_name)
+    # Check if there's a quarantine specialist in this city
+    return true if @players.any? { |p| p.role == :quarantine_specialist && p.location == city_name }
+
+    # Check if there's a quarantine specialist in a connected city
+    city = @cities[city_name]
+    city.connections.any? do |connected_city|
+      @players.any? { |p| p.role == :quarantine_specialist && p.location == connected_city }
+    end
   end
 
   private
@@ -174,17 +192,6 @@ class GameState
     card = player.hand.delete_at(card_index)
     player.hand = player.sorted_hand
     @player_discard << card if card
-  end
-
-  def has_quarantine_specialist_protection?(city_name)
-    # Check if there's a quarantine specialist in this city
-    return true if @players.any? { |p| p.role == :quarantine_specialist && p.location == city_name }
-
-    # Check if there's a quarantine specialist in a connected city
-    city = @cities[city_name]
-    city.connections.any? do |connected_city|
-      @players.any? { |p| p.role == :quarantine_specialist && p.location == connected_city }
-    end
   end
 
   def medic_ability(requested_player, destination)
