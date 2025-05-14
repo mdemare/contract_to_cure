@@ -196,7 +196,7 @@ module EndTurnEvents
     # Don't add if eradicated
     return if cures[color] && disease_cubes[color] == GameStateConfig::MAX_DISEASE_CUBES_PER_COLOR
     # Don't add if cured and medic present
-    # TODO
+    return if cures[color] && has_medic_at_location?(city_name)
 
     city = cities[city_name]
     return if city.color != color
@@ -220,5 +220,10 @@ module EndTurnEvents
       disease_cubes[color] -= count
       nil
     end
+  end
+
+  # Helper method to check if a medic is present at the given location
+  def has_medic_at_location?(city_name)
+    @players.any? { |player| player.role == :medic && player.location == city_name }
   end
 end
