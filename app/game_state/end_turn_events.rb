@@ -115,9 +115,11 @@ module EndTurnEvents
     @infection_discard = []
   end
 
-  def trigger_outbreak(city_name, outbreak_chain = [])
+  def trigger_outbreak(city_name, events, outbreak_chain = [])
     # Prevent chain reactions in the same city
     return nil if outbreak_chain.include?(city_name)
+
+    events << { type: :outbreak, city: city_name, color: @cities[city_name].color, outbreak_chain: outbreak_chain }
 
     # Add this city to the chain
     outbreak_chain << city_name
@@ -180,11 +182,43 @@ module EndTurnEvents
 
       next unless outbreak
 
-      event = trigger_outbreak(connected_city_name, outbreak_chain)
+      event = trigger_outbreak(connected_city_name, events, outbreak_chain)
       return event if event && event[:type] == :game_over
 
       outbreak_chain = event[:outbreak_chain] if event
     end
     { type: :outbreak, city: city_name, color: color, outbreak_chain: outbreak_chain }
+  end
+
+  def add_disease_cubes(city_name, color, count, events)
+    # Early returns for protection cases
+    return if has_quarantine_specialist_protection?(city_name)
+    # Don't add if eradicated
+    return if cures[color] && disease_cubes[color] == GameStateConfig::MAX_DISEASE_CUBES_PER_COLOR
+    # Don't add if cured and medic present
+    # TODO
+
+    city = cities[city_name]
+    return if city.color != color
+
+    # Check if adding cubes would cause game over
+    if count >= disease_cubes[color] and city.disease_cubes < 3
+      # Adding all remaining cubes then game over
+      city.disease_cubes = [3, city.disease_cubes + count].min
+
+      out_of_cubes(color)
+      return { type: :game_over, reason: :no_cubes, color: color }
+    end
+
+    if city.disease_cubes + count > 3
+      city.disease_cubes = 3
+      disease_cubes[color] -= 3 - city.disease_cubes
+      trigger_outbreak(city_name, events)
+    else
+      # Normal case - add cubes
+      city.disease_cubes += count
+      disease_cubes[color] -= count
+      nil
+    end
   end
 end

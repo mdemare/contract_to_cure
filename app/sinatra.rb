@@ -35,7 +35,7 @@ puts "  New Game: #{options[:new_game]}"
 set :public_folder, "/Users/mdemare/iCloud/proj/contract_to_cure/public"
 
 # Initialize game state based on options
-if options[:new_game] || !File.exist?('../current_game.yaml')
+if options[:new_game] || !File.exist?('current_game.yaml')
   puts "Starting new game with difficulty: #{options[:difficulty]}"
   game_state = GameState.new(4, options[:difficulty])
 else

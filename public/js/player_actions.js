@@ -2,7 +2,7 @@
 import { getCurrentGameState, loadGameState, CITIES, getCurrentLocation, getCurrentPlayer } from './game_state.js';
 import { handleEndOfTurnEvents } from './end_turn_events.js';
 import { getActionCardSource } from './action_cards.js';
-import { showCardSelectionModal, showGeneralCardSelectionModal, handleHandLimitCheck } from './select_cards.js';
+import { showHandSelectionModal, showGeneralCardSelectionModal, handleHandLimitCheck } from './select_cards.js';
 
 let selectedPlayerIndex = null;
 
@@ -338,6 +338,8 @@ async function processAPIRequest(endpoint, requestData, successMessage, failureP
         // Check if we need to handle hand limit
         if (result.exceeded_hand_limit) {
           const { player_index, discard_count } = result.exceeded_hand_limit;
+          const gameState = getCurrentGameState();
+          console.log(`${gameState.players[player_index].role} exceeded hand limit`)
 
           // Handle hand limit exceeded
           await new Promise(resolve => {
@@ -543,7 +545,8 @@ async function handleFlightChoice(playerIndex, destination) {
   const selectionIndices = flightCardIndices.map(card => card.index);
 
   // Show card selection modal
-  showCardSelectionModal(1, selectionIndices, async (selectedIndices) => {
+  // Called from hand limit exceeded, and direct flight or charter
+  showHandSelectionModal(1, selectionIndices, async (selectedIndices) => {
     // Re-submit the move with the selected card
     const moveData = {
       player_index: playerIndex,

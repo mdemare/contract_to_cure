@@ -195,6 +195,30 @@ function createCardElement(event) {
       return cardElement;
     }
 
+    case 'outbreak': {
+      // TODO zoom in on city and animate infections of neighbors
+
+      // Create an outbreak card with the new styling
+      const { city, color } = event;
+
+      const cardElement = document.createElement('div');
+      cardElement.classList.add('animated-card', 'infection-card', color);
+
+      // Card content
+      const cardHeader = document.createElement('div');
+      cardHeader.classList.add('card-header');
+      cardHeader.textContent = 'Outbreak';
+
+      const cardTitle = document.createElement('div');
+      cardTitle.classList.add('card-title');
+      cardTitle.textContent = city;
+
+      cardElement.appendChild(cardHeader);
+      cardElement.appendChild(cardTitle);
+
+      return cardElement;
+    }
+
     case 'infect_city': {
       // Create an infection card with the new styling
       const { city, color } = event;

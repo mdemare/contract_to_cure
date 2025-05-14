@@ -10,9 +10,10 @@ import { getCityColor } from '/js/player_actions.js';
  * @param {Set} selectedCards - Set to track selected card indices
  * @param {number} count - Number of cards that need to be selected
  * @param {HTMLElement} confirmButton - The confirm button to enable/disable
+ * @param {Function} selectionComplete - Function to call when selection is complete
  * @returns {HTMLElement} The created card element
  */
-function createSelectableCard(cardName, index, selectedCards, count, confirmButton) {
+function createSelectableCard(cardName, index, selectedCards, count, confirmButton, selectionComplete) {
   if (typeof cardName !== "string") { throw new Error("card name is not a string") }
   console.log(`cardName = ${cardName}`)
   const card = document.createElement('div');
@@ -43,7 +44,15 @@ function createSelectableCard(cardName, index, selectedCards, count, confirmButt
 
   // Add click handler for card selection
   card.addEventListener('click', () => {
-    // Toggle selection state
+    // If count is 1, select and confirm immediately
+    if (count === 1) {
+      selectedCards.clear(); // Clear any previous selection
+      selectedCards.add(index);
+      selectionComplete([index]); // Call selection complete with the index
+      return;
+    }
+
+    // Otherwise, toggle selection state for multi-select mode
     if (selectedCards.has(index)) {
       selectedCards.delete(index);
       card.classList.remove('selected');
@@ -69,19 +78,20 @@ function createSelectableCard(cardName, index, selectedCards, count, confirmButt
 }
 
 // Function to show a card selection modal
-export function showCardSelectionModal(count, cardIndices, completionFunction, customTitle, playerIndex) {
+export function showHandSelectionModal(count, cardIndices, completionFunction, customTitle, playerIndex) {
 
   // Get current game state to show player's cards
   const gameState = getCurrentGameState();
 
   // Use specified player index or default to current player
   const index = playerIndex !== undefined ? playerIndex : gameState.gameStatus.currentPlayerIndex;
-  const currentPlayer = gameState.players[index];
+  const player = gameState.players[index];
 
-  if (!currentPlayer || !currentPlayer.hand || !Array.isArray(currentPlayer.hand)) {
+  if (!player || !player.hand || !Array.isArray(player.hand)) {
     return;
   }
-  showGeneralCardSelectionModal(count, currentPlayer.hand.map((name, index) => name), completionFunction, customTitle);
+  const cards = cardIndices.map((idx) => player.hand[idx])
+  showGeneralCardSelectionModal(count, cards, completionFunction, customTitle);
 }
 
 export function showGeneralCardSelectionModal(count, cards, completionFunction, customTitle) {
@@ -114,38 +124,50 @@ export function showGeneralCardSelectionModal(count, cards, completionFunction, 
   // Track selected cards
   const selectedCards = new Set();
 
-  // Add button container
+  // Add button container - only if count > 1
   const buttonContainer = document.createElement('div');
   buttonContainer.classList.add('modal-buttons');
 
-  // Add cancel button
+  // Add cancel button - always included
   const cancelButton = document.createElement('button');
   cancelButton.textContent = 'Cancel';
   cancelButton.classList.add('cancel-btn');
   cancelButton.addEventListener('click', () => {
     closeModal();
   });
-
-  // Add confirm button
-  const confirmButton = document.createElement('button');
-  confirmButton.textContent = 'Confirm Selection';
-  confirmButton.classList.add('confirm-btn', 'disabled');
-  confirmButton.disabled = true;
-  confirmButton.addEventListener('click', () => {
-    if (selectedCards.size === count) {
-      const selectedIndices = Array.from(selectedCards);
-      closeModal();
-      completionFunction(selectedIndices);
-    }
-  });
-
   buttonContainer.appendChild(cancelButton);
-  buttonContainer.appendChild(confirmButton);
+
+  // Add confirm button - only if count > 1
+  let confirmButton;
+  if (count > 1) {
+    confirmButton = document.createElement('button');
+    confirmButton.textContent = 'Confirm Selection';
+    confirmButton.classList.add('confirm-btn', 'disabled');
+    confirmButton.disabled = true;
+    confirmButton.addEventListener('click', () => {
+      if (selectedCards.size === count) {
+        const selectedIndices = Array.from(selectedCards);
+        closeModal();
+        completionFunction(selectedIndices);
+      }
+    });
+    buttonContainer.appendChild(confirmButton);
+  } else {
+    // For count = 1, we still need a placeholder confirmButton to pass to createSelectableCard
+    confirmButton = document.createElement('button');
+  }
+
   modalContent.appendChild(buttonContainer);
+
+  // Function to handle selection completion
+  function selectionComplete(selectedIndices) {
+    closeModal();
+    completionFunction(selectedIndices);
+  }
 
   // Create card elements for selection
   cards.forEach((name, index) => {
-    const card = createSelectableCard(name, index, selectedCards, count, confirmButton);
+    const card = createSelectableCard(name, index, selectedCards, count, confirmButton, selectionComplete);
     cardSelectionContainer.appendChild(card);
   });
 
@@ -185,11 +207,13 @@ export function handleHandLimitCheck(playerIndex, discardCount, completionCallba
   // Create title for the modal
   const title = `${playerName} must discard ${discardCount} card${discardCount > 1 ? 's' : ''} (Hand limit: 7)`;
 
+  console.log(title)
+
   // Get all card indices
   const cardIndices = player.hand.map((_, index) => index);
 
   // Show card selection modal
-  showCardSelectionModal(discardCount, async (selectedIndices) => {
+  showHandSelectionModal(discardCount, cardIndices, async (selectedIndices) => {
     // Make API call to discard the selected cards
     try {
       const response = await fetch('/discard_cards', {

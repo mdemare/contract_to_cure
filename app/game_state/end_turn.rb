@@ -44,16 +44,13 @@ class EndTurn
     @game_state.infection_discard << card
 
     city = @game_state.cities[card.name]
-    infection_event = add_disease_cubes(city.name, city.color, 1)
+    @events << { type: :infect_city, city: city.name, color: city.color }
+    infection_event = @game_state.add_disease_cubes(city.name, city.color, 1, @events)
+
     return infection_event if infection_event&.dig(:type) == :game_over # Propagate game over event
 
-    infect_event = { type: :infect_city, city: city.name, color: city.color } # Return infection event
-
-    if infect_event
-      @events << infect_event
-      if @game_state.game_over
-        return { game_over: true, reason: @game_state.game_over_reason, events: @events }
-      end
+    if @game_state.game_over
+      return { game_over: true, reason: @game_state.game_over_reason, events: @events }
     end
   end
 
@@ -71,7 +68,7 @@ class EndTurn
     city = @game_state.cities[bottom_card.name]
 
     # Add 3 cubes of the city's color
-    infection_event = add_disease_cubes(city.name, city.color, 3)
+    infection_event = @game_state.add_disease_cubes(city.name, city.color, 3, @events)
     @events << infection_event if infection_event
 
     # Add card to discard pile
@@ -81,34 +78,5 @@ class EndTurn
     # Intensify: shuffle the infection discard pile and put it on top of infection deck
     # We draw cards via pop, so shuffled cards at the end.
     @game_state.intensify
-  end
-
-  def add_disease_cubes(city_name, color, count)
-    # Early returns for protection cases
-    return if @game_state.has_quarantine_specialist_protection?(city_name)
-    return if @game_state.cures[color] && @game_state.disease_cubes[color] == GameStateConfig::MAX_DISEASE_CUBES_PER_COLOR
-
-    city = @game_state.cities[city_name]
-    return if city.color != color
-
-    # Check if adding cubes would cause game over
-    if count >= @game_state.disease_cubes[color] and city.disease_cubes < 3
-      # Adding all remaining cubes then game over
-      city.disease_cubes = [3, city.disease_cubes + count].min
-
-      @game_state.out_of_cubes(color)
-      return { type: :game_over, reason: :no_cubes, color: color }
-    end
-
-    if city.disease_cubes + count > 3
-      city.disease_cubes = 3
-      @game_state.disease_cubes[color] -= 3 - city.disease_cubes
-      @game_state.trigger_outbreak(city_name)
-    else
-      # Normal case - add cubes
-      city.disease_cubes += count
-      @game_state.disease_cubes[color] -= count
-      nil
-    end
   end
 end
