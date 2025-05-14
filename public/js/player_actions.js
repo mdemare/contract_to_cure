@@ -1,7 +1,7 @@
 // player_actions.js
 import { getCurrentGameState, loadGameState, CITIES, getCurrentLocation, getCurrentPlayer } from './game_state.js';
 import { handleEndOfTurnEvents } from './end_turn_events.js';
-import { useActionCard, getActionCardSource } from './action_cards.js';
+import { getActionCardSource } from './action_cards.js';
 import { showCardSelectionModal, showGeneralCardSelectionModal, handleHandLimitCheck } from './select_cards.js';
 
 let selectedPlayerIndex = null;
@@ -9,7 +9,6 @@ let selectedPlayerIndex = null;
 export function setSelectedPlayerIndex(index) {
   selectedPlayerIndex = index;
 }
-
 
 // Map click handler - initialize city click events
 export function initMoveActions() {
@@ -398,6 +397,20 @@ async function processAPIRequest(endpoint, requestData, successMessage, failureP
 }
 
 // Use Government Grant action card
+export async function useQuietNight() {
+  try {
+    // Get the card source info from the action_buttons module
+    // Use the action card
+    await useActionCard('Action:One Quiet Night');
+
+    // Show success message
+    showSuccessMessage("Tonight everything is quiet");
+  } catch (error) {
+    showErrorMessage(`Error using One Quiet Night: ${error.message}`);
+  }
+}
+
+// Use Government Grant action card
 async function useGovernmentGrant(cityName) {
   try {
     // Get the card source info from the action_buttons module
@@ -409,11 +422,7 @@ async function useGovernmentGrant(cityName) {
     }
 
     // Use the action card
-    await useActionCard(
-      'Action:Government Grant',
-      cityName,
-      governmentGrantSource
-    );
+    await useActionCard( 'Action:Government Grant', cityName );
 
     // Show success message
     showSuccessMessage(`Built a research station in ${cityName} using Government Grant`);
@@ -555,4 +564,39 @@ async function handleFlightChoice(playerIndex, destination) {
       }
     );
   }, "Choose a card to discard for flight");
+}
+
+/**
+ * Use an action card
+ * @param {string} cardName - The name of the action card
+ * @param {string} cityName - The city to apply the action to (optional)
+ */
+export async function useActionCard(cardName, cityName = null) {
+  // Prepare the request data
+  const actionCardData = {
+    card: cardName
+  };
+
+  // Add city name to request data if provided
+  if (cityName) {
+    actionCardData.city = cityName;
+  }
+
+  // Get success message based on the card type
+  let successMessage = `Used ${cardName.replace('Action:', '')}`;
+  if (cityName) {
+    successMessage += ` on ${cityName}`;
+  }
+
+  try {
+    // Process the action card request
+    await processAPIRequest(
+      '/action_card',
+      actionCardData,
+      successMessage,
+      'Failed to use action card'
+    );
+  } catch (error) {
+    console.error('Error using action card:', error);
+  }
 }

@@ -9,9 +9,14 @@ module EndTurnEvents
       end_turn.draw_player_card
       return if game_over
     end
-    @infection_rate.times do
-      end_turn.infect_city
-      return if game_over
+    if @quiet_night
+      @quiet_night = false
+      end_turn.events << { type: :quiet_night }
+    else
+      @infection_rate.times do
+        end_turn.infect_city
+        return if game_over
+      end
     end
 
     # Go to next player

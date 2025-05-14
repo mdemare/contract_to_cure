@@ -205,28 +205,55 @@ module PlayerActions
     after_action(true, "Successfully discovered a cure for the #{color} disease!")
   end
 
+  def use_action_card(card_name)
+    puts "use_action_card(#{card_name})"
+    @players.each_with_index do |player, pidx|
+      player.hand.each_with_index do |card, hidx|
+        if card.name == card_name
+          err = yield(card)
+          discard_player_card(pidx, hidx) unless err
+          return err
+        else
+          puts card.inspect, card_name
+        end
+      end
+    end
+    puts "no card found in hand"
+    return { success: false, message: "Card not found in player's hand" }
+  end
+
+  def quiet_night!
+    use_action_card("One Quiet Night") do |card|
+      puts "QUIET NIGHT!!"
+      @quiet_night = true
+      nil
+    end
+  end
+
   # Government Grant action card
   # Allows a player to build a research station in any city without discarding a city card
-  def use_government_grant(player_index, card_index, city_name)
-    player = @players[player_index]
+  def use_government_grant(city_name)
+    puts "#{city_name} Government Grant"
 
-    # Verify card is in player's hand and is the Government Grant action card
-    card = player.hand[card_index]
-    return { success: false, message: "Card not found in player's hand" } unless card
-    return { success: false, message: "Card is not Government Grant" } unless card.type == :event && card.name == "Government Grant"
+    rv = use_action_card("Government Grant") do |card|
 
-    # Check maximum research stations limit
-    return { success: false, message: "Maximum number of research stations reached" } if @research_stations.size >= MAX_RESEARCH_STATIONS
+      # Check maximum research stations limit
+      break { success: false, message: "Maximum number of research stations reached" } if @research_stations.size >= MAX_RESEARCH_STATIONS
 
-    # Check if city already has a research station
-    return { success: false, message: "Research station already exists in #{city_name}" } if @research_stations.include?(city_name)
+      # Check if city already has a research station
+      break { success: false, message: "Research station already exists in #{city_name}" } if @research_stations.include?(city_name)
 
-    # Check if city exists
-    return { success: false, message: "City '#{city_name}' does not exist" } unless @cities[city_name]
+      # Check if city exists
+      break { success: false, message: "City '#{city_name}' does not exist" } unless @cities[city_name]
+      nil
+    end
+
+    puts rv.inspect
+    return rv if rv
 
     # Build the research station and discard the card
     @research_stations << city_name
-    discard_player_card(player_index, card_index)
+    puts @research_stations.inspect
 
     # This doesn't consume an action, so don't call after_action
     response = {

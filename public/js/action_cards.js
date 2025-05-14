@@ -4,6 +4,7 @@
 import { getCurrentGameState } from './game_state.js';
 import { showGeneralCardSelectionModal } from './select_cards.js';
 import { toggleMode } from './action_buttons.js';
+import { useQuietNight } from './player_actions.js';
 
 // Store the current action card source for Government Grant
 let currentActionCardSource = null;
@@ -110,6 +111,7 @@ function handleActionCardsClick() {
         break;
       case 'Action:One Quiet Night':
         console.log('One Quiet Night card selected');
+        useQuietNight();
         break;
       default:
         console.log('Unknown action card type');
@@ -181,42 +183,4 @@ function handleGovernmentGrant(cardSource) {
 
   // Set the mode to government grant
   toggleMode('governmentGrant');
-}
-
-/**
- * Use an action card
- * @param {string} cardName - The name of the action card
- * @param {string} cityName - The city to apply the action to
- * @param {Object} cardSource - The source of the card (player index and card index)
- */
-export async function useActionCard(cardName, cityName, cardSource) {
-  try {
-    const response = await fetch('/action_card', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json'
-      },
-      body: JSON.stringify({
-        card: cardName,
-        city: cityName,
-        player_index: cardSource.playerIndex,
-        card_index: cardSource.cardIndex
-      })
-    });
-
-    if (response.ok) {
-      const data = await response.json();
-      console.log(`Used ${cardName} on ${cityName}`, data);
-
-      // Refresh game state
-      const gameStateResponse = await fetch('/game_state.json');
-      if (gameStateResponse.ok) {
-        await gameStateResponse.json();
-      }
-    } else {
-      console.error('Error using action card:', await response.text());
-    }
-  } catch (error) {
-    console.error('Error using action card:', error);
-  }
 }

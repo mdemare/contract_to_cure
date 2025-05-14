@@ -13,6 +13,8 @@ import { getCityColor } from '/js/player_actions.js';
  * @returns {HTMLElement} The created card element
  */
 function createSelectableCard(cardName, index, selectedCards, count, confirmButton) {
+  if (typeof cardName !== "string") { throw new Error("card name is not a string") }
+  console.log(`cardName = ${cardName}`)
   const card = document.createElement('div');
   card.classList.add('selectable-card');
 
@@ -79,10 +81,11 @@ export function showCardSelectionModal(count, cardIndices, completionFunction, c
   if (!currentPlayer || !currentPlayer.hand || !Array.isArray(currentPlayer.hand)) {
     return;
   }
-  showGeneralCardSelectionModal(count, currentPlayer.hand, completionFunction, customTitle);
+  showGeneralCardSelectionModal(count, currentPlayer.hand.map((name, index) => name), completionFunction, customTitle);
 }
 
 export function showGeneralCardSelectionModal(count, cards, completionFunction, customTitle) {
+  if (typeof cards[0] !== "string") { throw new Error("cards should be names, not objects") }
   // Create modal backdrop
   const modalBackdrop = document.createElement('div');
   modalBackdrop.classList.add('modal-backdrop');
@@ -141,8 +144,8 @@ export function showGeneralCardSelectionModal(count, cards, completionFunction, 
   modalContent.appendChild(buttonContainer);
 
   // Create card elements for selection
-  cards.forEach((cardName, index) => {
-    const card = createSelectableCard(cardName, index, selectedCards, count, confirmButton);
+  cards.forEach((name, index) => {
+    const card = createSelectableCard(name, index, selectedCards, count, confirmButton);
     cardSelectionContainer.appendChild(card);
   });
 

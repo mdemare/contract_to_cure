@@ -40,8 +40,6 @@ class EndTurn
 
   def infect_city
     return nil if @game_state.infection_deck.empty? # Return nil if no city infected
-    puts "infection deck",@game_state.infection_deck.map(&:name).join(?,)
-    puts "infection discard",@game_state.infection_discard.map(&:name).join(?,)
     card = @game_state.infection_deck.pop
     @game_state.infection_discard << card
 

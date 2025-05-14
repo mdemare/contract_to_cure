@@ -153,16 +153,16 @@ post '/action_card' do
 
   card_name = data['card']
   city_name = data['city']
-  player_index = data['player_index'].to_i
-  card_index = data['card_index'].to_i
 
   # Validate required parameters
-  return { status: 'error', message: 'Missing required parameters' }.to_json unless card_name && city_name
+  return { status: 'error', message: 'Missing required parameters' }.to_json unless card_name
 
   result = case card_name.split(?:).last
+  when 'One Quiet Night'
+    game_state.quiet_night!
   when 'Government Grant'
     # Add a research station to the specified city without using a city card
-    game_state.use_government_grant(player_index, card_index, city_name)
+    game_state.use_government_grant(city_name)
   # Add cases for other action cards as they are implemented
   else
     { status: 'error', message: "Unknown action card: #{card_name}" }
