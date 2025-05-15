@@ -13,6 +13,7 @@ import { getCityColor } from './player_action_utils.js';
  * @param {Function} selectionComplete - Function to call when selection is complete
  * @returns {HTMLElement} The created card element
  */
+// TODO REFACTOR, don't take card names, but card objects
 function createSelectableCard(cardName, index, selectedCards, count, confirmButton, selectionComplete) {
   if (typeof cardName !== "string") { throw new Error("card name is not a string") }
   const card = document.createElement('div');

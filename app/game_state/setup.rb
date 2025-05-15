@@ -91,17 +91,17 @@ module Setup
       Card.new(:city, name, city.color)
     end
 
-    # Create event cards
-    event_cards = [
-      Card.new(:event, 'Airlift'),
-      Card.new(:event, 'Forecast'),
-      Card.new(:event, 'Government Grant'),
-      Card.new(:event, 'One Quiet Night'),
-      Card.new(:event, 'Resilient Population')
+    # Create action cards
+    action_cards = [
+      Card.new(:action, 'Airlift'),
+      Card.new(:action, 'Forecast'),
+      Card.new(:action, 'Government Grant'),
+      Card.new(:action, 'One Quiet Night'),
+      Card.new(:action, 'Resilient Population')
     ]
 
     # Combine and shuffle
-    combined_deck = (city_cards + event_cards).shuffle
+    combined_deck = (city_cards + action_cards).shuffle
 
     # Deal initial hands
     player_deck = combined_deck.dup

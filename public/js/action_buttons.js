@@ -1,10 +1,11 @@
-// action_buttons.js
+// action_buttons.js - updated with retrieve card functionality
 import { getCurrentGameState } from './game_state.js';
 import { treatDisease, pass, cureDisease, setSelectedPlayerIndex } from './player_actions.js';
 import { initShareKnowledge, updateShareKnowledgeButtonState } from './share_knowledge.js';
 import { initActionCardsButton, updateActionCardsButtonState } from './action_cards.js';
 import { hidePlayerSelectionPanel, isDispatcher, showPlayerSelectionPanel } from './player_selection.js';
 import { updatePlayerHand } from './player_hand.js';
+import { initRetrieveCard, updateRetrieveButtonState } from './retrieve_card.js';
 
 // Game mode state to track which action is currently selected
 let currentMode = null;
@@ -37,6 +38,9 @@ export function initActionButtons() {
 
   // Initialize share knowledge functionality
   initShareKnowledge();
+
+  // Initialize retrieve card functionality
+  initRetrieveCard();
 
   // Update button states based on current game state
   updateButtonStates();
@@ -142,6 +146,9 @@ export function updateButtonStates() {
 
   // Update action cards button visibility
   updateActionCardsButtonState(gameState);
+
+  // Update retrieve card button visibility
+  updateRetrieveButtonState();
 
   // For now, all other buttons are enabled
   enableAllButtons();

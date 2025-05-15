@@ -4,7 +4,6 @@ module PlayerActions
   def move(player_index, destination, card_index = nil)
     player = @players[player_index]
     current_location = player.location
-    puts "city cards: ",current_player.city_cards.inspect
     # Check if move is valid
     if @cities[current_location].connections.include?(destination)
       move_type = 'drive / ferry'
@@ -299,10 +298,11 @@ module PlayerActions
     return after_action(false, "Only the Contingency Planner can retrieve action cards") unless current_player.role == :contingency_planner
 
     # Check if the card is in the discard pile
-    action_card = @player_discard_pile.find { |card| card.name == action_card_name }
+    action_card = @player_discard.find { |card| card.name == action_card_name }
     return after_action(false, "Card '#{action_card_name}' not found in discard pile") unless action_card
 
     # Check if this card has been retrieved previously
+    # TODO how do we store this information
     return after_action(false, "This card has already been retrieved by the Contingency Planner") if current_player.stored_special_event == action_card_name
 
     # Check if the card is an action/event card
@@ -310,7 +310,7 @@ module PlayerActions
 
     # Store the card with the contingency planner and remove from discard pile
     current_player.stored_special_event = action_card_name
-    @player_discard_pile.delete_if { |card| card.name == action_card_name }
+    @player_discard.delete_if { |card| card.name == action_card_name }
 
     # Handle hand limit check if needed
     if current_player.hand.size > 7

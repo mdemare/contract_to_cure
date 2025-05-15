@@ -37,7 +37,7 @@ module JsonGenerator
           index: player.index,
           location: player.location,
           hand: player.sorted_hand.map do |card|
-            if card.type == :event
+            if card.type == :action
               "Action:#{card.name}"
             else
               card.name
@@ -47,7 +47,8 @@ module JsonGenerator
       end,
       decks: {
         playerDeck: @player_deck.size,
-        infectionDeck: @infection_deck.size
+        infectionDeck: @infection_deck.size,
+        discardPile: @player_discard.map(&:description)
       }
     }
   end

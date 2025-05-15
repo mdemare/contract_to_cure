@@ -34,7 +34,7 @@ class Player
     when :dispatcher
       { description: "Move other players' pawns as if they were your own. Move any pawn to a city with another pawn." }
     when :contingency_planner
-      { description: 'You may take an event card from the discard pile and use it. Remove it from the game afterward.' }
+      { description: 'You may take an action card from the discard pile and use it. Remove it from the game afterward.' }
     when :quarantine_specialist
       { description: 'Prevent disease cubes in your location and all connected cities.' }
     else

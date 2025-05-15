@@ -63,7 +63,7 @@
 }
 
 .action-btn.share i::before {
-  content: "🔄";
+  content: "🤝";
 }
 
 .action-btn.build i::before {
@@ -71,11 +71,11 @@
 }
 
 .action-btn.pass i::before {
-  content: "⏭️";
+  content: "⌛";
 }
 
-.action-btn.action-cards i::before {
-  content: "⚡";
+.action-btn.retrieve i::before {
+  content: "♻️";
 }
 
 /* Special action button styling - positioned on far right */

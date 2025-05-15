@@ -169,7 +169,7 @@ function createCardElement(event) {
       // Add appropriate class based on card type
       if (card.type === 'city') {
         cardElement.classList.add('city-card', `card-${card.color}`);
-      } else if (card.type === 'event') {
+      } else if (card.type === 'action') {
         cardElement.classList.add('card-event');
       } else if (card.type === 'epidemic') {
         cardElement.classList.add('card-epidemic');
