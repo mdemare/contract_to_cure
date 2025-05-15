@@ -1,6 +1,6 @@
 // player_panel.js
 import { getCurrentGameState } from './game_state.js';
-import { getCityColor } from './player_actions.js';
+import { getCityColor } from './player_action_utils.js';
 
 // DOM elements
 let playerPanel;

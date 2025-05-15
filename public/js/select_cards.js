@@ -1,6 +1,6 @@
 // Import dependencies
 import { getCurrentGameState, getCurrentPlayer } from '/js/game_state.js';
-import { getCityColor } from '/js/player_actions.js';
+import { getCityColor } from './player_action_utils.js';
 
 /**
  * Creates a selectable card element for the card selection modal

@@ -7,6 +7,7 @@ import { initMoveActions } from './player_actions.js';
 import { initializeCurrentPlayer } from './current_player.js';
 import { initShareKnowledge } from './share_knowledge.js';
 import { initGameOver } from './game_over.js';
+import { initializeModules } from './player_action_utils.js'; // Import the new initialization function
 
 // Initialize the pandemic map
 async function initializePandemicMap() {
@@ -15,6 +16,9 @@ async function initializePandemicMap() {
 
     // First load cities data
     await loadCities();
+
+    // Initialize utility modules to avoid circular dependencies
+    await initializeModules();
 
     if (CITIES) {
       // Prepare the map data for rendering

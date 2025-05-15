@@ -1,7 +1,7 @@
 // player_hand.js
 // Handles displaying and interacting with the player's hand of
-import { getCityColor } from './player_actions.js';
-import { getCurrentMode, updateButtonStates } from './action_buttons.js';
+import { getCityColor } from './player_action_utils.js';
+import { updateButtonStates } from './action_buttons.js';
 
 /**
  * Update player hand display

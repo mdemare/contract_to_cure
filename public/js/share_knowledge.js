@@ -1,6 +1,8 @@
 // share_knowledge.js
 import { getCurrentGameState } from './game_state.js';
-import { executeShareKnowledge, getCityColor } from './player_actions.js';
+import { executeShareKnowledge } from './player_actions.js';
+import { getCityColor } from './player_action_utils.js';
+
 
 // State to track which players can share knowledge
 let applicableCards = [];
