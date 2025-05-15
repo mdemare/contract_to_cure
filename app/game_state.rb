@@ -54,8 +54,8 @@ class GameState
   end
 
   def game_over!(reason)
-    self.game_over = true
-    self.game_over_reason = reason
+    @game_over = true
+    @game_over_reason = reason
     save_game_state
     return { type: :game_over, reason: game_over_reason }
   end
@@ -119,6 +119,7 @@ class GameState
     @infection_rate = state[:game_status][:infection_rate]
     @infection_rate_marker = state[:game_status][:infection_rate_position]
     @current_player_index = state[:game_status][:current_player_index]
+    @quiet_night = state[:game_status][:quiet_night]
 
     # Rebuild cities
     @cities = {}
@@ -187,11 +188,11 @@ class GameState
     player.hand.any? { |card| card.type == :city && card.name == city_name }
   end
 
-  def discard_player_card(player_index, card_index)
+  def discard_player_card(player_index, card_index, retrieved = false)
     player = @players[player_index]
     card = player.hand.delete_at(card_index)
     player.hand = player.sorted_hand
-    @player_discard << card if card
+    @player_discard << card if card && !retrieved
   end
 
   def medic_ability(requested_player, destination)

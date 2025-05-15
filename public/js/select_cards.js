@@ -13,16 +13,16 @@ import { getCityColor } from './player_action_utils.js';
  * @param {Function} selectionComplete - Function to call when selection is complete
  * @returns {HTMLElement} The created card element
  */
-// TODO REFACTOR, don't take card names, but card objects
-function createSelectableCard(cardName, index, selectedCards, count, confirmButton, selectionComplete) {
-  if (typeof cardName !== "string") { throw new Error("card name is not a string") }
+function createSelectableCard(cardObj, index, selectedCards, count, confirmButton, selectionComplete) {
+  if(typeof index !== 'number') { throw new Error("index must be an number")}
+  const cardName = cardObj.name
   const card = document.createElement('div');
   card.classList.add('selectable-card');
 
   // Determine card type and color
-  if (cardName.startsWith('Action:')) {
+  if (cardObj.type == 'action') {
     card.classList.add('action');
-  } else if (cardName === 'Epidemic') {
+  } else if (cardObj.type == 'event') {
     card.classList.add('epidemic');
   } else {
     // City card - find the color
@@ -95,7 +95,6 @@ export function showHandSelectionModal(count, cardIndices, completionFunction, c
 }
 
 export function showGeneralCardSelectionModal(count, cards, completionFunction, customTitle) {
-  if (typeof cards[0] !== "string") { throw new Error("cards should be names, not objects") }
   // Create modal backdrop
   const modalBackdrop = document.createElement('div');
   modalBackdrop.classList.add('modal-backdrop');
@@ -148,6 +147,7 @@ export function showGeneralCardSelectionModal(count, cards, completionFunction, 
       if (selectedCards.size === count) {
         const selectedIndices = Array.from(selectedCards);
         closeModal();
+        if (!selectedIndices.every(item => typeof item === 'number')) { throw new Error("must be indices")}
         completionFunction(selectedIndices);
       }
     });
@@ -161,13 +161,14 @@ export function showGeneralCardSelectionModal(count, cards, completionFunction, 
 
   // Function to handle selection completion
   function selectionComplete(selectedIndices) {
+    if (!selectedIndices.every(item => typeof item === 'number')) { throw new Error("must be indices")}
     closeModal();
     completionFunction(selectedIndices);
   }
 
   // Create card elements for selection
-  cards.forEach((name, index) => {
-    const card = createSelectableCard(name, index, selectedCards, count, confirmButton, selectionComplete);
+  cards.forEach(cardObj => {
+    const card = createSelectableCard(cardObj, cardObj.index, selectedCards, count, confirmButton, selectionComplete);
     cardSelectionContainer.appendChild(card);
   });
 
@@ -206,8 +207,6 @@ export function handleHandLimitCheck(playerIndex, discardCount, completionCallba
 
   // Create title for the modal
   const title = `${playerName} must discard ${discardCount} card${discardCount > 1 ? 's' : ''} (Hand limit: 7)`;
-
-  console.log(title)
 
   // Get all card indices
   const cardIndices = player.hand.map((_, index) => index);

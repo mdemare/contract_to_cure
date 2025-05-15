@@ -59,8 +59,6 @@ post '/move' do
   destination = data['destination']
   card_index = data['card_index']&.to_i
 
-  puts data.inspect
-
   # Validate required parameters
   return { status: 'error', message: 'Missing required parameters' }.to_json unless player_index && destination
 

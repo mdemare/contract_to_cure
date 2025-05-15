@@ -13,4 +13,7 @@ class Card
     desc.delete(:color) unless type == :city
     desc
   end
+
+  def retrieved? = @retrieved
+  def retrieved=(v) @retrieved = v; end
 end

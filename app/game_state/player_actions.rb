@@ -10,7 +10,10 @@ module PlayerActions
     elsif @research_stations.include?(current_location) && @research_stations.include?(destination)
       move_type = 'shuttle flight'
     elsif current_player.role == :operations_expert and @research_stations.include?(current_location) and not current_player.city_cards.empty?
+      puts 1
+      puts current_player.hand[card_index].description if card_index
       if card_index and current_player.hand[card_index].type == :city
+
         # The operation expert can go anywhere from a research station by discarding a city card
         move_type = 'operation researcher special move'
         discard_player_card(@current_player_index, card_index)
@@ -205,28 +208,37 @@ module PlayerActions
   end
 
   def use_action_card(card_name)
-    puts "use_action_card(#{card_name})"
     @players.each_with_index do |player, pidx|
       player.hand.each_with_index do |card, hidx|
         if card.name == card_name
-          err = yield(card)
-          discard_player_card(pidx, hidx) unless err
+          err = yield(card) if block_given?
+          discard_player_card(pidx, hidx, card.retrieved?) unless err
           return err
-        else
-          puts card.inspect, card_name
         end
       end
     end
-    puts "no card found in hand"
     return { success: false, message: "Card not found in player's hand" }
   end
 
   def quiet_night!
-    use_action_card("One Quiet Night") do |card|
-      puts "QUIET NIGHT!!"
-      @quiet_night = true
-      nil
-    end
+    err = use_action_card("One Quiet Night")
+
+    return err if err
+
+    @quiet_night = true
+
+    # This doesn't consume an action, so don't call after_action
+    response = {
+      success: true,
+      status: 'success',
+      message: "Tonight at least will be quiet",
+      game_state: to_json_state
+    }
+
+    # Save game state after the action
+    save_game_state
+
+    return response
   end
 
   # Government Grant action card
@@ -301,15 +313,12 @@ module PlayerActions
     action_card = @player_discard.find { |card| card.name == action_card_name }
     return after_action(false, "Card '#{action_card_name}' not found in discard pile") unless action_card
 
-    # Check if this card has been retrieved previously
-    # TODO how do we store this information
-    return after_action(false, "This card has already been retrieved by the Contingency Planner") if current_player.stored_special_event == action_card_name
-
     # Check if the card is an action/event card
-    return after_action(false, "Card '#{action_card_name}' is not an action card") unless action_card.type == :event
+    return after_action(false, "Card '#{action_card_name}' is not an action card") unless action_card.type == :action
 
     # Store the card with the contingency planner and remove from discard pile
-    current_player.stored_special_event = action_card_name
+    action_card.retrieved = true
+    current_player.hand << action_card
     @player_discard.delete_if { |card| card.name == action_card_name }
 
     # Handle hand limit check if needed

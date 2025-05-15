@@ -27,7 +27,7 @@ export async function processAPIRequest(endpoint, requestData, successMessage, f
     if (response.ok) {
       // Try to parse JSON
       const result = await response.json();
-
+      if(!result) { throw new Error("no result")}
       if (result.status === 'success') {
         // Check if we need to handle hand limit
         if (result.exceeded_hand_limit) {

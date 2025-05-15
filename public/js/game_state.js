@@ -78,6 +78,11 @@ function updateGameUI(gameState) {
       return;
     }
 
+    // Update actions counter
+    if (gameState.gameStatus.actions_remaining !== undefined) {
+      document.getElementById('action-counter').textContent = gameState.gameStatus.actions_remaining;
+    }
+
     // Update turn counter
     if (gameState.gameStatus.turn !== undefined) {
       document.getElementById('turn-counter').textContent = gameState.gameStatus.turn;

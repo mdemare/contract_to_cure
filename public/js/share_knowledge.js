@@ -36,19 +36,23 @@ export function updateShareKnowledgeButtonState() {
 
   // Check if there are other players in the same location
   const playersInSameLocation = getPlayersInSameLocation(gameState, currentPlayer.location);
+  if (playersInSameLocation.length == 0) {
+    shareBtn.classList.add('disabled')
+    shareBtn.disabled = true
+    return
+  }
 
   // Get applicable cards that can be shared
   // Store the state for later use
   applicableCards = getApplicableCards(gameState, currentPlayerIndex, playersInSameLocation);
   eligiblePlayers = playersInSameLocation;
 
+  shareBtn.disabled = (applicableCards.length == 0)
   // Enable or disable the button based on whether sharing is possible
-  if (playersInSameLocation.length > 0 && applicableCards.length > 0) {
-    shareBtn.classList.remove('disabled');
-    shareBtn.disabled = false;
-  } else {
+  if (applicableCards.length == 0) {
     shareBtn.classList.add('disabled');
-    shareBtn.disabled = true;
+  } else {
+    shareBtn.classList.remove('disabled');
   }
 }
 
@@ -77,7 +81,7 @@ function getApplicableCards(gameState, currentPlayerIndex, playersInSameLocation
   const currentLocation = currentPlayer.location;
 
   // Check if current player has the current location card (they can give it)
-  const currentLocationCardIndex = currentPlayer.hand.indexOf(currentLocation);
+  const currentLocationCardIndex = currentPlayer.hand.findIndex(card => card.name === currentLocation)
   if (currentLocationCardIndex !== -1) {
     result.push({
       cardName: currentLocation,
@@ -89,7 +93,7 @@ function getApplicableCards(gameState, currentPlayerIndex, playersInSameLocation
 
   // Check if any other player has the current location card (current player can take it)
   playersInSameLocation.forEach(player => {
-    const locationCardIndex = player.hand.indexOf(currentLocation);
+    const locationCardIndex = player.hand.findIndex(card => card.name === currentLocation)
 
     // Check if player has the current location card
     if (locationCardIndex !== -1) {
@@ -103,13 +107,13 @@ function getApplicableCards(gameState, currentPlayerIndex, playersInSameLocation
 
     // If the other player is a Researcher, they can give any card from their hand
     if (player.role === 'researcher') {
-      player.hand.forEach((cardName, index) => {
+      player.hand.forEach((cardObj, index) => {
         // Skip the current location card as it's already been added
-        if (cardName !== currentLocation) {
+        if (cardObj.name !== currentLocation) {
           // Skip non-city cards (like Event or Epidemic cards)
-          if (!cardName.startsWith('Action:') && cardName !== 'Epidemic') {
+          if (cardObj.type === 'city') {
             result.push({
-              cardName: cardName,
+              cardName: cardObj.name,
               action: 'take',
               playerIndex: player.index,
               cardIndex: index,
@@ -123,13 +127,13 @@ function getApplicableCards(gameState, currentPlayerIndex, playersInSameLocation
 
   // If the current player is a Researcher, they can give any card from their hand
   if (currentPlayer.role === 'researcher') {
-    currentPlayer.hand.forEach((cardName, index) => {
+    currentPlayer.hand.forEach((cardObj, index) => {
       // Skip the current location card as it's already been added
-      if (cardName !== currentLocation && currentLocationCardIndex !== index) {
+      if (cardObj !== currentLocation && currentLocationCardIndex !== index) {
         // Skip non-city cards (like Event or Epidemic cards)
-        if (!cardName.startsWith('Action:') && cardName !== 'Epidemic') {
+        if (cardObj.type === 'city') {
           result.push({
-            cardName: cardName,
+            cardName: cardObj.name,
             action: 'give',
             playerIndex: currentPlayerIndex,
             cardIndex: index,

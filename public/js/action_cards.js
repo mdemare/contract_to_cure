@@ -70,9 +70,9 @@ function handleActionCardsClick() {
 
   gameState.players.forEach((player, playerIndex) => {
     if (player.hand) {
-      player.hand.forEach((cardName, cardIndex) => {
-        if (cardName.startsWith('Action:')) {
-          actionCards.push(cardName);
+      player.hand.forEach((cardObj, cardIndex) => {
+        if (cardObj.type === 'action') {
+          actionCards.push(cardObj);
           actionCardSources.push({ playerIndex, cardIndex });
         }
       });
@@ -88,7 +88,7 @@ function handleActionCardsClick() {
   // Show the modal with action cards and handle the selected card
   showGeneralCardSelectionModal(1, actionCards, (selectedIndices) => {
     const selectedIndex = selectedIndices[0];
-    const cardName = actionCards[selectedIndex];
+    const cardName = actionCards[selectedIndex].name;
     const cardSource = actionCardSources[selectedIndex];
 
     // Log the selected card
@@ -96,20 +96,20 @@ function handleActionCardsClick() {
 
     // Handle different action cards
     switch(cardName) {
-      case 'Action:Airlift':
+      case 'Airlift':
         console.log('Airlift card selected');
         break;
-      case 'Action:Resilient Population':
+      case 'Resilient Population':
         console.log('Resilient Population card selected');
         break;
-      case 'Action:Government Grant':
+      case 'Government Grant':
         console.log('Government Grant card selected');
         handleGovernmentGrant(cardSource);
         break;
-      case 'Action:Forecast':
+      case 'Forecast':
         console.log('Forecast card selected');
         break;
-      case 'Action:One Quiet Night':
+      case 'One Quiet Night':
         console.log('One Quiet Night card selected');
         useQuietNight();
         break;
@@ -133,21 +133,9 @@ export function updateActionCardsButtonState(gameState) {
     return;
   }
 
-  // Check if any player has action cards
-  let hasActionCards = false;
-
-  for (const player of gameState.players) {
-    if (player.hand) {
-      for (const cardName of player.hand) {
-        if (cardName.startsWith('Action:')) {
-          hasActionCards = true;
-          break;
-        }
-      }
-    }
-    if (hasActionCards) break;
-  }
-
+  const hasActionCards = gameState.players.some(player =>
+    player.hand?.some(card => card.type === 'action')
+  );
   // Show/hide the button based on whether action cards are available
   actionCardsBtn.style.display = hasActionCards ? 'inline-flex' : 'none';
 }

@@ -36,13 +36,7 @@ module JsonGenerator
           role: player.role,
           index: player.index,
           location: player.location,
-          hand: player.sorted_hand.map do |card|
-            if card.type == :action
-              "Action:#{card.name}"
-            else
-              card.name
-            end
-          end
+          hand: player.sorted_hand.map(&:description).map.with_index {|o,i| o[:index] = i; o}
         }
       end,
       decks: {

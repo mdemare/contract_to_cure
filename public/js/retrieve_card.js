@@ -77,22 +77,19 @@ async function handleRetrieveCardClick() {
   const discardedActionCards = getDiscardedActionCards(gameState);
 
   if (discardedActionCards.length === 0) {
-    console.log(gameState.decks)
     showErrorMessage('No action cards available to retrieve');
     return;
   }
 
-  // Format cards for the selection modal
-  const actionCardsForModal = discardedActionCards.map(card => card.name);
-
   // Show card selection modal with discarded action cards
+
   showGeneralCardSelectionModal(
     1, // Select just one card
-    actionCardsForModal,
+    discardedActionCards,
     (selectedCards) => {
       // The selected card is the full action card name
       if (selectedCards && selectedCards.length > 0) {
-        let chosenCardName = actionCardsForModal[selectedCards[0]]
+        let chosenCardName = discardedActionCards[selectedCards[0]].name
         retrieveActionCard(chosenCardName);
       }
     },

@@ -44,7 +44,8 @@ module EndTurnEvents
           outbreaks: @outbreak_count,
           infection_rate: @infection_rate,
           infection_rate_position: @infection_rate_marker,
-          current_player_index: @current_player_index
+          current_player_index: @current_player_index,
+          quiet_night: @quiet_night
         },
         disease_cubes: COLORS.each_with_object({}) do |color, hash|
           hash[color] = {

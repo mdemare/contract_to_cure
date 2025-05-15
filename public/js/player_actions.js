@@ -170,20 +170,10 @@ export async function cureDisease() {
   });
 
   // Process each card in the player's hand
-  currentPlayer.hand.forEach((cardName, index) => {
+  currentPlayer.hand.forEach(cardObj => {
     // Skip event cards or epidemic cards
-    if (cardName.startsWith('Action:') || cardName === 'Epidemic') {
-      return;
-    }
-
-    // Get the city color
-    const cityColor = getCityColor(cardName);
-    if (cityColor) {
-      // Add card info to the appropriate color group
-      cardsByColor[cityColor].push({
-        name: cardName,
-        index: index
-      });
+    if (cardObj.type == 'city') {
+      cardsByColor[cardObj.color].push(cardObj);
     }
   });
 
@@ -233,7 +223,7 @@ export async function cureDisease() {
   if (!selectedColor || !colorCards || colorCards.length < cardsNeeded) {
     showInvalidActionMessage(`You need ${cardsNeeded} cards of the same color to discover a cure`);
   } else {
-    let selectableCards = colorCards.map(card => card.index)
+    let selectableCards = colorCards.map(cardObj => cardObj.index)
     if (colorCards.length == cardsNeeded) {
       cureWithIndices(selectableCards, selectedColor);
     } else {
@@ -361,17 +351,8 @@ async function useGovernmentGrant(cityName) {
 export async function handleOperationsExpertMove(playerIndex, destination) {
   const gameState = getCurrentGameState();
   const currentPlayer = gameState.players[playerIndex];
-
   // Get all city cards from player's hand
-  const cityCards = currentPlayer.hand
-    .map((cardName, index) => {
-      // Skip non-city cards
-      if (cardName.startsWith('Action:') || cardName === 'Epidemic') {
-        return null;
-      }
-      return cardName;
-    })
-    .filter(index => index !== null);
+  const cityCards = currentPlayer.hand.filter(cardObj => cardObj.type === 'city');
 
   // Show card selection modal
   showGeneralCardSelectionModal(1, cityCards, async (selectedIndices) => {
@@ -380,7 +361,7 @@ export async function handleOperationsExpertMove(playerIndex, destination) {
       player_index: playerIndex,
       destination: destination,
       card_index: selectedIndices[0]
-    };
+    }
 
     // Process the move action with the selected card
     await processAPIRequest(

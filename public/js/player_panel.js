@@ -182,8 +182,8 @@ function createPlayerItem(player, isCurrent) {
 
   // Add cards to hand preview
   if (player.hand && Array.isArray(player.hand)) {
-    player.hand.forEach(cardName => {
-      const cardElement = createCardPreview(cardName);
+    player.hand.forEach(cardObj => {
+      const cardElement = createCardPreview(cardObj);
       handPreview.appendChild(cardElement);
     });
   }
@@ -195,37 +195,30 @@ function createPlayerItem(player, isCurrent) {
   return playerItem;
 }
 
-// Create a card preview element
-function createCardPreview(cardName) {
-  const cardElement = document.createElement('div');
+const typeToClassMap = {
+  'action': 'event',
+  'event': 'epidemic'
+};
 
-  // Determine card type and style
-  if (cardName.startsWith('Action:')) {
-    cardElement.className = 'hand-card-preview event';
-    cardElement.textContent = cardName.replace('Action:', '').trim();
-  } else if (cardName === 'Epidemic') {
-    cardElement.className = 'hand-card-preview epidemic';
-    cardElement.textContent = 'Epidemic';
-  } else {
-    // It's a city card
-    const cityColor = getCityColor(cardName);
-    cardElement.className = `hand-card-preview ${cityColor || ''}`;
-    cardElement.textContent = cardName;
-  }
-
-  return cardElement;
+  // Create a card preview element
+function createCardPreview(cardObj) {
+  if (!cardObj) { throw new Error("cardObj is undefined") }
+  const cardElement = document.createElement('div')
+  cardElement.textContent = cardObj.name
+  cardElement.className = `hand-card-preview ${typeToClassMap[cardObj.type] || cardObj.color}`
+  return cardElement
 }
 
 // Format role text to be more readable (copied from current_player.js)
 function formatRoleText(role) {
-  if (!role) return 'Player';
+  if (!role) return 'Player'
 
   // Convert to string and split by capitals
   const words = String(role)
     .replace(/([a-z])([A-Z])/g, '$1 $2')
     .split('_')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ');
+    .join(' ')
 
   return words;
 }
