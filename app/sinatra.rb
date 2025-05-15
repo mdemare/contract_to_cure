@@ -88,6 +88,21 @@ post '/cure_disease' do
   game_state.cure_disease(color, indices).to_json
 end
 
+# Retrieve action card endpoint for contingency planner
+post '/retrieve' do
+  content_type :json
+  request.body.rewind
+  data = JSON.parse(request.body.read)
+
+  action_card_name = data['action_card_name']
+
+  # Validate required parameters
+  return { status: 'error', message: 'Missing required parameters' }.to_json unless action_card_name
+
+  # Perform the action and get result
+  game_state.retrieve(action_card_name).to_json
+end
+
 # Share knowledge endpoint
 post '/share_knowledge' do
   content_type :json

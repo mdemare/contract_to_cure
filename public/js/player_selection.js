@@ -26,7 +26,6 @@ export function isDispatcher() {
  * Create and show the player selection panel
  */
 export function showPlayerSelectionPanel() {
-  console.log("showPlayerSelectionPanel")
   // Check if panel already exists
   let playerSelectionPanel = document.getElementById('player-selection-panel');
   if (playerSelectionPanel) {
@@ -129,8 +128,6 @@ function formatRoleText(role) {
  * @param {number} playerIndex - The index of the selected player
  */
 function handlePlayerSelection(playerIndex) {
-  console.log(`Selected player index: ${playerIndex}`);
-
   // Store selected player index
   selectedPlayerIndex = playerIndex;
 

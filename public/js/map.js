@@ -80,7 +80,6 @@ export function saveCurrentTransform(translateX, translateY, scale) {
 
 // Updated render function preserving the current transform
 export function renderPandemicCities(pandemicMap) {
-  console.log("renderPandemicCities", pandemicMap);
   const container = document.querySelector('.map-container');
 
   // Save current transform if it exists

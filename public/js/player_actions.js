@@ -114,7 +114,6 @@ async function handleCityClick(event) {
   }
 
   // Check if we're in Dispatcher's moveSelectedPlayer mode
-  console.log(`DISPATCHER mode ${actionButtons.getCurrentMode()}`)
   if (actionButtons.getCurrentMode() === 'moveSelectedPlayer') {
     // Get the selected player index
     if (selectedPlayerIndex !== null) {
@@ -445,7 +444,7 @@ export function getCityColor(cityName) {
   if (CITIES[cityName] && CITIES[cityName].color) {
     return CITIES[cityName].color;
   }
-  console.log("No color found for "+cityName)
+  console.error("No color found for "+cityName)
   return null;
 }
 

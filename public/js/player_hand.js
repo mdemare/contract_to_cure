@@ -53,38 +53,9 @@ export function updatePlayerHand(gameState) {
     // Add data attribute for card index
     card.dataset.cardIndex = index;
 
-    // Add click handler for potential card interactions
-    card.addEventListener('click', () => handleCardClick(index, cardName));
-
     handContainer.appendChild(card);
   });
 
   // After updating the hand, update the button states
   updateButtonStates();
-}
-
-/**
- * Handle card clicks in player hand
- * @param {number} cardIndex - The index of the clicked card
- * @param {string} cardName - The name of the clicked card
- */
-function handleCardClick(cardIndex, cardName) {
-  console.log(`Card clicked: ${cardName} (index: ${cardIndex})`);
-
-  // Check if we're in a mode that uses cards
-  const mode = getCurrentMode();
-
-  if (mode === 'cure') {
-    // Could implement card selection for cure action
-    console.log('Selecting card for cure action');
-  } else if (mode === 'trade') {
-    // Could implement card selection for trading
-    console.log('Selecting card for trade');
-  } else if (mode === 'move') {
-    // Could implement direct flight if clicking on city card
-    if (!cardName.startsWith('Action:') && cardName !== 'Epidemic') {
-      console.log(`Using ${cardName} for direct flight`);
-      // Implement direct flight here
-    }
-  }
 }

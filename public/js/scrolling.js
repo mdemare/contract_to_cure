@@ -134,7 +134,6 @@ function startDragTouch(e) {
   let targetElement = e.touches[0].target;
   while (targetElement && targetElement !== document.body) {
     if (targetElement.classList && targetElement.classList.contains('city')) {
-      console.log('Touch on city detected:', targetElement.dataset.cityName);
       return; // Don't start dragging if touching a city
     }
     targetElement = targetElement.parentNode;
@@ -208,11 +207,6 @@ function updateScroll(deltaX) {
     jumpDirection = "left";
   }
 
-  // Log jump details if one occurred
-  if (jumpOccurred) {
-    console.log(`Jump ${jumpDirection}: ${oldX.toFixed(2)} -> ${offsetX.toFixed(2)}`);
-  }
-
   // Update the transform without any transition
   inner.style.transform = `translate(${offsetX}px, ${offsetY}px) scale(${scale})`;
 
@@ -252,6 +246,5 @@ export function cleanupScrolling() {
   if (listenersInitialized) {
     removeEventListeners();
     listenersInitialized = false;
-    console.log('Scrolling event listeners cleaned up');
   }
 }

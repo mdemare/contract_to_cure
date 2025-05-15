@@ -65,7 +65,6 @@ export function toggleMode(mode) {
 
 // Reset the current mode
 export function resetMode() {
-  console.log("RESET MODE")
   currentMode = null;
   updateActiveModeUI();
 
@@ -79,7 +78,6 @@ export function resetMode() {
 
 // Update UI to highlight the active mode button
 function updateActiveModeUI() {
-  console.log(`updateActiveModeUI, mode = ${currentMode}`)
   // Remove active class from all buttons
   const buttons = document.querySelectorAll('.action-btn');
   buttons.forEach(button => {

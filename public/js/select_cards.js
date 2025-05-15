@@ -15,7 +15,6 @@ import { getCityColor } from '/js/player_actions.js';
  */
 function createSelectableCard(cardName, index, selectedCards, count, confirmButton, selectionComplete) {
   if (typeof cardName !== "string") { throw new Error("card name is not a string") }
-  console.log(`cardName = ${cardName}`)
   const card = document.createElement('div');
   card.classList.add('selectable-card');
 

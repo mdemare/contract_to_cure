@@ -232,9 +232,36 @@ module PlayerActions
 
   # Government Grant action card
   # Allows a player to build a research station in any city without discarding a city card
-  def use_government_grant(city_name)
-    puts "#{city_name} Government Grant"
+  def use_airlift(player_index, city_name)
+    rv = use_action_card("Airlift") do |card|
 
+      # Check if city exists
+      break { success: false, message: "City '#{city_name}' does not exist" } unless @cities[city_name]
+      nil
+    end
+
+    return rv if rv
+
+    # Build the research station and discard the card
+    @players[player_index].location = city_name
+
+    # This doesn't consume an action, so don't call after_action
+    response = {
+      success: true,
+      status: 'success',
+      message: "Successfully Airlifted #{@players[player_index].role} to #{city_name}",
+      game_state: to_json_state
+    }
+
+    # Save game state after the action
+    save_game_state
+
+    return response
+  end
+
+  # Government Grant action card
+  # Allows a player to build a research station in any city without discarding a city card
+  def use_government_grant(city_name)
     rv = use_action_card("Government Grant") do |card|
 
       # Check maximum research stations limit
@@ -248,12 +275,10 @@ module PlayerActions
       nil
     end
 
-    puts rv.inspect
     return rv if rv
 
     # Build the research station and discard the card
     @research_stations << city_name
-    puts @research_stations.inspect
 
     # This doesn't consume an action, so don't call after_action
     response = {
@@ -267,6 +292,39 @@ module PlayerActions
     save_game_state
 
     return response
+  end
+
+  def retrieve(action_card_name)
+    # Check if current player is the contingency planner
+    return after_action(false, "Only the Contingency Planner can retrieve action cards") unless current_player.role == :contingency_planner
+
+    # Check if the card is in the discard pile
+    action_card = @player_discard_pile.find { |card| card.name == action_card_name }
+    return after_action(false, "Card '#{action_card_name}' not found in discard pile") unless action_card
+
+    # Check if this card has been retrieved previously
+    return after_action(false, "This card has already been retrieved by the Contingency Planner") if current_player.stored_special_event == action_card_name
+
+    # Check if the card is an action/event card
+    return after_action(false, "Card '#{action_card_name}' is not an action card") unless action_card.type == :event
+
+    # Store the card with the contingency planner and remove from discard pile
+    current_player.stored_special_event = action_card_name
+    @player_discard_pile.delete_if { |card| card.name == action_card_name }
+
+    # Handle hand limit check if needed
+    if current_player.hand.size > 7
+      exceeded_limit = {
+        player_index: current_player_index,
+        discard_count: current_player.hand.size - 7
+      }
+      response = after_action(true, "Successfully retrieved '#{action_card_name}' action card")
+      response[:exceeded_hand_limit] = exceeded_limit
+      return response
+    end
+
+    # Return success
+    after_action(true, "Successfully retrieved '#{action_card_name}' action card")
   end
 
   private
