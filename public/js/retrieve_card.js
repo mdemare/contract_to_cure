@@ -93,7 +93,7 @@ async function handleRetrieveCardClick() {
         retrieveActionCard(chosenCardName);
       }
     },
-    'Choose an action card to retrieve'
+    {customTitle: 'Choose an action card to retrieve', useArrayIndex: true}
   );
 }
 

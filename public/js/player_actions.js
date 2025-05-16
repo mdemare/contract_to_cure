@@ -1,5 +1,5 @@
 // player_actions.js
-import { getCurrentGameState, loadGameState, CITIES, getCurrentLocation, getCurrentPlayer } from './game_state.js';
+import { getCurrentGameState, getCurrentLocation, getCurrentPlayer } from './game_state.js';
 import { getActionCardSource } from './action_cards.js';
 import { showHandSelectionModal, showGeneralCardSelectionModal } from './select_cards.js';
 import { processAPIRequest, getCityColor, showSuccessMessage, showErrorMessage, showInvalidActionMessage } from './player_action_utils.js'
@@ -220,7 +220,7 @@ export async function cureDisease() {
     if (colorCards.length == cardsNeeded) {
       cureWithIndices(selectableCards, selectedColor);
     } else {
-      showGeneralCardSelectionModal(cardsNeeded, colorCards, (indices) => { cureWithIndices(indices, selectedColor) });
+      showGeneralCardSelectionModal(cardsNeeded, colorCards, (indices) => { cureWithIndices(indices, selectedColor) }, {customTitle: `Select ${cardsNeeded} ${selectedColor} cards to cure the disease`});
     }
   }
 }
@@ -364,7 +364,7 @@ export async function handleOperationsExpertMove(playerIndex, destination) {
       'Move failed',
       { playerIndex, destination }
     );
-  });
+  }, {});
 }
 
 // Make this function exportable

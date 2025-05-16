@@ -106,6 +106,13 @@ class GameState
     end
   end
 
+  def discard_player_card(player_index, card_index, retrieved = false)
+    player = @players[player_index]
+    card = player.hand.delete_at(card_index)
+    player.hand = player.sorted_hand
+    @player_discard << card if card && !retrieved
+  end
+
   private
 
   # Set up instance variables from the saved state hash
@@ -186,13 +193,6 @@ class GameState
   def has_city_card?(player_index, city_name)
     player = @players[player_index]
     player.hand.any? { |card| card.type == :city && card.name == city_name }
-  end
-
-  def discard_player_card(player_index, card_index, retrieved = false)
-    player = @players[player_index]
-    card = player.hand.delete_at(card_index)
-    player.hand = player.sorted_hand
-    @player_discard << card if card && !retrieved
   end
 
   def medic_ability(requested_player, destination)

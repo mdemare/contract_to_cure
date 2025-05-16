@@ -116,7 +116,7 @@ function handleActionCardsClick() {
       default:
         console.log('Unknown action card type');
     }
-  }, 'Select Action Card');
+  }, {customTitle: 'Select Action Card', useArrayIndex: true});
 }
 
 /**

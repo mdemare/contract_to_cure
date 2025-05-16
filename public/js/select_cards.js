@@ -78,7 +78,7 @@ function createSelectableCard(cardObj, index, selectedCards, count, confirmButto
 }
 
 // Function to show a card selection modal
-export function showHandSelectionModal(count, cardIndices, completionFunction, customTitle, playerIndex) {
+export function showHandSelectionModal(count, cardIndices, completionFunction, {customTitle, playerIndex, hideCancel = false}) {
 
   // Get current game state to show player's cards
   const gameState = getCurrentGameState();
@@ -91,10 +91,10 @@ export function showHandSelectionModal(count, cardIndices, completionFunction, c
     return;
   }
   const cards = cardIndices.map((idx) => player.hand[idx])
-  showGeneralCardSelectionModal(count, cards, completionFunction, customTitle);
+  showGeneralCardSelectionModal(count, cards, completionFunction, {customTitle, hideCancel});
 }
 
-export function showGeneralCardSelectionModal(count, cards, completionFunction, customTitle) {
+export function showGeneralCardSelectionModal(count, cards, completionFunction, {customTitle, useArrayIndex = false, hideCancel = false}) {
   // Create modal backdrop
   const modalBackdrop = document.createElement('div');
   modalBackdrop.classList.add('modal-backdrop');
@@ -127,14 +127,16 @@ export function showGeneralCardSelectionModal(count, cards, completionFunction, 
   const buttonContainer = document.createElement('div');
   buttonContainer.classList.add('modal-buttons');
 
-  // Add cancel button - always included
-  const cancelButton = document.createElement('button');
-  cancelButton.textContent = 'Cancel';
-  cancelButton.classList.add('cancel-btn');
-  cancelButton.addEventListener('click', () => {
-    closeModal();
-  });
-  buttonContainer.appendChild(cancelButton);
+  // Add cancel button
+  if (!hideCancel) {
+    const cancelButton = document.createElement('button');
+    cancelButton.textContent = 'Cancel';
+    cancelButton.classList.add('cancel-btn');
+    cancelButton.addEventListener('click', () => {
+      closeModal();
+    });
+    buttonContainer.appendChild(cancelButton);
+  }
 
   // Add confirm button - only if count > 1
   let confirmButton;
@@ -167,8 +169,11 @@ export function showGeneralCardSelectionModal(count, cards, completionFunction, 
   }
 
   // Create card elements for selection
-  cards.forEach(cardObj => {
-    const card = createSelectableCard(cardObj, cardObj.index, selectedCards, count, confirmButton, selectionComplete);
+  cards.forEach((cardObj, idx) => {
+    console.log(`cardObj ${cardObj}, idx = ${idx}, cardObj.index = ${cardObj.index}`)
+    // for selections that are not from a single player's hand such as action cards, we use the array index
+    const index = useArrayIndex ? idx : cardObj.index
+    const card = createSelectableCard(cardObj, index, selectedCards, count, confirmButton, selectionComplete);
     cardSelectionContainer.appendChild(card);
   });
 
@@ -206,7 +211,7 @@ export function handleHandLimitCheck(playerIndex, discardCount, completionCallba
   const playerName = player.role;
 
   // Create title for the modal
-  const title = `${playerName} must discard ${discardCount} card${discardCount > 1 ? 's' : ''} (Hand limit: 7)`;
+  const customTitle = `${playerName} must discard ${discardCount} card${discardCount > 1 ? 's' : ''} (Hand limit: 7)`;
 
   // Get all card indices
   const cardIndices = player.hand.map((_, index) => index);
@@ -252,5 +257,5 @@ export function handleHandLimitCheck(playerIndex, discardCount, completionCallba
 
     // Call completion callback
     if (completionCallback) completionCallback();
-  }, title, playerIndex);
+  }, {customTitle, playerIndex, hideCancel: true});
 }
