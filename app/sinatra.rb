@@ -172,7 +172,9 @@ post '/action_card' do
   # Validate required parameters
   return { status: 'error', message: 'Missing required parameters' }.to_json unless card_name
 
-  result = case card_name.split(?:).last
+  result = case card_name
+  when 'Airlift'
+    game_state.use_airlift(data['player_index'].to_i, city_name)
   when 'One Quiet Night'
     game_state.quiet_night!
   when 'Government Grant'

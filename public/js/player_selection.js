@@ -2,7 +2,7 @@
 // Manages the Dispatcher-specific player selection panel and player button creation/handling.
 
 import { getCurrentGameState } from './game_state.js';
-import { resetMode } from './action_buttons.js';
+import { resetMode, getCurrentMode } from './action_buttons.js';
 import { createSimpleElement } from './dom.js';
 
 // Store the selected player index for dispatcher move action
@@ -127,8 +127,10 @@ function handlePlayerSelection(playerIndex) {
     instructionText.textContent = 'Select destination';
   }
 
-  // Close the player selection panel and show action buttons again
-  hidePlayerSelectionPanel();
+  // Don't hide the panel for airlift mode
+  if (getCurrentMode() !== 'airlift') {
+    hidePlayerSelectionPanel();
+  }
 
   // Dispatch event to notify that a player has been selected for movement
   const playerSelectedEvent = new CustomEvent('playerSelectedForMove', {

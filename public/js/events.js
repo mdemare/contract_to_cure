@@ -7,7 +7,8 @@ import { initMoveActions } from './player_actions.js';
 import { initializeCurrentPlayer } from './current_player.js';
 import { initShareKnowledge } from './share_knowledge.js';
 import { initGameOver } from './game_over.js';
-import { initializeModules } from './player_action_utils.js'; // Import the new initialization function
+import { initializeModules } from './player_action_utils.js';
+import { initializePlayerPanel } from './player_panel.js';
 
 // Initialize the pandemic map
 async function initializePandemicMap() {
@@ -23,6 +24,8 @@ async function initializePandemicMap() {
     if (CITIES) {
       // Prepare the map data for rendering
       const renderableMap = prepareMapForRendering(CITIES);
+
+      initializePlayerPanel();
 
       // Render the cities
       renderPandemicCities(renderableMap);
@@ -60,6 +63,5 @@ async function initializePandemicMap() {
 
 // Setup DOM event listeners when the document is ready
 document.addEventListener('DOMContentLoaded', function() {
-  // Initialize the map
   initializePandemicMap();
 });

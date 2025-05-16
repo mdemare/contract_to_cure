@@ -3,11 +3,12 @@
 // displaying cards in a modal, and handling specific action card behaviors.
 import { getCurrentGameState } from './game_state.js';
 import { showGeneralCardSelectionModal } from './select_cards.js';
-import { toggleMode } from './action_buttons.js';
-import { useQuietNight } from './player_actions.js';
+import { toggleMode, resetMode } from './action_buttons.js';
+import { useAirlift, useQuietNight } from './player_actions.js';
 import { createSimpleElement } from './dom.js';
+import { showPlayerSelectionPanel, getSelectedPlayerIndex } from './player_selection.js';
 
-// Store the current action card source for Government Grant
+// Store the current action card source for Government Grant and Airlift
 let currentActionCardSource = null;
 
 /**
@@ -95,6 +96,7 @@ function handleActionCardsClick() {
     switch(cardName) {
       case 'Airlift':
         console.log('Airlift card selected');
+        handleAirlift(cardSource);
         break;
       case 'Resilient Population':
         console.log('Resilient Population card selected');
@@ -167,3 +169,64 @@ function handleGovernmentGrant(cardSource) {
   // Set the mode to government grant
   toggleMode('governmentGrant');
 }
+
+/**
+ * Handle Airlift action card
+ * Allows player to move any pawn to any city on the board
+ * @param {Object} cardSource - The source of the card (player index and card index)
+ */
+function handleAirlift(cardSource) {
+  // Close the card selection modal
+  if (document.querySelector('.modal-backdrop')) {
+    document.body.removeChild(document.querySelector('.modal-backdrop'));
+  }
+
+  // Store the card source for later use
+  currentActionCardSource = cardSource;
+
+  // Add notification at the top of the page
+  const notification = createSimpleElement('div', 'action-notification', 'Select a player to airlift');
+  notification.id = 'action-notification';
+  document.body.insertBefore(notification, document.body.firstChild);
+
+  // Set the mode to airlift
+  toggleMode('airlift');
+
+  // Show the player selection panel
+  showPlayerSelectionPanel();
+}
+
+// Add this function to handle the second part of Airlift after player selection
+export function handleAirliftPlayerSelected() {
+  // Update the notification
+  const notification = document.getElementById('action-notification');
+  if (notification) {
+    notification.textContent = 'Select destination city for airlift';
+  }
+}
+
+// Add this function to complete the Airlift action
+export function completeAirlift(cityName) {
+  const selectedPlayer = getSelectedPlayerIndex();
+
+  if (selectedPlayer === null) {
+    console.error('No player selected for airlift');
+    return;
+  }
+
+  useAirlift(cityName, selectedPlayer)
+
+  resetMode();
+
+  // Remove action notification
+  const notification = document.getElementById('action-notification');
+  if (notification) {
+    notification.remove();
+  }
+  // Reset the action card source
+  currentActionCardSource = null;
+}
+
+document.addEventListener('playerSelected', (event) => {
+  handleAirliftPlayerSelected();
+})

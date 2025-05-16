@@ -19,6 +19,7 @@ export function initializePlayerPanel(gameState) {
   // Cache DOM elements
   playerPanel = document.querySelector('.player-panel');
   playerList = document.querySelector('.player-list');
+  if (!playerList) { throw new Error("don't call initializePlayerPanel until the DOM is loaded") }
   panelToggleBtn = document.querySelector('.player-panel-toggle');
 
   // Add event listener to toggle button
@@ -44,24 +45,6 @@ export function initializePlayerPanel(gameState) {
     panelToggleBtn.setAttribute('aria-expanded', 'false');
   }
 }
-
-// Initialize module
-document.addEventListener('DOMContentLoaded', async () => {
-  try {
-    // Get initial game state (waiting for it to be loaded first)
-    const gameState = getCurrentGameState();
-    if (gameState) {
-      initializePlayerPanel(gameState);
-    } else {
-      // If game state isn't loaded yet, wait for it
-      document.addEventListener('gameStateLoaded', (e) => {
-        initializePlayerPanel(e.detail.gameState);
-      }, { once: true });
-    }
-  } catch (error) {
-    console.error('Error initializing player panel:', error);
-  }
-});
 
 // Create the player panel DOM structure
 function createPlayerPanel() {
@@ -107,6 +90,7 @@ function togglePlayerPanel() {
 
 // Update the player panel with current game state
 export function updatePlayerPanel(providedGameState) {
+  if (!playerList) {throw new Error('playerList not yet initialized')}
   // Use the provided game state or get the current one
   const gameState = providedGameState || getCurrentGameState();
 

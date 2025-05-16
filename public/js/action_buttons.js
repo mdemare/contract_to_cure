@@ -2,17 +2,22 @@
 import { getCurrentGameState } from './game_state.js';
 import { treatDisease, pass, cureDisease, setSelectedPlayerIndex } from './player_actions.js';
 import { initShareKnowledge, updateShareKnowledgeButtonState } from './share_knowledge.js';
-import { initActionCardsButton, updateActionCardsButtonState } from './action_cards.js';
+import { handleAirliftPlayerSelected, completeAirlift, initActionCardsButton, updateActionCardsButtonState } from './action_cards.js';
 import { hidePlayerSelectionPanel, isDispatcher, showPlayerSelectionPanel } from './player_selection.js';
 import { updatePlayerHand } from './player_hand.js';
 import { initRetrieveCard, updateRetrieveButtonState } from './retrieve_card.js';
 
 // Game mode state to track which action is currently selected
 let currentMode = null;
-// This could go in action_buttons.js or another initialization file
+
 document.addEventListener('playerSelectedForMove', (event) => {
-  toggleMode('moveSelectedPlayer');
-  setSelectedPlayerIndex(event.detail.playerIndex);
+  if (currentMode !== 'airlift') {
+    toggleMode('moveSelectedPlayer');
+    setSelectedPlayerIndex(event.detail.playerIndex);
+  } else {
+    // Handle airlift player selection
+    handleAirliftPlayerSelected();
+  }
 });
 
 // Initialize the action buttons

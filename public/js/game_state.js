@@ -105,7 +105,6 @@ function updateGameUI(gameState) {
     }
 
     updateCureStatus(gameState);
-    console.log("updatePlayerPanel")
     updatePlayerPanel(gameState);
     updatePlayerHand(gameState);
     updateCurrentPlayer(gameState);

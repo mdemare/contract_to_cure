@@ -1,6 +1,6 @@
 // player_actions.js
 import { getCurrentGameState, getCurrentLocation, getCurrentPlayer } from './game_state.js';
-import { getActionCardSource } from './action_cards.js';
+import { getActionCardSource, completeAirlift } from './action_cards.js';
 import { showHandSelectionModal, showGeneralCardSelectionModal } from './select_cards.js';
 import { processAPIRequest, getCityColor, showSuccessMessage, showErrorMessage, showInvalidActionMessage } from './player_action_utils.js'
 
@@ -82,48 +82,53 @@ async function handleBuildStationClick() {
 async function handleCityClick(event) {
   // Get the clicked city's name
   const cityName = event.currentTarget.dataset.cityName;
-
   if (!cityName) { return; }
 
   // Get the current player
   const currentPlayer = getCurrentPlayer();
 
-  // Check if we're in Government Grant mode
+  // Import action buttons to get current mode
   const actionButtons = await import('./action_buttons.js');
-  if (actionButtons.getCurrentMode() === 'governmentGrant') {
-    // Reset the mode after handling the action
-    actionButtons.resetMode();
 
-    // Check if there's already a research station here
-    const hasStation = getCurrentGameState().researchStations?.locations?.includes(cityName);
-
-    if (hasStation) {
-      showInvalidActionMessage(`${cityName} already has a research station.`);
-    } else {
-      // Call the action card API with the selected city
-      await useGovernmentGrant(cityName);
-    }
-    return;
-  }
-
-  // Check if we're in Dispatcher's moveSelectedPlayer mode
-  if (actionButtons.getCurrentMode() === 'moveSelectedPlayer') {
-    // Get the selected player index
-    if (selectedPlayerIndex !== null) {
+  switch (actionButtons.getCurrentMode()) {
+    case 'governmentGrant':
       // Reset the mode after handling the action
       actionButtons.resetMode();
 
-      // Move the selected player to the clicked city
-      await movePlayer(selectedPlayerIndex, cityName);
-      return;
-    }
-  }
+      // Check if there's already a research station here
+      const hasStation = getCurrentGameState().researchStations?.locations?.includes(cityName);
 
-  // Check if the clicked city is the current city (for treat disease)
-  if (cityName === currentPlayer.location) {
-    await treatDisease();
-  } else {
-    await movePlayer(currentPlayer.index, cityName);
+      if (hasStation) {
+        showInvalidActionMessage(`${cityName} already has a research station.`);
+      } else {
+        // Call the action card API with the selected city
+        await useGovernmentGrant(cityName);
+      }
+      return;
+
+    case 'airlift':
+      completeAirlift(cityName);
+      return;
+
+    case 'moveSelectedPlayer':
+      // Get the selected player index
+      if (selectedPlayerIndex !== null) {
+        // Reset the mode after handling the action
+        actionButtons.resetMode();
+
+        // Move the selected player to the clicked city
+        await movePlayer(selectedPlayerIndex, cityName);
+      }
+      return;
+
+    default:
+      // Standard move or treat action
+      if (cityName === currentPlayer.location) {
+        await treatDisease();
+      } else {
+        await movePlayer(currentPlayer.index, cityName);
+      }
+      return;
   }
 }
 
@@ -299,12 +304,30 @@ export async function executeShareKnowledge(cityName, givingPlayerIndex, receivi
   }
 }
 
+export async function useAirlift(cityName, playerIndex) {
+  try {
+    // Get the card source and verify it exists
+    const airliftSource = getActionCardSource();
+    if (!airliftSource) {
+      showErrorMessage("Error: Airlift card source information is missing");
+      return;
+    }
+
+    // Use the action card
+    await useActionCard('Airlift', {city: cityName, player_index: playerIndex})
+
+    // Show success message
+    showSuccessMessage(`Airlift to ${cityName} performed`)
+  } catch (error) {
+    showErrorMessage(`Error using Airlift: ${error.message}`)
+  }
+}
 // Use Government Grant action card
 export async function useQuietNight() {
   try {
     // Get the card source info from the action_buttons module
     // Use the action card
-    await useActionCard('Action:One Quiet Night');
+    await useActionCard('One Quiet Night', {});
 
     // Show success message
     showSuccessMessage("Tonight everything is quiet");
@@ -325,7 +348,7 @@ async function useGovernmentGrant(cityName) {
     }
 
     // Use the action card
-    await useActionCard( 'Action:Government Grant', cityName );
+    await useActionCard('Government Grant', {city: cityName});
 
     // Show success message
     showSuccessMessage(`Built a research station in ${cityName} using Government Grant`);
@@ -412,22 +435,10 @@ export async function handleFlightChoice(playerIndex, destination) {
  * @param {string} cardName - The name of the action card
  * @param {string} cityName - The city to apply the action to (optional)
  */
-export async function useActionCard(cardName, cityName = null) {
-  // Prepare the request data
-  const actionCardData = {
-    card: cardName
-  };
-
-  // Add city name to request data if provided
-  if (cityName) {
-    actionCardData.city = cityName;
-  }
-
+export async function useActionCard(cardName, actionCardData = {}) {
   // Get success message based on the card type
-  let successMessage = `Used ${cardName.replace('Action:', '')}`;
-  if (cityName) {
-    successMessage += ` on ${cityName}`;
-  }
+  let successMessage = `Used ${cardName}`;
+  actionCardData.card = cardName
 
   try {
     // Process the action card request
