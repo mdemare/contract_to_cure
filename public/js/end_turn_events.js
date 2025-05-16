@@ -106,7 +106,31 @@ function animateCardStack(animContainer, eventStack) {
   if (eventToAnimate.type === 'header') {
     handleHeaderAnimation(animContainer, cardElement, eventStack);
   } else {
-    handleCardAnimation(animContainer, cardElement, eventStack);
+    if (eventToAnimate.exceeded_hand_limit) {
+      const nrCardsToDiscard = eventToAnimate.discard_count;
+      const playerIndex = eventToAnimate.player_index;
+
+      // First handle the card animation
+      handleCardAnimation(animContainer, cardElement, [], false); // Pass empty array to prevent recursion
+
+      // Import the select_cards module dynamically to avoid circular dependencies
+      import('./select_cards.js').then(selectCardsModule => {
+        // After animation completes, show the discard dialog
+        setTimeout(() => {
+          // Use the handleHandLimitCheck with a callback that continues the animation sequence
+          selectCardsModule.handleHandLimitCheck(playerIndex, nrCardsToDiscard, () => {
+            // Continue with the remaining animation stack after player has discarded
+            animateCardStack(animContainer, eventStack);
+          });
+        }, 1200); // Give enough time for the card animation to complete
+      }).catch(error => {
+        console.error('Failed to import select_cards module:', error);
+        // Continue with remaining animations even if there's an error
+        animateCardStack(animContainer, eventStack);
+      });
+    } else {
+      handleCardAnimation(animContainer, cardElement, eventStack);
+    }
   }
 }
 
@@ -154,7 +178,7 @@ function createCardsWrapper() {
 }
 
 // Function to handle card animations
-function handleCardAnimation(animContainer, cardElement, eventStack) {
+function handleCardAnimation(animContainer, cardElement, eventStack, continueAnimation = true) {
   // Create a wrapper div to hold the cards in a fixed position
   // This prevents cards from moving when new ones are added
   let cardsWrapper = animContainer.querySelector('.cards-wrapper');
@@ -181,9 +205,11 @@ function handleCardAnimation(animContainer, cardElement, eventStack) {
     // Add the drawn class to trigger the animation
     cardElement.classList.add('drawn');
 
-    // Schedule the next card animation after this one completes
-    setTimeout(() => {
-      animateCardStack(animContainer, eventStack);
-    }, 1000); // 1 second delay between cards
+    // Schedule the next card animation after this one completes, but only if continueAnimation is true
+    if (continueAnimation) {
+      setTimeout(() => {
+        animateCardStack(animContainer, eventStack);
+      }, 1000); // 1 second delay between cards
+    }
   });
 }

@@ -37,11 +37,6 @@ export function initializePlayerPanel(gameState) {
     updatePlayerPanel(getCurrentGameState());
   });
 
-  // Update after any action completes
-  document.addEventListener('actionComplete', () => {
-    updatePlayerPanel(getCurrentGameState());
-  });
-
   // Restore hidden state from localStorage if needed
   const savedHiddenState = localStorage.getItem('playerPanelHidden');
   if (savedHiddenState === 'true' && !playerPanel.classList.contains('hidden')) {

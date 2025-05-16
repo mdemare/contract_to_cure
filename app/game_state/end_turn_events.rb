@@ -5,8 +5,8 @@ module EndTurnEvents
   include GameStateConfig
   def end_turn
     end_turn = EndTurn.new(self)
-    2.times do
-      end_turn.draw_player_card
+    2.times do |i|
+      end_turn.draw_player_card(i)
       return if game_over
     end
     if @quiet_night

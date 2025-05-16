@@ -153,6 +153,8 @@ post '/discard_cards' do
     game_state.discard_player_card(player_index, card_index.to_i)
   end
 
+  game_state.save_game_state
+
   # Return success response
   { status: 'success', message: "Successfully discarded #{card_indices.length} card(s)" }.to_json
 end

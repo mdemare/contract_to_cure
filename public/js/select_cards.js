@@ -2,6 +2,7 @@
 import { getCurrentGameState } from '/js/game_state.js';
 import { getCityColor } from './player_action_utils.js';
 import { createSimpleElement } from './dom.js';
+import { loadGameState } from './game_state.js';
 
 /**
  * Creates a selectable card element for the card selection modal
@@ -178,7 +179,38 @@ export function showGeneralCardSelectionModal(count, cards, completionFunction, 
   }
 }
 
-// Function to handle hand limit checks and discard cards
+/**
+ * Handles the situation when a player exceeds their hand limit (7 cards).
+ * Shows a modal allowing the player to select cards to discard and processes the discard action.
+ *
+ * @async
+ * @param {number} playerIndex - The index of the player who needs to discard cards
+ * @param {number} discardCount - The number of cards the player needs to discard
+ * @param {Function} completionCallback - Callback function to execute after discard is complete
+ *
+ * @description
+ * This function performs the following actions:
+ * 1. Retrieves the current game state to access player data
+ * 2. Creates a custom modal title indicating the required discard action
+ * 3. Shows a card selection modal allowing the player to select which cards to discard
+ * 4. Once cards are selected, sends a POST request to the server to discard the cards
+ * 5. Refreshes the game state after the discard action
+ * 6. Displays a success notification to inform the player
+ * 7. Executes the completion callback to signal that the discard process is complete
+ *
+ * The function includes error handling for situations where the game state is unavailable
+ * or the player data cannot be accessed. The modal forces the player to make a selection
+ * (the cancel button is hidden) since resolving the hand limit is mandatory.
+ *
+ * @example
+ * // When a player draws a card and exceeds the hand limit
+ * handleHandLimitCheck(2, 1, () => {
+ *   console.log('Discard complete, continuing with game flow');
+ * });
+ *
+ * @returns {void}
+ * @throws {Error} If the network request fails when discarding cards
+ */
 export function handleHandLimitCheck(playerIndex, discardCount, completionCallback) {
   const gameState = getCurrentGameState();
   if (!gameState) {
@@ -220,10 +252,7 @@ export function handleHandLimitCheck(playerIndex, discardCount, completionCallba
 
       if (response.ok) {
         // Refresh game state after discard
-        const gameStateResponse = await fetch('/game_state.json');
-        if (gameStateResponse.ok) {
-          await gameStateResponse.json(); // This will update the game state through the event listeners
-        }
+        loadGameState();
 
         // Show success message
         const notification = createSimpleElement('div', ['game-notification', 'success'],

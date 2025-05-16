@@ -1,6 +1,7 @@
 // game_state.js
 import { renderPandemicCities } from './map.js';
 import { updatePlayerHand } from './player_hand.js';
+import { updatePlayerPanel } from './player_panel.js';
 import { updateCurrentPlayer } from './current_player.js';
 import { checkGameOver } from './game_over.js';
 
@@ -103,15 +104,11 @@ function updateGameUI(gameState) {
       document.getElementById('infection-cards').textContent = gameState.decks.infectionDeck;
     }
 
-    // Update cure status
     updateCureStatus(gameState);
-
-    // Update player hand
+    console.log("updatePlayerPanel")
+    updatePlayerPanel(gameState);
     updatePlayerHand(gameState);
-
     updateCurrentPlayer(gameState);
-
-    // Update the map with the new state
     updateMapState(gameState);
   } catch (error) {
     console.error('Error updating game UI:', error);

@@ -14,9 +14,13 @@ export async function initializeModules() {
 async function handleSuccessfulAPIRequest(result, successMessage, eventData) {
   // Check if we need to handle hand limit
   if (result.exceeded_hand_limit) {
-    const { player_index, discard_count } = result.exceeded_hand_limit;
+    const { player_index, discard_count } = result;
     const gameState = getCurrentGameState();
-    console.log(`${gameState.players[player_index].role} exceeded hand limit`)
+    if (player_index) {
+      console.log(`${gameState.players[player_index].role} exceeded hand limit`)
+    } else {
+      console.error(`result does not contain player_index - ${result}`)
+    }
 
     // Load selectCardsModule if not already loaded
     if (!selectCardsModule) {

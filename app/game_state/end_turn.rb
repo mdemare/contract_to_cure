@@ -6,7 +6,7 @@ class EndTurn
     @events = []
   end
 
-  def draw_player_card
+  def draw_player_card(i)
     if @game_state.player_deck.empty?
       return @game_state.game_over!(:no_player_cards)
     end
@@ -18,13 +18,14 @@ class EndTurn
     if card.type != :epidemic
       current_player.hand << card
       current_player.hand = current_player.sorted_hand
+    end
 
-      # Check hand limit (7 cards)
-      if current_player.hand.size > 7
-        event[:exceeded_hand_limit] = true
-        event[:discard_count] = current_player.hand.size - 7
-        event[:player_index] = @game_state.current_player_index
-      end
+    # Check hand limit (7 cards)
+    if i == 1 and current_player.hand.size > 7
+      event[:exceeded_hand_limit] = true
+      event[:discard_count] = current_player.hand.size - 7
+      event[:player_index] = @game_state.current_player_index
+      puts event.inspect
     end
 
     @events << event
