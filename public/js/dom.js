@@ -1,57 +1,6 @@
 // dom_helpers.js
 
 /**
- * Creates and returns an animation container or retrieves the existing one
- * @returns {HTMLElement} The animation container element
- */
-export function getAnimContainer() {
-  let animContainer = document.querySelector('.card-draw-animation-container');
-  if (!animContainer) {
-    animContainer = createSimpleElement('div', 'card-draw-animation-container');
-    document.body.appendChild(animContainer);
-  } else {
-    // Clear any existing animations, but in a controlled way
-    // We want to make sure we don't disrupt the DOM when other animations are ongoing
-    const allCards = animContainer.querySelectorAll('.animated-card, .cards-wrapper, .header-container');
-    allCards.forEach(elem => elem.remove());
-  }
-  return animContainer;
-}
-
-/**
- * Creates a header container element
- * @returns {HTMLElement} The header container element
- */
-export function createHeaderContainer() {
-  const headerContainer = createSimpleElement('div', 'header-container');
-  Object.assign(headerContainer.style, {
-    position: 'absolute',
-    top: '100px',
-    left: '0',
-    width: '100%',
-    display: 'flex',
-    justifyContent: 'center',
-    zIndex: '10'
-  });
-  return headerContainer;
-}
-
-/**
- * Creates a cards wrapper element
- * @returns {HTMLElement} The cards wrapper element
- */
-export function createCardsWrapper() {
-  const cardsWrapper = createSimpleElement('div', 'cards-wrapper');
-  Object.assign(cardsWrapper.style, {
-    display: 'flex',
-    position: 'relative',
-    width: '100%',
-    justifyContent: 'center'
-  });
-  return cardsWrapper;
-}
-
-/**
  * Creates a card element based on the event data
  * @param {Object} event - The event data
  * @returns {HTMLElement} The card element
@@ -71,6 +20,8 @@ export function createCardElement(event) {
       return createNewInfectionElement(event);
     case 'header':
       return createHeaderElement(event);
+    case 'quiet_night':
+      return createQuietNightElement(event);
     default:
       return createUnknownEventElement(event);
   }
@@ -127,6 +78,39 @@ function createInfectionCardElement(event) {
   const cardElement = createSimpleElement('div', ['animated-card', 'infection-card', color]);
 
   appendCardContent(cardElement, 'Infection', city);
+
+  return cardElement;
+}
+
+/**
+ * Creates a quiet night element
+ * @param {Object} event - The quiet night event data
+ * @returns {HTMLElement} The quiet night element
+ */
+function createQuietNightElement(event) {
+  // Create the base card element with quiet night styling
+  const cardElement = createSimpleElement('div', ['animated-card', 'quiet-night-event']);
+
+  // Add card header
+  const cardHeader = createSimpleElement('div', 'card-header', 'Quiet Night');
+  cardElement.appendChild(cardHeader);
+
+  // Add card title - this could be empty or contain text like "No infections this turn"
+  const cardTitle = createSimpleElement('div', 'card-title', 'No infections this turn');
+  cardElement.appendChild(cardTitle);
+
+  // Add additional detail element for more context
+  const cardDetail = createSimpleElement('div', 'card-detail', 'Cities remain calm');
+
+  // Style using object format
+  Object.assign(cardDetail.style, {
+    textAlign: 'center',
+    fontSize: '14px',
+    marginTop: '10px',
+    color: '#7a4cb5',
+    fontStyle: 'italic'
+  });
+  cardElement.appendChild(cardDetail);
 
   return cardElement;
 }

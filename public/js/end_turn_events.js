@@ -1,5 +1,41 @@
 // end_turn_events.js
-import { getAnimContainer, createHeaderContainer, createCardsWrapper, createCardElement } from './dom.js';
+import { createCardElement, createSimpleElement } from './dom.js';
+
+/**
+ * Creates a header container element
+ * @returns {HTMLElement} The header container element
+ */
+function createHeaderContainer() {
+  const headerContainer = createSimpleElement('div', 'header-container');
+  Object.assign(headerContainer.style, {
+    position: 'absolute',
+    top: '100px',
+    left: '0',
+    width: '100%',
+    display: 'flex',
+    justifyContent: 'center',
+    zIndex: '10'
+  });
+  return headerContainer;
+}
+
+/**
+ * Creates and returns an animation container or retrieves the existing one
+ * @returns {HTMLElement} The animation container element
+ */
+function getAnimContainer() {
+  let animContainer = document.querySelector('.card-draw-animation-container');
+  if (!animContainer) {
+    animContainer = createSimpleElement('div', 'card-draw-animation-container');
+    document.body.appendChild(animContainer);
+  } else {
+    // Clear any existing animations, but in a controlled way
+    // We want to make sure we don't disrupt the DOM when other animations are ongoing
+    const allCards = animContainer.querySelectorAll('.animated-card, .cards-wrapper, .header-container');
+    allCards.forEach(elem => elem.remove());
+  }
+  return animContainer;
+}
 
 // Function to animate card draws
 function startAnimationSequence(events) {
@@ -57,8 +93,8 @@ function animateCardStack(animContainer, eventStack) {
       setTimeout(() => {
         animContainer.style.display = 'none';
         animContainer.style.opacity = '1'; // Reset for next time
-      }, 800);
-    }, 2000); // 2 seconds after last card is drawn
+      }, 600);
+    }, 1200); // 2 seconds after last card is drawn
     return;
   }
 
@@ -99,7 +135,22 @@ function handleHeaderAnimation(animContainer, cardElement, eventStack) {
   // Longer delay after headers for readability
   setTimeout(() => {
     animateCardStack(animContainer, eventStack);
-  }, 1500);
+  }, 1000);
+}
+
+/**
+ * Creates a cards wrapper element
+ * @returns {HTMLElement} The cards wrapper element
+ */
+function createCardsWrapper() {
+  const cardsWrapper = createSimpleElement('div', 'cards-wrapper');
+  Object.assign(cardsWrapper.style, {
+    display: 'flex',
+    position: 'relative',
+    width: '100%',
+    justifyContent: 'center'
+  });
+  return cardsWrapper;
 }
 
 // Function to handle card animations

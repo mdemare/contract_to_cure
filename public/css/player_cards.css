@@ -165,57 +165,6 @@
   color: #cc0000;
 }
 
-/* ===== Full Card Styles (used in animations and modals) ===== */
-.animated-card {
-  width: 180px;
-  height: 250px;
-  background-color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  display: flex;
-  flex-direction: column;
-  padding: 10px;
-  transform: scale(0.5) translateX(-50vw);
-  opacity: 0;
-  transition: transform 1s ease-out, opacity 0.8s ease-out;
-  position: relative;
-  margin-right: 30px;
-  border: 2px solid #333;
-}
-
-.animated-card.drawn {
-  transform: scale(1) translateX(0);
-  opacity: 1;
-}
-
-/* Add a glow effect for drawn cards */
-.animated-card.drawn::after {
-  content: '';
-  position: absolute;
-  top: -10px;
-  left: -10px;
-  right: -10px;
-  bottom: -10px;
-  border-radius: 15px;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
-  z-index: -1;
-  animation: glow 1.5s ease-out;
-}
-
-@keyframes glow {
-  0% {
-    opacity: 0;
-    transform: scale(0.9);
-  }
-  50% {
-    opacity: 1;
-  }
-  100% {
-    opacity: 0;
-    transform: scale(1.1);
-  }
-}
-
 /* ===== Card Preview Styles (used in player panel sidebar) ===== */
 .hand-card-preview {
   height: 24px; /* Slightly shorter for compact view */

@@ -67,7 +67,7 @@ async function handleBuildStationClick() {
   }
 
   // Check if player has the city card
-  const hasCityCard = currentPlayer.hand.includes(currentLocation);
+  const hasCityCard = currentPlayer.hand.some(card => card.name == currentLocation);
 
   if (!hasCityCard && currentPlayer.role !== 'operations_expert') {
     showInvalidActionMessage(`You need the ${currentLocation} city card to build a research station here.`);
