@@ -304,6 +304,29 @@ export async function executeShareKnowledge(cityName, givingPlayerIndex, receivi
   }
 }
 
+/**
+ * Use Resilient Population action card
+ * @param {string} cityName - The city to remove from the infection discard pile
+ */
+export async function useResilientPopulation(cityName) {
+  try {
+    // Get the card source and verify it exists
+    const resilientPopulationSource = getActionCardSource();
+    if (!resilientPopulationSource) {
+      showErrorMessage("Error: Resilient Population card source information is missing");
+      return;
+    }
+
+    // Use the action card
+    await useActionCard('Resilient Population', {city: cityName});
+
+    // Show success message
+    showSuccessMessage(`Removed ${cityName} from the infection discard pile`);
+  } catch (error) {
+    showErrorMessage(`Error using Resilient Population: ${error.message}`);
+  }
+}
+
 export async function useAirlift(cityName, playerIndex) {
   try {
     // Get the card source and verify it exists
@@ -337,7 +360,7 @@ export async function useQuietNight() {
 }
 
 // Use Government Grant action card
-async function useGovernmentGrant(cityName) {
+export async function useGovernmentGrant(cityName) {
   try {
     // Get the card source info from the action_buttons module
     const governmentGrantSource = getActionCardSource();

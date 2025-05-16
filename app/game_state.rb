@@ -1,5 +1,7 @@
 # Main entry point for the GameState components
 require_relative 'game_state/config'
+
+require_relative 'game_state/action_cards'
 require_relative 'game_state/player_actions'
 require_relative 'game_state/end_turn_events'
 require_relative 'game_state/json_generator'
@@ -9,6 +11,7 @@ require_relative 'game_state/player'
 require_relative 'game_state/card'
 
 class GameState
+  include ActionCards
   include GameStateConfig
   include PlayerActions
   include EndTurnEvents

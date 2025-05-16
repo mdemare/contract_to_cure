@@ -177,6 +177,10 @@ post '/action_card' do
     game_state.use_airlift(data['player_index'].to_i, city_name)
   when 'One Quiet Night'
     game_state.quiet_night!
+  when 'Resilient Population'
+    # Remove a card from the infection discard pile by city name
+    city_name = data['city']
+    game_state.use_resilient_population(city_name)
   when 'Government Grant'
     # Add a research station to the specified city without using a city card
     game_state.use_government_grant(city_name)

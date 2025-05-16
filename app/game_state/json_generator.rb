@@ -42,7 +42,8 @@ module JsonGenerator
       decks: {
         playerDeck: @player_deck.size,
         infectionDeck: @infection_deck.size,
-        discardPile: @player_discard.map(&:description)
+        discardPile: @player_discard.map(&:description),
+        infectionDiscardPile: @infection_discard.map(&:description)
       }
     }
   end

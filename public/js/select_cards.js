@@ -107,7 +107,7 @@ export function showGeneralCardSelectionModal(count, cards, completionFunction, 
 
   // Add instructions
   const instructions = createSimpleElement('p', 'modal-instructions',
-    `Please select ${count} card${count !== 1 ? 's' : ''} from your hand.`);
+    `Please select ${count} card${count !== 1 ? 's' : ''}.`);
   modalContent.appendChild(instructions);
 
   // Create card selection container
@@ -166,6 +166,74 @@ export function showGeneralCardSelectionModal(count, cards, completionFunction, 
   });
 
   modalContent.appendChild(cardSelectionContainer);
+
+  // Assemble and show the modal
+  modalBackdrop.appendChild(modalContent);
+  document.body.appendChild(modalBackdrop);
+
+  // Function to close the modal
+  function closeModal() {
+    if (modalBackdrop.parentNode) {
+      document.body.removeChild(modalBackdrop);
+    }
+  }
+}
+
+/**
+ * Shows a modal with infection discard cards for Resilient Population
+ * @param {Array} infectionCards - Array of infection cards from the discard pile
+ * @param {Function} completionFunction - Function to call when a card is selected
+ */
+export function showResilientPopulationModal(infectionCards, completionFunction) {
+  // Create modal backdrop
+  const modalBackdrop = createSimpleElement('div', 'modal-backdrop');
+
+  // Create modal content with resilient population styling
+  const modalContent = createSimpleElement('div', ['modal-content', 'card-selection-modal', 'resilient-population-modal']);
+
+  // Add title
+  const modalTitle = createSimpleElement('h3', null, 'Remove City from Infection Discard Pile');
+  modalContent.appendChild(modalTitle);
+
+  // Add instructions
+  const instructions = createSimpleElement('p', 'modal-instructions',
+    'Select a city to permanently remove from the game. This city will no longer be infected.');
+  modalContent.appendChild(instructions);
+
+  // Create card selection container with specialized class
+  const cardSelectionContainer = createSimpleElement('div', 'infection-selection-container');
+
+  // Track selected cards (only one in this case)
+  const selectedCards = new Set();
+
+  // Add button container
+  const buttonContainer = createSimpleElement('div', 'modal-buttons');
+
+  // Function to handle selection completion
+  function selectionComplete(selectedCity) {
+    closeModal();
+    completionFunction(selectedCity);
+  }
+
+  // Create card elements for selection
+  infectionCards.forEach((cardObj, idx) => {
+    const card = createSimpleElement('div', ['selectable-card', 'infection-card', cardObj.color]);
+
+    // Add card name
+    const cardName = createSimpleElement('div', 'card-name', cardObj.name);
+    card.appendChild(cardName);
+
+    // Add click handler
+    card.addEventListener('click', () => {
+      selectedCards.clear(); // Clear any previous selection
+      selectionComplete(cardObj.name); // Complete with the city name
+    });
+
+    cardSelectionContainer.appendChild(card);
+  });
+
+  modalContent.appendChild(cardSelectionContainer);
+  modalContent.appendChild(buttonContainer);
 
   // Assemble and show the modal
   modalBackdrop.appendChild(modalContent);

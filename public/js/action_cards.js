@@ -4,9 +4,10 @@
 import { getCurrentGameState } from './game_state.js';
 import { showGeneralCardSelectionModal } from './select_cards.js';
 import { toggleMode, resetMode } from './action_buttons.js';
-import { useAirlift, useQuietNight } from './player_actions.js';
+import { useAirlift, useQuietNight, useResilientPopulation } from './player_actions.js';
 import { createSimpleElement } from './dom.js';
 import { showPlayerSelectionPanel, getSelectedPlayerIndex } from './player_selection.js';
+import { showErrorMessage } from './player_action_utils.js'
 
 // Store the current action card source for Government Grant and Airlift
 let currentActionCardSource = null;
@@ -100,6 +101,7 @@ function handleActionCardsClick() {
         break;
       case 'Resilient Population':
         console.log('Resilient Population card selected');
+        handleResilientPopulation(cardSource);
         break;
       case 'Government Grant':
         console.log('Government Grant card selected');
@@ -110,12 +112,13 @@ function handleActionCardsClick() {
         break;
       case 'One Quiet Night':
         console.log('One Quiet Night card selected');
-        useQuietNight();
+        useQuietNight(); // Maybe rename to handleQuietNight for consistency
         break;
       default:
         console.log('Unknown action card type');
     }
-  }, {customTitle: 'Select Action Card', useArrayIndex: true});
+  },
+  {customTitle: 'Select Action Card', useArrayIndex: true});
 }
 
 /**
@@ -145,6 +148,49 @@ export function updateActionCardsButtonState(gameState) {
  */
 export function getActionCardSource() {
   return currentActionCardSource;
+}
+
+/**
+ * Handle Resilient Population action card
+ * Allows removal of a card from the infection discard pile
+ * @param {Object} cardSource - The source of the card (player index and card index)
+ */
+function handleResilientPopulation(cardSource) {
+  // Close the card selection modal
+  if (document.querySelector('.modal-backdrop')) {
+    document.body.removeChild(document.querySelector('.modal-backdrop'));
+  }
+
+  // Store the card source for later use
+  currentActionCardSource = cardSource;
+
+  const gameState = getCurrentGameState();
+
+  // Show infection discard pile for selection
+  console.log(gameState.decks)
+  const infectionDiscard = gameState.decks.infectionDiscardPile
+  if (!infectionDiscard || infectionDiscard.length === 0) {
+    showErrorMessage("No cards in the infection discard pile");
+    return;
+  }
+
+  // Show card selection modal
+  showGeneralCardSelectionModal(1, infectionDiscard, (selectedIndices) => {
+    const selectedIndex = selectedIndices[0];
+    const cityName = infectionDiscard[selectedIndex].name;
+    completeResilientPopulation(cityName);
+  }, {customTitle: 'Select a city to remove from the game', useArrayIndex: true});
+}
+
+/**
+ * Complete Resilient Population action
+ * @param {string} cityName - The name of the city to remove
+ */
+function completeResilientPopulation(cityName) {
+  useResilientPopulation(cityName);
+
+  // Reset the action card source
+  currentActionCardSource = null;
 }
 
 /**

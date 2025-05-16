@@ -191,8 +191,18 @@ function handleCardAnimation(animContainer, cardElement, eventStack, continueAni
   cardElement.style.position = 'absolute';
   // Calculate offset based on number of cards already shown (excluding headers)
   const cardCount = cardsWrapper.querySelectorAll('.animated-card').length;
-  const offsetX = cardCount * 100; // Increased spacing to 100px between cards for less overlap
-  cardElement.style.left = `calc(50% + ${offsetX}px - 90px)`; // Center offset
+
+  // Try adjusting the offset calculation specifically for infection cards
+  const isInfectionCard = cardElement.classList.contains('infection-card');
+  const offsetX = cardCount * 100;
+  // Apply different offset or animation timing for infection cards
+  if (isInfectionCard) {
+    cardElement.style.left = `calc(50% + ${offsetX}px - 125px)`; // Different center point
+    // Or adjust animation timing:
+    cardElement.style.transitionDuration = '1.2s'; // Slightly slower
+  } else {
+    cardElement.style.left = `calc(50% + ${offsetX}px - 90px)`;
+  }
 
   // For cards, add to container first without the drawn class
   cardsWrapper.appendChild(cardElement);

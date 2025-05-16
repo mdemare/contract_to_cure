@@ -15,32 +15,48 @@
   display: none;
   padding-right: 300px; /* Increased padding to prevent cards from wrapping */
   overflow: hidden;
-  transition: opacity 0.5s ease;
+  transition: opacity 5s ease;
 }
 
+/* ===== Full Card Styles (used in animations and modals) ===== */
 .animated-card {
-  width: 180px;
-  height: 250px;
+  backface-visibility: hidden;
   background-color: #fff;
   border-radius: 10px;
+  border: 2px solid #333;
   box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
   display: flex;
   flex-direction: column;
-  padding: 10px;
-  transform: scale(0.5) translateX(-50vw) rotate(-10deg);
-  opacity: 0;
-  transition: transform 0.8s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease-out;
-  position: relative;
+  height: 250px;
   margin-right: 30px;
-  border: 2px solid #333;
-  will-change: transform, opacity;
-  backface-visibility: hidden;
+  opacity: 0;
+  padding: 10px;
   perspective: 1000px;
+  position: relative;
+  transform: scale(0.5) translateX(-50vw) rotate(-10deg);
+  transform-origin: center center;
+  transition: transform 8s cubic-bezier(0.34, 1.56, 0.64, 1), opacity 0.6s ease-out;
+  width: 180px;
+  will-change: transform, opacity;
 }
 
 .animated-card.drawn {
   transform: scale(1) translateX(0) rotate(0deg);
   opacity: 1;
+}
+
+/* Add a glow effect for drawn cards */
+.animated-card.drawn::after {
+  animation: glow 1.5s ease-out;
+  border-radius: 15px;
+  bottom: -10px;
+  box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
+  content: '';
+  left: -10px;
+  position: absolute;
+  right: -10px;
+  top: -10px;
+  z-index: -1;
 }
 
 .card-header {
@@ -126,20 +142,6 @@
 .animated-card.epidemic-card .card-header,
 .animated-card.epidemic-card .card-title {
   color: #cc0000;
-}
-
-/* Add a glow effect for drawn cards */
-.animated-card.drawn::after {
-  content: '';
-  position: absolute;
-  top: -10px;
-  left: -10px;
-  right: -10px;
-  bottom: -10px;
-  border-radius: 15px;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
-  z-index: -1;
-  animation: glow 1.5s ease-out;
 }
 
 /* Infection Card Base */
@@ -257,42 +259,6 @@
   }
 }
 
-/* ===== Full Card Styles (used in animations and modals) ===== */
-.animated-card {
-  width: 180px;
-  height: 250px;
-  background-color: #fff;
-  border-radius: 10px;
-  box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
-  display: flex;
-  flex-direction: column;
-  padding: 10px;
-  transform: scale(0.5) translateX(-50vw);
-  opacity: 0;
-  transition: transform 1s ease-out, opacity 0.8s ease-out;
-  position: relative;
-  margin-right: 30px;
-  border: 2px solid #333;
-}
-
-.animated-card.drawn {
-  transform: scale(1) translateX(0);
-  opacity: 1;
-}
-
-/* Add a glow effect for drawn cards */
-.animated-card.drawn::after {
-  content: '';
-  position: absolute;
-  top: -10px;
-  left: -10px;
-  right: -10px;
-  bottom: -10px;
-  border-radius: 15px;
-  box-shadow: 0 0 20px rgba(255, 255, 255, 0.7);
-  z-index: -1;
-  animation: glow 1.5s ease-out;
-}
 
 /* Quiet Night Event Card Styling */
 .animated-card.quiet-night-event {
@@ -390,6 +356,11 @@
   }
 }
 
+.event-header[data-type="resilient"] {
+  border-left-color: #ff8c42;
+  background-color: rgba(255, 140, 66, 0.7);
+}
+
 /* Event headers with improved animations */
 .event-header {
   color: white;
@@ -457,4 +428,225 @@
 
 .event-header[data-type="quiet"] {
   border-left-color: #9c6edb;
+}
+
+/* Resilient Population Event Card Styling */
+.animated-card.resilient-population-event {
+  background-color: #fff5e6; /* Light warm background */
+  border-color: #ff8c42; /* Orange border to signify protection/resilience */
+  background-image: linear-gradient(to bottom right, #fff5e6, #ffe6cc); /* Gradient background for warm effect */
+  position: relative;
+}
+
+/* Card content styling */
+.animated-card.resilient-population-event .card-header {
+  color: #ff8c42; /* Orange text matching the border */
+  border-bottom: 1px solid rgba(255, 140, 66, 0.3);
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.animated-card.resilient-population-event .card-title {
+  color: #ff8c42;
+  font-size: 22px;
+  text-align: center;
+  text-shadow: 0 0 3px rgba(255, 140, 66, 0.2);
+}
+
+/* Shield icon in the background */
+.animated-card.resilient-population-event::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 100px;
+  height: 100px;
+  transform: translate(-50%, -50%);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='%23ff8c42' opacity='0.15'%3E%3Cpath d='M12,1L3,5v6c0,5.55,3.84,10.74,9,12c5.16-1.26,9-6.45,9-12V5L12,1z M12,21c-4.41-1.08-7-5.47-7-10V6.3l7-3.11l7,3.11 V11C19,15.53,16.41,19.92,12,21z'%3E%3C/path%3E%3Cpath d='M12,7L9,11h2v4h2v-4h2L12,7z'%3E%3C/path%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: center;
+  opacity: 0.8;
+  z-index: 0;
+}
+
+/* Special glow effect */
+@keyframes resilientGlow {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(255, 140, 66, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(255, 140, 66, 0.6);
+  }
+}
+
+.animated-card.resilient-population-event.drawn {
+  animation: resilientGlow 3s infinite ease-in-out;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .animated-card.resilient-population-event::before {
+    width: 80px;
+    height: 80px;
+  }
+}
+
+/* Styling for the cards in the infection discard selection modal */
+.infection-selection-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 15px;
+  margin: 20px 0;
+}
+
+.selectable-card.infection-card {
+  width: 100%;
+  height: 120px;
+  background-color: rgba(0, 0, 0, 0.8);
+  border-width: 2px;
+  border-style: solid;
+  border-radius: 8px;
+  padding: 10px;
+  cursor: pointer;
+  position: relative;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Disease color borders for selectable cards */
+.selectable-card.infection-card.blue {
+  border-color: var(--blue-disease);
+  box-shadow: 0 0 5px rgba(59, 144, 255, 0.3);
+}
+
+.selectable-card.infection-card.yellow {
+  border-color: var(--yellow-disease);
+  box-shadow: 0 0 5px rgba(255, 215, 0, 0.3);
+}
+
+.selectable-card.infection-card.black {
+  border-color: var(--black-disease);
+  box-shadow: 0 0 5px rgba(68, 68, 68, 0.3);
+}
+
+.selectable-card.infection-card.red {
+  border-color: var(--red-disease);
+  box-shadow: 0 0 5px rgba(255, 94, 94, 0.3);
+}
+
+/* Card content styling */
+.selectable-card.infection-card .card-name {
+  color: white;
+  font-size: 18px;
+  text-align: center;
+  text-shadow: 0 0 5px rgba(0, 0, 0, 0.5);
+  font-weight: bold;
+  z-index: 1;
+}
+
+/* Infection marker on selectable cards */
+.selectable-card.infection-card::after {
+  content: '';
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  width: 25px;
+  height: 25px;
+  border-radius: 50%;
+  background-size: 60% 60%;
+  background-position: center;
+  background-repeat: no-repeat;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='white'%3E%3Cpath d='M12 2C6.47 2 2 6.47 2 12s4.47 10 10 10 10-4.47 10-10S17.53 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8z'%3E%3C/path%3E%3Ccircle cx='12' cy='12' r='5'%3E%3C/circle%3E%3C/svg%3E");
+  opacity: 0.6;
+}
+
+/* Color-specific disease markers */
+.selectable-card.infection-card.blue::after {
+  background-color: var(--blue-disease);
+}
+
+.selectable-card.infection-card.yellow::after {
+  background-color: var(--yellow-disease);
+}
+
+.selectable-card.infection-card.black::after {
+  background-color: var(--black-disease);
+}
+
+.selectable-card.infection-card.red::after {
+  background-color: var(--red-disease);
+}
+
+/* Hover and selection effects */
+.selectable-card.infection-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.3);
+}
+
+.selectable-card.infection-card.selected {
+  transform: translateY(-8px);
+  box-shadow: 0 8px 20px rgba(255, 140, 66, 0.5);
+  border-color: #ff8c42 !important;
+}
+
+.selectable-card.infection-card.selected::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border-radius: 8px;
+  border: 2px solid #ff8c42;
+  box-shadow: 0 0 15px rgba(255, 140, 66, 0.6);
+  animation: pulseSelection 1.5s infinite;
+  z-index: -1;
+}
+
+@keyframes pulseSelection {
+  0% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.05);
+  }
+  100% {
+    opacity: 0.6;
+    transform: scale(1);
+  }
+}
+
+/* Modified modal for infection selection */
+.modal-content.resilient-population-modal {
+  background-color: var(--panel-bg);
+  border: 3px solid #ff8c42;
+  max-width: 700px;
+}
+
+.resilient-population-modal h3 {
+  color: #ff8c42;
+  border-bottom: 1px solid rgba(255, 140, 66, 0.3);
+}
+
+.resilient-population-modal .modal-instructions {
+  color: #333;
+  font-weight: 500;
+}
+
+/* Special confirm button for resilient population */
+.resilient-population-modal .confirm-btn {
+  background-color: #ff8c42;
+}
+
+.resilient-population-modal .confirm-btn:hover:not(.disabled) {
+  background-color: #ff7e29;
+}
+
+.resilient-population-modal .confirm-btn.disabled {
+  background-color: #ffbb8c;
 }

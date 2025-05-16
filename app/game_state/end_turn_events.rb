@@ -156,7 +156,7 @@ module EndTurnEvents
       if @disease_cubes[color] == 1
         # Adding all remaining cubes then game over
         connected_city.disease_cubes = [3, connected_city.disease_cubes + 1].min
-        add_disease_cubes(connected_city_name, color, 1)
+        add_disease_cubes(connected_city_name, color, 1, events)
         @disease_cubes[color] = 0
       end
 

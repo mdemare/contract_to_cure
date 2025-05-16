@@ -22,11 +22,12 @@ export function createCardElement(event) {
       return createHeaderElement(event);
     case 'quiet_night':
       return createQuietNightElement(event);
+    case 'resilient_population':
+      return createResilientPopulationElement(event);
     default:
       return createUnknownEventElement(event);
   }
 }
-
 /**
  * Creates a draw card element
  * @param {Object} event - The draw card event data
@@ -36,7 +37,7 @@ function createDrawCardElement(event) {
   const { player, card } = event;
 
   // Determine the classes to add
-  const classes = ['animated-card', 'card-base'];
+  const classes = ['animated-card'];
   if (card.type === 'city') {
     classes.push('city-card', `card-${card.color}`);
   } else if (card.type === 'action') {
@@ -153,6 +154,40 @@ function createNewInfectionElement(event) {
 }
 
 /**
+ * Creates a Resilient Population element
+ * @param {Object} event - The resilient population event data
+ * @returns {HTMLElement} The resilient population element
+ */
+function createResilientPopulationElement(event) {
+  // Create the base card element with resilient population styling
+  const cardElement = createSimpleElement('div', ['animated-card', 'resilient-population-event']);
+
+  // Add card header
+  const cardHeader = createSimpleElement('div', 'card-header', 'Resilient Population');
+  cardElement.appendChild(cardHeader);
+
+  // Add card title with the removed city if available
+  const titleText = event.city ? `${event.city} removed from game` : 'City removed from game';
+  const cardTitle = createSimpleElement('div', 'card-title', titleText);
+  cardElement.appendChild(cardTitle);
+
+  // Add additional detail element for more context
+  const cardDetail = createSimpleElement('div', 'card-detail', 'Population now immune');
+
+  // Style using object format
+  Object.assign(cardDetail.style, {
+    textAlign: 'center',
+    fontSize: '14px',
+    marginTop: '10px',
+    color: '#ff8c42',
+    fontStyle: 'italic'
+  });
+  cardElement.appendChild(cardDetail);
+
+  return cardElement;
+}
+
+/**
  * Creates a header element
  * @param {Object} event - The header event data
  * @returns {HTMLElement} The header element
@@ -169,6 +204,8 @@ function createHeaderElement(event) {
     header.setAttribute('data-type', 'epidemic');
   } else if (event.message.includes('Quiet Night')) {
     header.setAttribute('data-type', 'quiet');
+  } else if (event.message.includes('Resilient Population')) {
+    header.setAttribute('data-type', 'resilient');
   }
 
   return header;
