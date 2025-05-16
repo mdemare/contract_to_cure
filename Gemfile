@@ -8,7 +8,7 @@ gem 'sinatra', '~> 3.1.0'
 gem 'sinatra-contrib', '~> 3.1.0'
 
 # Server gems
-gem 'thin', '~> 1.8.2' # Fast and reliable server
+gem 'puma', '~> 6.6'
 
 # Development gems
 group :development do
