@@ -1,6 +1,7 @@
 // Import dependencies
-import { getCurrentGameState, getCurrentPlayer } from '/js/game_state.js';
+import { getCurrentGameState } from '/js/game_state.js';
 import { getCityColor } from './player_action_utils.js';
+import { createSimpleElement } from './dom.js';
 
 /**
  * Creates a selectable card element for the card selection modal
@@ -15,9 +16,9 @@ import { getCityColor } from './player_action_utils.js';
  */
 function createSelectableCard(cardObj, index, selectedCards, count, confirmButton, selectionComplete) {
   if(typeof index !== 'number') { throw new Error("index must be an number")}
-  const cardName = cardObj.name
-  const card = document.createElement('div');
-  card.classList.add('selectable-card');
+  const cardName = cardObj.name;
+
+  const card = createSimpleElement('div', 'selectable-card');
 
   // Determine card type and color
   if (cardObj.type == 'action') {
@@ -34,9 +35,7 @@ function createSelectableCard(cardObj, index, selectedCards, count, confirmButto
   }
 
   // Create card content
-  const cardNameElement = document.createElement('div');
-  cardNameElement.classList.add('card-name');
-  cardNameElement.textContent = cardName.replace('Action:', '');
+  const cardNameElement = createSimpleElement('div', 'card-name', cardName.replace('Action:', ''));
   card.appendChild(cardNameElement);
 
   // Add data attribute for card index
@@ -96,42 +95,32 @@ export function showHandSelectionModal(count, cardIndices, completionFunction, {
 
 export function showGeneralCardSelectionModal(count, cards, completionFunction, {customTitle, useArrayIndex = false, hideCancel = false}) {
   // Create modal backdrop
-  const modalBackdrop = document.createElement('div');
-  modalBackdrop.classList.add('modal-backdrop');
+  const modalBackdrop = createSimpleElement('div', 'modal-backdrop');
 
   // Create modal content
-  const modalContent = document.createElement('div');
-  modalContent.classList.add('modal-content', 'card-selection-modal');
+  const modalContent = createSimpleElement('div', ['modal-content', 'card-selection-modal']);
 
   // Add title
-  const modalTitle = document.createElement('h3');
-  modalTitle.textContent = customTitle || `Select ${count} Card${count !== 1 ? 's' : ''}`;
+  const modalTitle = createSimpleElement('h3', null, customTitle || `Select ${count} Card${count !== 1 ? 's' : ''}`);
   modalContent.appendChild(modalTitle);
 
   // Add instructions
-  const instructions = document.createElement('p');
-  instructions.classList.add('modal-instructions');
-  instructions.textContent = customTitle
-    ? `Please select ${count} card${count !== 1 ? 's' : ''} from your hand.`
-    : `Please select ${count} card${count !== 1 ? 's' : ''} from your hand.`;
+  const instructions = createSimpleElement('p', 'modal-instructions',
+    `Please select ${count} card${count !== 1 ? 's' : ''} from your hand.`);
   modalContent.appendChild(instructions);
 
   // Create card selection container
-  const cardSelectionContainer = document.createElement('div');
-  cardSelectionContainer.classList.add('card-selection-container');
+  const cardSelectionContainer = createSimpleElement('div', 'card-selection-container');
 
   // Track selected cards
   const selectedCards = new Set();
 
   // Add button container - only if count > 1
-  const buttonContainer = document.createElement('div');
-  buttonContainer.classList.add('modal-buttons');
+  const buttonContainer = createSimpleElement('div', 'modal-buttons');
 
   // Add cancel button
   if (!hideCancel) {
-    const cancelButton = document.createElement('button');
-    cancelButton.textContent = 'Cancel';
-    cancelButton.classList.add('cancel-btn');
+    const cancelButton = createSimpleElement('button', 'cancel-btn', 'Cancel');
     cancelButton.addEventListener('click', () => {
       closeModal();
     });
@@ -141,9 +130,7 @@ export function showGeneralCardSelectionModal(count, cards, completionFunction, 
   // Add confirm button - only if count > 1
   let confirmButton;
   if (count > 1) {
-    confirmButton = document.createElement('button');
-    confirmButton.textContent = 'Confirm Selection';
-    confirmButton.classList.add('confirm-btn', 'disabled');
+    confirmButton = createSimpleElement('button', ['confirm-btn', 'disabled'], 'Confirm Selection');
     confirmButton.disabled = true;
     confirmButton.addEventListener('click', () => {
       if (selectedCards.size === count) {
@@ -156,7 +143,7 @@ export function showGeneralCardSelectionModal(count, cards, completionFunction, 
     buttonContainer.appendChild(confirmButton);
   } else {
     // For count = 1, we still need a placeholder confirmButton to pass to createSelectableCard
-    confirmButton = document.createElement('button');
+    confirmButton = createSimpleElement('button');
   }
 
   modalContent.appendChild(buttonContainer);
@@ -239,9 +226,8 @@ export function handleHandLimitCheck(playerIndex, discardCount, completionCallba
         }
 
         // Show success message
-        const notification = document.createElement('div');
-        notification.classList.add('game-notification', 'success');
-        notification.textContent = `${playerName} discarded ${discardCount} card${discardCount > 1 ? 's' : ''}`;
+        const notification = createSimpleElement('div', ['game-notification', 'success'],
+          `${playerName} discarded ${discardCount} card${discardCount > 1 ? 's' : ''}`);
         document.body.appendChild(notification);
 
         setTimeout(() => {

@@ -1,6 +1,6 @@
 // player_panel.js
 import { getCurrentGameState } from './game_state.js';
-import { getCityColor } from './player_action_utils.js';
+import { createSimpleElement } from './dom.js';
 
 // DOM elements
 let playerPanel;
@@ -71,28 +71,22 @@ document.addEventListener('DOMContentLoaded', async () => {
 // Create the player panel DOM structure
 function createPlayerPanel() {
   // Create panel container
-  const panel = document.createElement('div');
-  panel.className = 'player-panel';
+  const panel = createSimpleElement('div', 'player-panel');
 
   // Create toggle button as a separate element (not inside the panel)
-  const toggleBtn = document.createElement('button');
-  toggleBtn.className = 'player-panel-toggle';
+  const toggleBtn = createSimpleElement('button', 'player-panel-toggle');
   toggleBtn.setAttribute('aria-label', 'Toggle player panel');
   toggleBtn.setAttribute('aria-expanded', 'true'); // Initially expanded
 
   // Add text to the toggle button
-  const toggleText = document.createElement('span');
-  toggleText.textContent = 'Players';
+  const toggleText = createSimpleElement('span', null, 'Players');
   toggleBtn.appendChild(toggleText);
 
   // Create header
-  const header = document.createElement('div');
-  header.className = 'player-panel-header';
-  header.textContent = 'Players';
+  const header = createSimpleElement('div', 'player-panel-header', 'Players');
 
   // Create player list container
-  const listContainer = document.createElement('div');
-  listContainer.className = 'player-list';
+  const listContainer = createSimpleElement('div', 'player-list');
 
   // Assemble the panel
   panel.appendChild(header);
@@ -144,32 +138,23 @@ export function updatePlayerPanel(providedGameState) {
 
 // Create a player item element
 function createPlayerItem(player, isCurrent) {
-  const playerItem = document.createElement('div');
-  playerItem.className = `player-item ${isCurrent ? 'current' : ''}`;
+  const playerItem = createSimpleElement('div', [`player-item${isCurrent ? ' current' : ''}`]);
 
   // Create player header with role and name
-  const playerHeader = document.createElement('div');
-  playerHeader.className = 'player-header';
+  const playerHeader = createSimpleElement('div', 'player-header');
 
   const roleName = String(player.role).toLowerCase();
   const roleText = formatRoleText(player.role);
 
   // Create pawn indicator
-  const pawnElement = document.createElement('div');
-  pawnElement.className = `player-pawn ${roleName.replace(' ', '-')}`;
+  const pawnElement = createSimpleElement('div', ['player-pawn', roleName.replace(' ', '-')]);
 
   // Create player name/role text
-  const nameElement = document.createElement('div');
-  nameElement.className = 'player-name';
-  nameElement.textContent = roleText; // Use the role name instead of "Player X"
-
-  const roleElement = document.createElement('div');
-  roleElement.className = 'player-role';
-  roleElement.textContent = `Player ${player.index + 1}`; // Move player number to the subtitle
+  const nameElement = createSimpleElement('div', 'player-name', roleText);
+  const roleElement = createSimpleElement('div', 'player-role', `Player ${player.index + 1}`);
 
   // Create current player indicator
-  const currentIndicator = document.createElement('div');
-  currentIndicator.className = 'current-player-indicator';
+  const currentIndicator = createSimpleElement('div', 'current-player-indicator');
 
   // Assemble header
   playerHeader.appendChild(pawnElement);
@@ -177,8 +162,7 @@ function createPlayerItem(player, isCurrent) {
   playerHeader.appendChild(currentIndicator);
 
   // Create hand preview
-  const handPreview = document.createElement('div');
-  handPreview.className = 'player-hand-preview';
+  const handPreview = createSimpleElement('div', 'player-hand-preview');
 
   // Add cards to hand preview
   if (player.hand && Array.isArray(player.hand)) {
@@ -200,13 +184,13 @@ const typeToClassMap = {
   'event': 'epidemic'
 };
 
-  // Create a card preview element
+// Create a card preview element
 function createCardPreview(cardObj) {
   if (!cardObj) { throw new Error("cardObj is undefined") }
-  const cardElement = document.createElement('div')
-  cardElement.textContent = cardObj.name
-  cardElement.className = `hand-card-preview ${typeToClassMap[cardObj.type] || cardObj.color}`
-  return cardElement
+
+  // Use the appropriate class from the map or the card's color
+  const cardClass = `hand-card-preview ${typeToClassMap[cardObj.type] || cardObj.color}`;
+  return createSimpleElement('div', cardClass, cardObj.name);
 }
 
 // Format role text to be more readable (copied from current_player.js)

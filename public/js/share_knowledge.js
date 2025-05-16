@@ -2,7 +2,7 @@
 import { getCurrentGameState } from './game_state.js';
 import { executeShareKnowledge } from './player_actions.js';
 import { getCityColor } from './player_action_utils.js';
-
+import { createSimpleElement } from './dom.js';
 
 // State to track which players can share knowledge
 let applicableCards = [];
@@ -169,24 +169,20 @@ function closeShareModal() {
 // Create and show the share knowledge modal
 export function showShareKnowledgeModal(cards, players) {
   // Create modal backdrop
-  const modalBackdrop = document.createElement('div');
-  modalBackdrop.classList.add('modal-backdrop');
+  const modalBackdrop = createSimpleElement('div', 'modal-backdrop');
 
   // Store reference to the modal backdrop
   activeModalBackdrop = modalBackdrop;
 
   // Create modal content
-  const modalContent = document.createElement('div');
-  modalContent.classList.add('modal-content');
+  const modalContent = createSimpleElement('div', 'modal-content');
 
   // Add title
-  const modalTitle = document.createElement('h3');
-  modalTitle.textContent = 'Share Knowledge';
+  const modalTitle = createSimpleElement('h3', null, 'Share Knowledge');
   modalContent.appendChild(modalTitle);
 
   // Add cards list
-  const cardsList = document.createElement('div');
-  cardsList.classList.add('share-cards-list');
+  const cardsList = createSimpleElement('div', 'share-cards-list');
 
   // Group cards by action (give/take)
   const giveCards = cards.filter(card => card.action === 'give');
@@ -194,11 +190,8 @@ export function showShareKnowledgeModal(cards, players) {
 
   // Add section for cards to give (if any)
   if (giveCards.length > 0) {
-    const giveSection = document.createElement('div');
-    giveSection.classList.add('share-section');
-
-    const giveTitle = document.createElement('h4');
-    giveTitle.textContent = 'Cards you can give:';
+    const giveSection = createSimpleElement('div', 'share-section');
+    const giveTitle = createSimpleElement('h4', null, 'Cards you can give:');
     giveSection.appendChild(giveTitle);
 
     giveCards.forEach(card => {
@@ -211,11 +204,8 @@ export function showShareKnowledgeModal(cards, players) {
 
   // Add section for cards to take (if any)
   if (takeCards.length > 0) {
-    const takeSection = document.createElement('div');
-    takeSection.classList.add('share-section');
-
-    const takeTitle = document.createElement('h4');
-    takeTitle.textContent = 'Cards you can take:';
+    const takeSection = createSimpleElement('div', 'share-section');
+    const takeTitle = createSimpleElement('h4', null, 'Cards you can take:');
     takeSection.appendChild(takeTitle);
 
     takeCards.forEach(card => {
@@ -229,9 +219,7 @@ export function showShareKnowledgeModal(cards, players) {
   modalContent.appendChild(cardsList);
 
   // Add close button
-  const closeButton = document.createElement('button');
-  closeButton.textContent = 'Cancel';
-  closeButton.classList.add('cancel-btn');
+  const closeButton = createSimpleElement('button', 'cancel-btn', 'Cancel');
   closeButton.addEventListener('click', () => {
     closeShareModal();
   });
@@ -281,8 +269,7 @@ function resetActiveMode() {
 
 // Create a card element for the share knowledge modal
 function createCardElement(card, players) {
-  const cardElement = document.createElement('div');
-  cardElement.classList.add('share-card');
+  const cardElement = createSimpleElement('div', 'share-card');
 
   // Add city color
   const cityColor = getCityColor(card.cardName);
@@ -291,14 +278,11 @@ function createCardElement(card, players) {
   }
 
   // Card name
-  const cardName = document.createElement('div');
-  cardName.classList.add('card-name');
-  cardName.textContent = card.cardName;
+  const cardName = createSimpleElement('div', 'card-name',
+    card.fromResearcher ? `${card.cardName} (Researcher)` : card.cardName);
 
   // Card action
-  const actionBadge = document.createElement('span');
-  actionBadge.classList.add('action-badge');
-  actionBadge.textContent = card.action.toUpperCase();
+  const actionBadge = createSimpleElement('span', 'action-badge', card.action.toUpperCase());
 
   // Add player name if it's a take action
   let playerName = '';
@@ -309,14 +293,8 @@ function createCardElement(card, players) {
     }
   }
 
-  // Add researcher note if applicable
-  if (card.fromResearcher) {
-    cardName.textContent += ' (Researcher)';
-  }
-
   // Create button to execute the share
-  const shareButton = document.createElement('button');
-  shareButton.classList.add('share-btn');
+  const shareButton = createSimpleElement('button', 'share-btn');
 
   if (card.action === 'give') {
     // For give actions, we need to show the player to give to
@@ -324,14 +302,12 @@ function createCardElement(card, players) {
 
     // If there's more than one eligible player, show dropdown
     if (players.length > 1) {
-      const playerList = document.createElement('div');
-      playerList.classList.add('player-dropdown');
+      const playerList = createSimpleElement('div', 'player-dropdown');
       playerList.style.display = 'none';
 
       players.forEach(player => {
-        const playerOption = document.createElement('div');
-        playerOption.classList.add('player-option');
-        playerOption.textContent = player.role || `Player ${player.index + 1}`;
+        const playerOption = createSimpleElement('div', 'player-option',
+          player.role || `Player ${player.index + 1}`);
         playerOption.addEventListener('click', async () => {
           await shareKnowledge(card.cardName, player.index, 'give');
           playerList.style.display = 'none';
@@ -380,9 +356,7 @@ function showErrorMessage(message) {
 
 function showNotification(message, type = 'info') {
   // Create notification element
-  const notification = document.createElement('div');
-  notification.classList.add('share-notification', type);
-  notification.textContent = message;
+  const notification = createSimpleElement('div', ['share-notification', type], message);
 
   // Append to body
   document.body.appendChild(notification);
