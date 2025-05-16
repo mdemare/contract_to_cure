@@ -1,7 +1,7 @@
 // player_actions.js
 import { getCurrentGameState, loadGameState, CITIES, getCurrentLocation, getCurrentPlayer } from './game_state.js';
 import { getActionCardSource } from './action_cards.js';
-import { showHandSelectionModal, showGeneralCardSelectionModal, handleHandLimitCheck } from './select_cards.js';
+import { showHandSelectionModal, showGeneralCardSelectionModal } from './select_cards.js';
 import { processAPIRequest, getCityColor, showSuccessMessage, showErrorMessage, showInvalidActionMessage } from './player_action_utils.js'
 
 let selectedPlayerIndex = null;
@@ -81,12 +81,9 @@ async function handleBuildStationClick() {
 // Handle a city click event
 async function handleCityClick(event) {
   // Get the clicked city's name
-  const cityElement = event.currentTarget;
-  const cityName = cityElement.dataset.cityName;
+  const cityName = event.currentTarget.dataset.cityName;
 
-  if (!cityName) {
-    return;
-  }
+  if (!cityName) { return; }
 
   // Get the current player
   const currentPlayer = getCurrentPlayer();
@@ -98,18 +95,14 @@ async function handleCityClick(event) {
     actionButtons.resetMode();
 
     // Check if there's already a research station here
-    const gameState = getCurrentGameState();
-    const hasStation = gameState.researchStations &&
-                      gameState.researchStations.locations &&
-                      gameState.researchStations.locations.includes(cityName);
+    const hasStation = getCurrentGameState().researchStations?.locations?.includes(cityName);
 
     if (hasStation) {
       showInvalidActionMessage(`${cityName} already has a research station.`);
-      return;
+    } else {
+      // Call the action card API with the selected city
+      await useGovernmentGrant(cityName);
     }
-
-    // Call the action card API with the selected city
-    await useGovernmentGrant(cityName);
     return;
   }
 
@@ -382,17 +375,9 @@ export async function handleFlightChoice(playerIndex, destination) {
 
   // Find the indices of the current location card and destination card in hand
   const flightCardIndices = currentPlayer.hand
-    .map((cardName, index) => {
-      // We only want the current location or destination city cards
-      if (cardName === currentLocation || cardName === destination) {
-        return {
-          index: index,
-          name: cardName
-        };
-      }
-      return null;
+    .filter(cardObj => {
+      return cardObj.name === currentLocation || cardObj.name === destination
     })
-    .filter(card => card !== null);
 
   // Extract just the indices for the modal
   const selectionIndices = flightCardIndices.map(card => card.index);

@@ -11,6 +11,62 @@ export async function initializeModules() {
   selectCardsModule = await import('./select_cards.js');
 }
 
+async function handleSuccessfulAPIRequest(result, successMessage, eventData) {
+  // Check if we need to handle hand limit
+  if (result.exceeded_hand_limit) {
+    const { player_index, discard_count } = result.exceeded_hand_limit;
+    const gameState = getCurrentGameState();
+    console.log(`${gameState.players[player_index].role} exceeded hand limit`)
+
+    // Load selectCardsModule if not already loaded
+    if (!selectCardsModule) {
+      selectCardsModule = await import('./select_cards.js');
+    }
+
+    // Handle hand limit exceeded
+    await new Promise(resolve => {
+      selectCardsModule.handleHandLimitCheck(player_index, discard_count, resolve);
+    });
+  }
+
+  // Check for end of turn events
+  if (result.end_turn && result.end_turn_events) {
+    // Load endTurnEventsModule if not already loaded
+    if (!endTurnEventsModule) {
+      endTurnEventsModule = await import('./end_turn_events.js');
+    }
+
+    endTurnEventsModule.handleEndOfTurnEvents(result.end_turn_events);
+  }
+
+  // Use the game state directly from the response
+  if (result.game_state) {
+    // Update the game state in game_state.js module
+    await loadGameState(result.game_state);
+  } else {
+    // Fallback to loading game state if not provided in response
+    await loadGameState();
+  }
+
+  // Dispatch event if provided
+  if (eventData) {
+    const moveEvent = new CustomEvent('playerMoved', {
+      detail: {
+        playerIndex: eventData.playerIndex,
+        destination: eventData.destination,
+        success: true,
+        moveType: eventData.moveType,
+        endTurn: result.end_turn || false
+      }
+    });
+    document.dispatchEvent(moveEvent);
+  }
+
+  // Show success message
+  showSuccessMessage(result.message || successMessage);
+
+}
+
 // Generic handler for API requests and responses
 export async function processAPIRequest(endpoint, requestData, successMessage, failurePrefix, eventData = null) {
   try {
@@ -29,58 +85,7 @@ export async function processAPIRequest(endpoint, requestData, successMessage, f
       const result = await response.json();
       if(!result) { throw new Error("no result")}
       if (result.status === 'success') {
-        // Check if we need to handle hand limit
-        if (result.exceeded_hand_limit) {
-          const { player_index, discard_count } = result.exceeded_hand_limit;
-          const gameState = getCurrentGameState();
-          console.log(`${gameState.players[player_index].role} exceeded hand limit`)
-
-          // Load selectCardsModule if not already loaded
-          if (!selectCardsModule) {
-            selectCardsModule = await import('./select_cards.js');
-          }
-
-          // Handle hand limit exceeded
-          await new Promise(resolve => {
-            selectCardsModule.handleHandLimitCheck(player_index, discard_count, resolve);
-          });
-        }
-
-        // Check for end of turn events
-        if (result.end_turn && result.end_turn_events) {
-          // Load endTurnEventsModule if not already loaded
-          if (!endTurnEventsModule) {
-            endTurnEventsModule = await import('./end_turn_events.js');
-          }
-
-          endTurnEventsModule.handleEndOfTurnEvents(result.end_turn_events);
-        }
-
-        // Use the game state directly from the response
-        if (result.game_state) {
-          // Update the game state in game_state.js module
-          await loadGameState(result.game_state);
-        } else {
-          // Fallback to loading game state if not provided in response
-          await loadGameState();
-        }
-
-        // Dispatch event if provided
-        if (eventData) {
-          const moveEvent = new CustomEvent('playerMoved', {
-            detail: {
-              playerIndex: eventData.playerIndex,
-              destination: eventData.destination,
-              success: true,
-              moveType: eventData.moveType,
-              endTurn: result.end_turn || false
-            }
-          });
-          document.dispatchEvent(moveEvent);
-        }
-
-        // Show success message
-        showSuccessMessage(result.message || successMessage);
+        handleSuccessfulAPIRequest(result, successMessage, eventData)
       } else if (result.status === 'card_required' && endpoint === '/move') {
         // Handle operations expert special move card selection
         if (result.movement_type === 'operations_expert_special') {
@@ -116,6 +121,7 @@ async function handleOperationsExpertMove(playerIndex, destination) {
 }
 
 async function handleFlightChoice(playerIndex, destination) {
+  console.log(`handleFlightChoice(${playerIndex}, ${destination})`)
   // Dynamically import player_actions to avoid circular dependency
   const playerActionsModule = await import('./player_actions.js');
 
