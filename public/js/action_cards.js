@@ -5,6 +5,7 @@ import { getCurrentGameState } from './game_state.js';
 import { showGeneralCardSelectionModal } from './select_cards.js';
 import { toggleMode } from './action_buttons.js';
 import { useQuietNight } from './player_actions.js';
+import { createSimpleElement } from './dom.js';
 
 // Store the current action card source for Government Grant
 let currentActionCardSource = null;
@@ -20,21 +21,17 @@ export function initActionCardsButton() {
   }
 
   // Create the button element as a card
-  const actionCardsBtn = document.createElement('div');
+  const actionCardsBtn = createSimpleElement('div', ['action-btn', 'action-cards', 'special-action']);
   actionCardsBtn.id = 'action-cards-btn';
-  actionCardsBtn.className = 'action-btn action-cards special-action';
 
   // Create a card header
-  const cardHeader = document.createElement('div');
-  cardHeader.className = 'card-header';
-  cardHeader.textContent = 'EVENT';
+  const cardHeader = createSimpleElement('div', 'card-header', 'EVENT');
 
   // Create the icon element
-  const iconElement = document.createElement('i');
+  const iconElement = createSimpleElement('i');
 
   // Create the span for button text (card title)
-  const textSpan = document.createElement('span');
-  textSpan.textContent = 'View Actions';
+  const textSpan = createSimpleElement('span', null, 'View Actions');
 
   // Assemble the button with card-like structure
   actionCardsBtn.appendChild(cardHeader);
@@ -163,10 +160,8 @@ function handleGovernmentGrant(cardSource) {
   currentActionCardSource = cardSource;
 
   // Add notification at the top of the page
-  const notification = document.createElement('div');
+  const notification = createSimpleElement('div', 'action-notification', 'Choose a city to build a research station');
   notification.id = 'action-notification';
-  notification.textContent = 'Choose a city to build a research station';
-  notification.classList.add('action-notification');
   document.body.insertBefore(notification, document.body.firstChild);
 
   // Set the mode to government grant

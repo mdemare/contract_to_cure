@@ -3,6 +3,7 @@
 
 import { getCurrentGameState } from './game_state.js';
 import { resetMode } from './action_buttons.js';
+import { createSimpleElement } from './dom.js';
 
 // Store the selected player index for dispatcher move action
 let selectedPlayerIndex = null;
@@ -34,19 +35,15 @@ export function showPlayerSelectionPanel() {
   }
 
   // Create the panel
-  playerSelectionPanel = document.createElement('div');
+  playerSelectionPanel = createSimpleElement('div', 'player-selection-panel');
   playerSelectionPanel.id = 'player-selection-panel';
-  playerSelectionPanel.className = 'player-selection-panel';
 
   // Add instruction text
-  const instructionText = document.createElement('div');
-  instructionText.className = 'selection-instruction';
-  instructionText.textContent = 'Select player to move';
+  const instructionText = createSimpleElement('div', 'selection-instruction', 'Select player to move');
   playerSelectionPanel.appendChild(instructionText);
 
   // Create container for player buttons
-  const buttonContainer = document.createElement('div');
-  buttonContainer.className = 'player-buttons-container';
+  const buttonContainer = createSimpleElement('div', 'player-buttons-container');
 
   // Add player buttons based on game state
   const gameState = getCurrentGameState();
@@ -60,9 +57,7 @@ export function showPlayerSelectionPanel() {
   playerSelectionPanel.appendChild(buttonContainer);
 
   // Add cancel button
-  const cancelButton = document.createElement('button');
-  cancelButton.className = 'cancel-button';
-  cancelButton.innerHTML = '&#10005;'; // X symbol
+  const cancelButton = createSimpleElement('button', 'cancel-button', '✕');
   cancelButton.addEventListener('click', resetMode);
   playerSelectionPanel.appendChild(cancelButton);
 
@@ -78,25 +73,20 @@ export function showPlayerSelectionPanel() {
  * @returns {HTMLElement} The player button element
  */
 function createPlayerButton(player, playerIndex) {
-  if (!player || !player.role) return document.createElement('div');
+  if (!player || !player.role) return createSimpleElement('div');
 
-  const playerButton = document.createElement('button');
-  playerButton.className = 'player-select-btn';
+  const playerButton = createSimpleElement('button', 'player-select-btn');
 
   // Add role class for styling
   const roleName = String(player.role).toLowerCase();
   playerButton.classList.add(roleName.replace(' ', '-'));
 
   // Add player pawn
-  const playerPawn = document.createElement('div');
-  playerPawn.className = 'player-pawn';
-  playerPawn.classList.add(roleName.replace(' ', '-'));
+  const playerPawn = createSimpleElement('div', ['player-pawn', roleName.replace(' ', '-')]);
   playerButton.appendChild(playerPawn);
 
   // Add player role text
-  const playerRole = document.createElement('span');
-  playerRole.className = 'player-role';
-  playerRole.textContent = formatRoleText(player.role);
+  const playerRole = createSimpleElement('span', 'player-role', formatRoleText(player.role));
   playerButton.appendChild(playerRole);
 
   // Add click handler for player selection

@@ -138,7 +138,7 @@ export function updatePlayerPanel(providedGameState) {
 
 // Create a player item element
 function createPlayerItem(player, isCurrent) {
-  const playerItem = createSimpleElement('div', [`player-item${isCurrent ? ' current' : ''}`]);
+  const playerItem = createSimpleElement('div', ['player-item', isCurrent && 'current'].filter(Boolean));
 
   // Create player header with role and name
   const playerHeader = createSimpleElement('div', 'player-header');
@@ -189,8 +189,8 @@ function createCardPreview(cardObj) {
   if (!cardObj) { throw new Error("cardObj is undefined") }
 
   // Use the appropriate class from the map or the card's color
-  const cardClass = `hand-card-preview ${typeToClassMap[cardObj.type] || cardObj.color}`;
-  return createSimpleElement('div', cardClass, cardObj.name);
+  const cardClasses = ["hand-card-preview", `${typeToClassMap[cardObj.type] || cardObj.color}`];
+  return createSimpleElement('div', cardClasses, cardObj.name);
 }
 
 // Format role text to be more readable (copied from current_player.js)

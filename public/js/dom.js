@@ -202,13 +202,15 @@ function createHeaderElement(event) {
  * @param {string} textContent - Text content for the element
  * @returns {HTMLElement} The created element
  */
-function createSimpleElement(elementType, classes, textContent) {
+export function createSimpleElement(elementType, classes, textContent) {
   const element = document.createElement(elementType);
 
-  if (Array.isArray(classes)) {
-    element.classList.add(...classes);
-  } else if (classes) {
-    element.classList.add(classes);
+  if(classes) {
+    const classesArr = Array.isArray(classes) ? classes : classes.split(" ")
+    try {element.classList.add(...classesArr) } catch {
+      console.log(classes)
+      throw new Error("")
+    }
   }
 
   if (textContent) {

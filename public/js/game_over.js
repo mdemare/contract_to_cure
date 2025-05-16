@@ -1,4 +1,5 @@
 // game_over.js
+import { createSimpleElement } from './dom.js';
 
 // Initialize game over functionality
 export function initGameOver() {
@@ -13,37 +14,64 @@ export function initGameOver() {
 
 // Create the game over dialog HTML
 function createGameOverDialog() {
-  const overlay = document.createElement('div');
-  overlay.className = 'game-over-overlay';
+  const overlay = createSimpleElement('div', 'game-over-overlay');
+  const modal = createSimpleElement('div', 'game-over-modal');
 
-  const modal = document.createElement('div');
-  modal.className = 'game-over-modal';
+  // Game over title and subtitle
+  const title = createSimpleElement('h1', 'game-over-title', 'Game Over');
+  const subtitle = createSimpleElement('h2', 'game-over-subtitle', 'The pandemic has overwhelmed humanity');
+  modal.appendChild(title);
+  modal.appendChild(subtitle);
 
-  // Content will be dynamically generated when the game ends
-  modal.innerHTML = `
-    <h1 class="game-over-title">Game Over</h1>
-    <h2 class="game-over-subtitle">The pandemic has overwhelmed humanity</h2>
-    <div class="game-over-reason"></div>
-    <div class="animation-container"></div>
-    <div class="game-over-stats">
-      <div class="stat-item">
-        <div class="stat-value" id="turns-stat">0</div>
-        <div class="stat-label">Turns</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value" id="outbreaks-stat">0</div>
-        <div class="stat-label">Outbreaks</div>
-      </div>
-      <div class="stat-item">
-        <div class="stat-value" id="cures-stat">0</div>
-        <div class="stat-label">Cures Discovered</div>
-      </div>
-    </div>
-    <div class="game-over-buttons">
-      <button class="game-over-button restart-button">Restart Game</button>
-      <button class="game-over-button menu-button">Main Menu</button>
-    </div>
-  `;
+  // Reason for game over
+  const reason = createSimpleElement('div', 'game-over-reason');
+  modal.appendChild(reason);
+
+  // Animation container
+  const animContainer = createSimpleElement('div', 'animation-container');
+  modal.appendChild(animContainer);
+
+  // Stats section
+  const statsContainer = createSimpleElement('div', 'game-over-stats');
+
+  // Turns stat
+  const turnsStat = createSimpleElement('div', 'stat-item');
+  const turnsValue = createSimpleElement('div', 'stat-value', '0');
+  turnsValue.id = 'turns-stat';
+  const turnsLabel = createSimpleElement('div', 'stat-label', 'Turns');
+  turnsStat.appendChild(turnsValue);
+  turnsStat.appendChild(turnsLabel);
+
+  // Outbreaks stat
+  const outbreaksStat = createSimpleElement('div', 'stat-item');
+  const outbreaksValue = createSimpleElement('div', 'stat-value', '0');
+  outbreaksValue.id = 'outbreaks-stat';
+  const outbreaksLabel = createSimpleElement('div', 'stat-label', 'Outbreaks');
+  outbreaksStat.appendChild(outbreaksValue);
+  outbreaksStat.appendChild(outbreaksLabel);
+
+  // Cures stat
+  const curesStat = createSimpleElement('div', 'stat-item');
+  const curesValue = createSimpleElement('div', 'stat-value', '0');
+  curesValue.id = 'cures-stat';
+  const curesLabel = createSimpleElement('div', 'stat-label', 'Cures Discovered');
+  curesStat.appendChild(curesValue);
+  curesStat.appendChild(curesLabel);
+
+  // Add all stats to container
+  statsContainer.appendChild(turnsStat);
+  statsContainer.appendChild(outbreaksStat);
+  statsContainer.appendChild(curesStat);
+  modal.appendChild(statsContainer);
+
+  // Buttons
+  const buttonsContainer = createSimpleElement('div', 'game-over-buttons');
+  const restartButton = createSimpleElement('button', ['game-over-button', 'restart-button'], 'Restart Game');
+  const menuButton = createSimpleElement('button', ['game-over-button', 'menu-button'], 'Main Menu');
+
+  buttonsContainer.appendChild(restartButton);
+  buttonsContainer.appendChild(menuButton);
+  modal.appendChild(buttonsContainer);
 
   overlay.appendChild(modal);
   document.body.appendChild(overlay);
@@ -215,8 +243,7 @@ function createVictoryAnimation() {
   const colors = ['#3b90ff', '#ffd700', '#444', '#ff5e5e', '#4caf50'];
 
   for (let i = 0; i < 50; i++) {
-    const particle = document.createElement('div');
-    particle.className = 'particle';
+    const particle = createSimpleElement('div', 'particle');
 
     // Random position, color, and delay
     const left = Math.random() * 100;
@@ -234,9 +261,7 @@ function createVictoryAnimation() {
 // Display a notification
 function showNotification(message, type = 'info') {
   // Create notification element
-  const notification = document.createElement('div');
-  notification.classList.add('game-notification', type);
-  notification.textContent = message;
+  const notification = createSimpleElement('div', ['game-notification', type], message);
 
   // Append to body
   document.body.appendChild(notification);

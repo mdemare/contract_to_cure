@@ -1,5 +1,6 @@
 // map.js
 import { MAP_WIDTH } from './constants.js';
+import { createSimpleElement } from './dom.js';
 
 // Store the current transform state so it can be preserved during re-renders
 let currentTransform = {
@@ -10,8 +11,7 @@ let currentTransform = {
 
 // Create city div with centralized dot
 function createCityOnPanel(cityData, cityName, panel) {
-  const city = document.createElement('div');
-  city.classList.add('city', cityData.color);
+  const city = createSimpleElement('div', ['city', cityData.color]);
 
   // Position the city div at the exact coordinate (dot will be centered)
   const xPos = cityData.x + panel * MAP_WIDTH;
@@ -22,25 +22,20 @@ function createCityOnPanel(cityData, cityName, panel) {
   city.dataset.cityName = cityName;
 
   // City dot (centered at the city coordinates)
-  const dot = document.createElement('div');
-  dot.classList.add('dot');
+  const dot = createSimpleElement('div', 'dot');
   dot.title = cityName;
   city.appendChild(dot);
 
   // City label (positioned below the dot)
-  const label = document.createElement('div');
-  label.classList.add('city-label');
-  label.textContent = cityName.replace(/ /g, '\u00A0');
+  const label = createSimpleElement('div', 'city-label', cityName.replace(/ /g, '\u00A0'));
   city.appendChild(label);
 
   // Disease cubes (if any)
   if (cityData.cubes > 0) {
-    const cubes = document.createElement('div');
-    cubes.classList.add('cubes');
+    const cubes = createSimpleElement('div', 'cubes');
 
     for (let i = 0; i < cityData.cubes; i++) {
-      const cube = document.createElement('div');
-      cube.classList.add('cube', cityData.color);
+      const cube = createSimpleElement('div', ['cube', cityData.color]);
       cubes.appendChild(cube);
     }
 
@@ -49,18 +44,15 @@ function createCityOnPanel(cityData, cityName, panel) {
 
   // Pawns (if any) - now using chess pawns
   if (cityData.pawns && cityData.pawns.length > 0) {
-    const pawns = document.createElement('div');
-    pawns.classList.add('pawns');
+    const pawns = createSimpleElement('div', 'pawns');
 
     // cityData.pawns contain role names
     // It's a stack, visually, so the first pawn in the array should be the last element in the div.
     for (let i = cityData.pawns.length - 1; i >= 0; i--) {
       let role = cityData.pawns[i];
-      const pawn = document.createElement('div');
-      pawn.classList.add('pawn', role.replaceAll('_','-')); // Use the role directly as the class
-      pawn.textContent = '♟';
+      const pawn = createSimpleElement('div', ['pawn', role.replaceAll('_','-')], '♟');
       pawns.appendChild(pawn);
-    };
+    }
 
     city.appendChild(pawns);
   }
@@ -100,8 +92,7 @@ export function renderPandemicCities(pandemicMap) {
   container.innerHTML = '';
 
   // Create inner container for proper sizing
-  const mapInner = document.createElement('div');
-  mapInner.classList.add('map-inner');
+  const mapInner = createSimpleElement('div', 'map-inner');
 
   // Apply the saved transform instead of always resetting to initial
   mapInner.style.transform = `translate(${currentTransform.translateX}px, ${currentTransform.translateY}px) scale(${currentTransform.scale})`;
