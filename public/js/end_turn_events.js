@@ -2,6 +2,15 @@
 import { createCardElement, createSimpleElement } from './dom.js';
 
 /**
+ * Creates a Promise that resolves after the specified delay
+ * @param {number} ms - Delay in milliseconds
+ * @returns {Promise} Promise that resolves after the delay
+ */
+function delay(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
  * Creates a header container element
  * @returns {HTMLElement} The header container element
  */
@@ -134,32 +143,35 @@ function animateCardStack(animContainer, eventStack) {
   }
 }
 
-// Function to handle header animations
-function handleHeaderAnimation(animContainer, cardElement, eventStack) {
-  // Don't clear the container, just manage what's inside
-  // First, remove any existing headers
+/**
+ * Handles header animation with Promise-based delays
+ * @param {HTMLElement} animContainer - The animation container
+ * @param {HTMLElement} cardElement - The card element to animate
+ * @param {Array} eventStack - Remaining events to animate
+ * @returns {Promise} Promise that resolves when animation completes
+ */
+async function handleHeaderAnimation(animContainer, cardElement, eventStack) {
+  // Existing setup code stays the same
   const existingHeaders = animContainer.querySelectorAll('.event-header');
   existingHeaders.forEach(header => header.remove());
 
-  // Create a dedicated header container if it doesn't exist
   let headerContainer = animContainer.querySelector('.header-container');
   if (!headerContainer) {
     headerContainer = createHeaderContainer();
     animContainer.appendChild(headerContainer);
   }
 
-  // Add header to the dedicated container
   headerContainer.appendChild(cardElement);
 
-  // Add drawing class with a small delay for a nice entrance effect
-  setTimeout(() => {
-    cardElement.classList.add('drawn');
-  }, 50);
+  // Replace setTimeout with await delay
+  await delay(50);
+  cardElement.classList.add('drawn');
 
-  // Longer delay after headers for readability
-  setTimeout(() => {
-    animateCardStack(animContainer, eventStack);
-  }, 1000);
+  // Replace the recursive setTimeout with await delay
+  await delay(1000);
+
+  // Return to original behavior for now (will be updated in next phase)
+  animateCardStack(animContainer, eventStack);
 }
 
 /**
@@ -177,49 +189,44 @@ function createCardsWrapper() {
   return cardsWrapper;
 }
 
-// Function to handle card animations
-function handleCardAnimation(animContainer, cardElement, eventStack, continueAnimation = true) {
-  // Create a wrapper div to hold the cards in a fixed position
-  // This prevents cards from moving when new ones are added
+/**
+ * Handles card animation with Promise-based delays
+ * @param {HTMLElement} animContainer - The animation container
+ * @param {HTMLElement} cardElement - The card element to animate
+ * @param {Array} eventStack - Remaining events to animate
+ * @param {boolean} continueAnimation - Whether to continue animation
+ * @returns {Promise} Promise that resolves when animation completes
+ */
+async function handleCardAnimation(animContainer, cardElement, eventStack, continueAnimation = true) {
+  // Existing setup code stays the same
   let cardsWrapper = animContainer.querySelector('.cards-wrapper');
   if (!cardsWrapper) {
     cardsWrapper = createCardsWrapper();
     animContainer.appendChild(cardsWrapper);
   }
 
-  // Position the new card absolutely to prevent pushing existing cards
   cardElement.style.position = 'absolute';
-  // Calculate offset based on number of cards already shown (excluding headers)
   const cardCount = cardsWrapper.querySelectorAll('.animated-card').length;
 
-  // Try adjusting the offset calculation specifically for infection cards
   const isInfectionCard = cardElement.classList.contains('infection-card');
   const offsetX = cardCount * 100;
-  // Apply different offset or animation timing for infection cards
+
   if (isInfectionCard) {
-    cardElement.style.left = `calc(50% + ${offsetX}px - 125px)`; // Different center point
-    // Or adjust animation timing:
-    cardElement.style.transitionDuration = '1.2s'; // Slightly slower
+    cardElement.style.left = `calc(50% + ${offsetX}px - 125px)`;
+    cardElement.style.transitionDuration = '1.2s';
   } else {
     cardElement.style.left = `calc(50% + ${offsetX}px - 90px)`;
   }
 
-  // For cards, add to container first without the drawn class
   cardsWrapper.appendChild(cardElement);
 
-  // Use requestAnimationFrame for better performance
-  requestAnimationFrame(() => {
-    // Forces browser to recognize the element before animating it
-    void cardElement.offsetWidth;
+  // Force browser to recognize element (keep this synchronous)
+  void cardElement.offsetWidth;
+  cardElement.classList.add('drawn');
 
-    // Add the drawn class to trigger the animation
-    cardElement.classList.add('drawn');
-
-    // Schedule the next card animation after this one completes, but only if continueAnimation is true
-    if (continueAnimation) {
-      setTimeout(() => {
-        animateCardStack(animContainer, eventStack);
-      }, 1000); // 1 second delay between cards
-    }
-  });
+  // Replace setTimeout with await delay, but keep original behavior for now
+  if (continueAnimation) {
+    await delay(1000);
+    animateCardStack(animContainer, eventStack);
+  }
 }
