@@ -32,7 +32,8 @@ puts "  Difficulty: #{options[:difficulty]}"
 puts "  New Game: #{options[:new_game]}"
 
 # Serve static files from the 'public' folder
-set :public_folder, "/Users/mdemare/iCloud/proj/contract_to_cure/public"
+set :public_folder, "/Users/mdemare/projects/contract_to_cure/public"
+set :bind, '0.0.0.0'
 
 # Initialize game state based on options
 if options[:new_game] || !File.exist?('current_game.yaml')
