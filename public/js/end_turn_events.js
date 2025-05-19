@@ -47,18 +47,20 @@ function getAnimContainer() {
 }
 
 // Function to animate card draws
-function startAnimationSequence(events) {
+async function startAnimationSequence(events) {
   // Get the animation container
   const animContainer = getAnimContainer();
 
   // Make container visible
   animContainer.style.display = 'flex';
   // Start the animation stack
-  animateCardStack(animContainer, events.map((x) => x));
+  await animateCardStack(animContainer, events.map((x) => x));
+
+  return true
 }
 
 // Function to handle end of turn events
-export function handleEndOfTurnEvents(endTurnData) {
+export async function handleEndOfTurnEvents(endTurnData) {
   if (!endTurnData || !endTurnData.events || !Array.isArray(endTurnData.events)) {
     console.error('Invalid end turn data:', endTurnData);
     return;
@@ -89,21 +91,23 @@ export function handleEndOfTurnEvents(endTurnData) {
   }
 
   // Start the animation sequence with all grouped events
-  startAnimationSequence(animationEvents.events);
+  return startAnimationSequence(animationEvents.events);
 }
 
-// Animate cards using a stack-based approach with staggered entry
-function animateCardStack(animContainer, eventStack) {
+/**
+ * Animates a stack of cards with Promise-based delays
+ * @param {HTMLElement} animContainer - The animation container
+ * @param {Array} eventStack - Events to animate
+ * @returns {Promise} Promise that resolves when all animations complete
+ */
+async function animateCardStack(animContainer, eventStack) {
   if (eventStack.length == 0) {
-    // All cards have been animated
-    setTimeout(() => {
-      // Fade out animation for the container
-      animContainer.style.opacity = '0';
-      setTimeout(() => {
-        animContainer.style.display = 'none';
-        animContainer.style.opacity = '1'; // Reset for next time
-      }, 600);
-    }, 1200); // 2 seconds after last card is drawn
+    // All cards have been animated - replace nested setTimeout with await
+    await delay(1200);
+    animContainer.style.opacity = '0';
+    await delay(600);
+    animContainer.style.display = 'none';
+    animContainer.style.opacity = '1'; // Reset for next time
     return;
   }
 
@@ -111,34 +115,38 @@ function animateCardStack(animContainer, eventStack) {
   const eventToAnimate = eventStack.shift();
   const cardElement = createCardElement(eventToAnimate);
 
-  // Handle headers differently than cards
+  // Call the appropriate handler function
   if (eventToAnimate.type === 'header') {
-    handleHeaderAnimation(animContainer, cardElement, eventStack);
+    await handleHeaderAnimation(animContainer, cardElement, eventStack);
   } else {
+    // Keep the exceeded_hand_limit case unchanged for now
     if (eventToAnimate.exceeded_hand_limit) {
       const nrCardsToDiscard = eventToAnimate.discard_count;
       const playerIndex = eventToAnimate.player_index;
 
       // First handle the card animation
-      handleCardAnimation(animContainer, cardElement, [], false); // Pass empty array to prevent recursion
+      await handleCardAnimation(animContainer, cardElement, [], false);
 
-      // Import the select_cards module dynamically to avoid circular dependencies
-      import('./select_cards.js').then(selectCardsModule => {
-        // After animation completes, show the discard dialog
-        setTimeout(() => {
-          // Use the handleHandLimitCheck with a callback that continues the animation sequence
-          selectCardsModule.handleHandLimitCheck(playerIndex, nrCardsToDiscard, () => {
-            // Continue with the remaining animation stack after player has discarded
-            animateCardStack(animContainer, eventStack);
-          });
-        }, 1200); // Give enough time for the card animation to complete
-      }).catch(error => {
+      try {
+        // Dynamic import is already Promise-based, so we can await it
+        const selectCardsModule = await import('./select_cards.js');
+
+        // Replace setTimeout with await delay
+        await delay(1200);
+
+        // Convert callback to Promise
+        await new Promise(resolve => {
+          selectCardsModule.handleHandLimitCheck(playerIndex, nrCardsToDiscard, resolve);
+        });
+
+        // Continue with animation stack
+        return animateCardStack(animContainer, eventStack);
+      } catch (error) {
         console.error('Failed to import select_cards module:', error);
-        // Continue with remaining animations even if there's an error
-        animateCardStack(animContainer, eventStack);
-      });
+        return animateCardStack(animContainer, eventStack);
+      }
     } else {
-      handleCardAnimation(animContainer, cardElement, eventStack);
+      await handleCardAnimation(animContainer, cardElement, eventStack);
     }
   }
 }
@@ -171,7 +179,7 @@ async function handleHeaderAnimation(animContainer, cardElement, eventStack) {
   await delay(1000);
 
   // Return to original behavior for now (will be updated in next phase)
-  animateCardStack(animContainer, eventStack);
+  return animateCardStack(animContainer, eventStack);
 }
 
 /**
@@ -227,6 +235,6 @@ async function handleCardAnimation(animContainer, cardElement, eventStack, conti
   // Replace setTimeout with await delay, but keep original behavior for now
   if (continueAnimation) {
     await delay(1000);
-    animateCardStack(animContainer, eventStack);
+    return animateCardStack(animContainer, eventStack);
   }
 }

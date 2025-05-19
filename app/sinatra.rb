@@ -44,6 +44,19 @@ else
   game_state = GameState.load_from_yaml || GameState.new(4, options[:difficulty])
 end
 
+before do
+  # Skip this check for specific routes:
+  # - GET routes (like game_state.json) should remain accessible
+  # - The action_card endpoint needs special handling for forecast completion
+  pass if request.get? || request.path_info == '/action_card'
+
+  # Check if forecast is active
+  if game_state.forecast_active
+    content_type :json
+    halt 422, { status: 'error', message: 'Cannot perform action while Forecast is active. Please complete the Forecast action first.' }.to_json
+  end
+end
+
 # Serve game state as JSON
 get '/game_state.json' do
   content_type :json
@@ -160,7 +173,6 @@ post '/discard_cards' do
   { status: 'success', message: "Successfully discarded #{card_indices.length} card(s)" }.to_json
 end
 
-# Action Card endpoint
 post '/action_card' do
   content_type :json
 
@@ -173,6 +185,17 @@ post '/action_card' do
   # Validate required parameters
   return { status: 'error', message: 'Missing required parameters' }.to_json unless card_name
 
+  # Special handling for Forecast
+  if game_state.forecast_active
+    # Only allow Forecast with card_order when forecast is active
+    if card_name == 'Forecast' && data['card_order']
+      return game_state.apply_forecast(data['card_order']).to_json
+    else
+      return { status: 'error', message: 'Cannot perform action while Forecast is active. Please complete the Forecast action first.' }.to_json
+    end
+  end
+
+  # Normal action card processing when forecast is not active
   result = case card_name
   when 'Airlift'
     game_state.use_airlift(data['player_index'].to_i, city_name)
@@ -185,6 +208,9 @@ post '/action_card' do
   when 'Government Grant'
     # Add a research station to the specified city without using a city card
     game_state.use_government_grant(city_name)
+  when 'Forecast'
+    # Initial Forecast call
+    game_state.use_forecast
   # Add cases for other action cards as they are implemented
   else
     { status: 'error', message: "Unknown action card: #{card_name}" }

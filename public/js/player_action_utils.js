@@ -40,7 +40,7 @@ async function handleSuccessfulAPIRequest(result, successMessage, eventData) {
       endTurnEventsModule = await import('./end_turn_events.js');
     }
 
-    endTurnEventsModule.handleEndOfTurnEvents(result.end_turn_events);
+    await endTurnEventsModule.handleEndOfTurnEvents(result.end_turn_events);
   }
 
   // Use the game state directly from the response
@@ -68,7 +68,6 @@ async function handleSuccessfulAPIRequest(result, successMessage, eventData) {
 
   // Show success message
   showSuccessMessage(result.message || successMessage);
-
 }
 
 // Generic handler for API requests and responses

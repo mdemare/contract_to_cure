@@ -21,7 +21,7 @@ class GameState
   attr_reader :cities, :players, :current_player_index, :infection_deck, :infection_discard,
               :player_deck, :player_discard, :research_stations, :disease_cubes, :cures,
               :outbreak_count, :infection_rate, :infection_rate_marker, :game_over,
-              :game_over_reason, :difficulty_level, :current_player
+              :game_over_reason, :difficulty_level, :current_player, :forecast_active
 
   # Initialize a new game state
   def initialize(players_count, difficulty_level = :heroic)
@@ -71,6 +71,8 @@ class GameState
       raise ArgumentError, 'Difficulty must be :introductory, :normal, :heroic' unless %i[introductory normal heroic].include?(difficulty_level)
     end
 
+    @forecast_active = false
+    @forecast_cards = nil
     @current_player_index = 0
     @outbreak_count = 0
     @infection_rate_marker = 0
@@ -130,6 +132,8 @@ class GameState
     @infection_rate_marker = state[:game_status][:infection_rate_position]
     @current_player_index = state[:game_status][:current_player_index]
     @quiet_night = state[:game_status][:quiet_night]
+    @forecast_active = state[:game_status][:forecast_active] || false
+    @forecast_cards = state[:game_status][:forecast_cards]
 
     # Rebuild cities
     @cities = {}

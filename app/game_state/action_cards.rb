@@ -1,5 +1,94 @@
 module ActionCards
   include GameStateConfig
+
+  # Forecast action card implementation
+  # First stage: Look at the top 6 cards of the infection deck
+  def use_forecast
+    # Find which player has the Forecast card and the card's index
+    player_with_card = nil
+    player_index = nil
+    forecast_index = nil
+
+    @players.each_with_index do |player, idx|
+      card_idx = player.hand.find_index { |card| card.type == :action && card.name == 'Forecast' }
+      if card_idx
+        player_with_card = player
+        player_index = idx
+        forecast_index = card_idx
+        break
+      end
+    end
+
+    unless player_with_card
+      return { status: 'error', message: 'No player has the Forecast card' }
+    end
+
+    # Get the top 6 cards from the infection deck (or all if less than 6)
+    card_count = [@infection_deck.length, 6].min
+    top_cards = @infection_deck.first(card_count)
+
+    # Discard the Forecast card from the player's hand
+    discard_player_card(player_index, forecast_index)
+
+    # Set a flag indicating we're in forecast mode
+    @forecast_active = true
+    @forecast_cards = top_cards.map(&:name)
+
+    # No action cost for playing action cards
+    # Action cards are played as a free action
+
+    # Save the game state
+    save_game_state
+
+    # Return the top cards to the frontend for rearrangement
+    {
+      status: 'success',
+      type: :forecast_view,
+      message: 'Choose the order for the infection cards',
+      cards: top_cards.map { |card| { name: card.name, color: card.color } }
+    }
+  end
+
+  # Second stage: Apply the new order to the infection deck
+  def apply_forecast(card_order)
+    # Validate that we're in forecast mode
+    unless @forecast_active
+      return { status: 'error', message: 'Forecast is not active' }
+    end
+
+    # Validate that the card order contains all the forecasted cards
+    unless card_order.size == @forecast_cards.size &&
+          card_order.all? { |card_name| @forecast_cards.include?(card_name) }
+      return { status: 'error', message: 'Invalid card order provided' }
+    end
+
+    # Remove the top N cards from the infection deck
+    @infection_deck.shift(@forecast_cards.size)
+
+    # Add the cards back in the specified order (reverse order since we're adding to the top)
+    card_order.reverse_each do |card_name|
+      # Find the original card with this name
+      city = @cities[card_name]
+      color = city ? city.color : nil
+
+      if color
+        # Create a new card and add it to the top of the infection deck
+        new_card = Card.new(:infection, card_name, color)
+        @infection_deck.unshift(new_card)
+      end
+    end
+
+    # Reset forecast mode
+    @forecast_active = false
+    @forecast_cards = nil
+
+    # Save the game state
+    save_game_state
+
+    # Return the updated game state
+    to_json_state
+  end
+
   def use_resilient_population(city_name)
     rv = use_action_card("Resilient Population") do |card|
       # Find the card in the infection discard pile

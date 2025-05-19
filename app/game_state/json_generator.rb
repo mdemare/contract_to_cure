@@ -13,6 +13,8 @@ module JsonGenerator
         infectionRate: @infection_rate,
         infectionRatePosition: @infection_rate_marker,
         currentPlayerIndex: @current_player_index,
+        forecast_active: @forecast_active,
+        forecast_cards: @forecast_cards,
         phase: 'playerActions' # This would need to be tracked separately in the full implementation
       },
       diseaseCubes: COLORS.each_with_object({}) do |color, hash|
