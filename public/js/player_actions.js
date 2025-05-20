@@ -192,11 +192,15 @@ export async function cureDisease() {
   let selectedColor = null;
   let colorCards = null;
 
-  let cureWithIndices = (cardIndices, selectedColor) => {
+  // Updated to use card names instead of indices
+  let cureWithCardNames = (cards, selectedColor) => {
     try {
+      // Extract the card names from the selected cards
+      const cardNames = cards.map(card => card.name);
+
       processAPIRequest(
         '/cure_disease',
-        {color: selectedColor, card_indices: cardIndices},
+        {color: selectedColor, card_names: cardNames},
         `Discovered a cure for ${selectedColor} disease!`,
         'Failed to discover cure'
       );
@@ -221,11 +225,19 @@ export async function cureDisease() {
   if (!selectedColor || !colorCards || colorCards.length < cardsNeeded) {
     showInvalidActionMessage(`You need ${cardsNeeded} cards of the same color to discover a cure`);
   } else {
-    let selectableCards = colorCards.map(cardObj => cardObj.index)
     if (colorCards.length == cardsNeeded) {
-      cureWithIndices(selectableCards, selectedColor);
+      // If exactly the right number of cards, use them all
+      cureWithCardNames(colorCards, selectedColor);
     } else {
-      showGeneralCardSelectionModal(cardsNeeded, colorCards, (indices) => { cureWithIndices(indices, selectedColor) }, {customTitle: `Select ${cardsNeeded} ${selectedColor} cards to cure the disease`});
+      // If more than needed, show selection modal
+      showGeneralCardSelectionModal(cardsNeeded, colorCards, (selectedIndices) => {
+        // Convert selected indices to actual card objects
+        const selectedCards = selectedIndices.map(index => {
+          return colorCards.find(card => card.index === index);
+        });
+
+        cureWithCardNames(selectedCards, selectedColor);
+      }, {customTitle: `Select ${cardsNeeded} ${selectedColor} cards to cure the disease`});
     }
   }
 }
@@ -327,6 +339,7 @@ export async function useResilientPopulation(cityName) {
   }
 }
 
+// Use Airlift action card
 export async function useAirlift(cityName, playerIndex) {
   try {
     // Get the card source and verify it exists
@@ -345,10 +358,10 @@ export async function useAirlift(cityName, playerIndex) {
     showErrorMessage(`Error using Airlift: ${error.message}`)
   }
 }
-// Use Government Grant action card
+
+// Use One Quiet Night action card
 export async function useQuietNight() {
   try {
-    // Get the card source info from the action_buttons module
     // Use the action card
     await useActionCard('One Quiet Night', {});
 
@@ -386,7 +399,7 @@ export async function useGovernmentGrant(cityName) {
   }
 }
 
-// Make these functions exportable so player_action_utils.js can call them
+// Handle operations expert special move - updated to use card name
 export async function handleOperationsExpertMove(playerIndex, destination) {
   const gameState = getCurrentGameState();
   const currentPlayer = gameState.players[playerIndex];
@@ -395,11 +408,20 @@ export async function handleOperationsExpertMove(playerIndex, destination) {
 
   // Show card selection modal
   showGeneralCardSelectionModal(1, cityCards, async (selectedIndices) => {
-    // Re-submit the move with the selected card
+    // Find the selected card
+    const selectedCardIndex = selectedIndices[0];
+    const selectedCard = cityCards.find(card => card.index === selectedCardIndex);
+
+    if (!selectedCard) {
+      showErrorMessage("Selected card not found");
+      return;
+    }
+
+    // Re-submit the move with the selected card name
     const moveData = {
       player_index: playerIndex,
       destination: destination,
-      card_index: selectedIndices[0]
+      card_name: selectedCard.name  // Changed from card_index to card_name
     }
 
     // Process the move action with the selected card
@@ -413,29 +435,37 @@ export async function handleOperationsExpertMove(playerIndex, destination) {
   }, {});
 }
 
-// Make this function exportable
+// Handle flight choice - updated to use card name
 export async function handleFlightChoice(playerIndex, destination) {
   const gameState = getCurrentGameState();
   const currentPlayer = gameState.players[playerIndex];
   const currentLocation = currentPlayer.location;
 
-  // Find the indices of the current location card and destination card in hand
-  const flightCardIndices = currentPlayer.hand
+  // Find the current location card and destination card in hand
+  const flightCards = currentPlayer.hand
     .filter(cardObj => {
       return cardObj.name === currentLocation || cardObj.name === destination
-    })
+    });
 
   // Extract just the indices for the modal
-  const selectionIndices = flightCardIndices.map(card => card.index);
+  const selectionIndices = flightCards.map(card => card.index);
 
   // Show card selection modal
-  // Called from hand limit exceeded, and direct flight or charter
   showHandSelectionModal(1, selectionIndices, async (selectedIndices) => {
-    // Re-submit the move with the selected card
+    // Find the selected card
+    const selectedCardIndex = selectedIndices[0];
+    const selectedCard = currentPlayer.hand.find(card => card.index === selectedCardIndex);
+
+    if (!selectedCard) {
+      showErrorMessage("Selected card not found");
+      return;
+    }
+
+    // Re-submit the move with the selected card name
     const moveData = {
       player_index: playerIndex,
       destination: destination,
-      card_index: selectedIndices[0]
+      card_name: selectedCard.name  // Changed from card_index to card_name
     };
 
     // Process the move action with the selected card

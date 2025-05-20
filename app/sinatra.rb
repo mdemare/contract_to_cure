@@ -71,13 +71,13 @@ post '/move' do
 
   player_index = data['player_index'].to_i
   destination = data['destination']
-  card_index = data['card_index']&.to_i
+  card_name = data['card_name']  # Changed from card_index to card_name
 
   # Validate required parameters
   return [500, { status: 'error', message: 'Missing required parameters' }.to_json] unless player_index && destination
 
   # Perform the move and get result
-  game_state.move(player_index, destination, card_index).to_json
+  game_state.move(player_index, destination, card_name).to_json
 end
 
 # Treat disease endpoint
@@ -95,9 +95,9 @@ post '/cure_disease' do
   data = JSON.parse(request.body.read)
 
   color = data['color'].to_sym
-  indices = data['card_indices']
+  card_names = data['card_names']  # Changed from card_indices to card_names
 
-  game_state.cure_disease(color, indices).to_json
+  game_state.cure_disease(color, card_names).to_json
 end
 
 # Retrieve action card endpoint for contingency planner
@@ -154,7 +154,6 @@ post '/continue' do
   end
 end
 
-
 # Build research station endpoint
 post '/build_research_station' do
   content_type :json
@@ -170,20 +169,23 @@ post '/discard_cards' do
   data = JSON.parse(request.body.read)
 
   player_index = data['player_index'].to_i
-  card_indices = data['card_indices']
+  card_names = data['card_names']  # Changed from card_indices to card_names
 
   # Validate required parameters
-  return [500, { status: 'error', message: 'Missing required parameters' }.to_json] unless player_index.is_a?(Integer) && card_indices.is_a?(Array)
+  return [500, { status: 'error', message: 'Missing required parameters' }.to_json] unless player_index.is_a?(Integer) && card_names.is_a?(Array)
 
-  # Sort indices in descending order to avoid issues when removing from array
-  card_indices.sort.reverse.each do |card_index|
-    game_state.discard_player_card(player_index, card_index.to_i)
+  # Discard each card by name
+  discarded_count = 0
+  card_names.each do |card_name|
+    if game_state.discard_player_card_by_name(player_index, card_name)
+      discarded_count += 1
+    end
   end
 
   game_state.save_game_state
 
   # Return success response
-  { status: 'success', message: "Successfully discarded #{card_indices.length} card(s)" }.to_json
+  { status: 'success', message: "Successfully discarded #{discarded_count} card(s)" }.to_json
 end
 
 post '/action_card' do

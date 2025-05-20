@@ -1,41 +1,50 @@
 module ActionCards
   include GameStateConfig
 
-  # Forecast action card implementation
-  # First stage: Look at the top 6 cards of the infection deck
-  def use_forecast
-    # Find which player has the Forecast card and the card's index
-    player_with_card = nil
+  # Uses an action card by name, finding which player has it and discarding it
+  # Returns nil on success or an error hash if card not found or conditions not met
+  def use_action_card(card_name)
+    # Find which player has the card
     player_index = nil
-    forecast_index = nil
 
     @players.each_with_index do |player, idx|
-      card_idx = player.hand.find_index { |card| card.type == :action && card.name == 'Forecast' }
-      if card_idx
-        player_with_card = player
+      if has_action_card?(idx, card_name)
         player_index = idx
-        forecast_index = card_idx
         break
       end
     end
 
-    unless player_with_card
-      return { status: 'error', message: 'No player has the Forecast card' }
+    unless player_index
+      return { success: false, status: 'error', message: "No player has the #{card_name} card" }
     end
+
+    # If a block is given, execute it for additional validation
+    if block_given?
+      result = yield(player_index)
+      return result if result # Return early if the block returned an error
+    end
+
+    # Discard the action card
+    discard_player_card_by_name(player_index, card_name)
+
+    # Return nil to indicate success
+    nil
+  end
+
+  # Forecast action card implementation
+  # First stage: Look at the top 6 cards of the infection deck
+  def use_forecast
+    # Try to use the Forecast card
+    result = use_action_card('Forecast')
+    return result if result # Return early if there was an error
 
     # Get the top 6 cards from the infection deck (or all if less than 6)
     card_count = [@infection_deck.length, 6].min
     top_cards = @infection_deck.first(card_count)
 
-    # Discard the Forecast card from the player's hand
-    discard_player_card(player_index, forecast_index)
-
     # Set a flag indicating we're in forecast mode
     @forecast_active = true
     @forecast_cards = top_cards.map(&:name)
-
-    # No action cost for playing action cards
-    # Action cards are played as a free action
 
     # Save the game state
     save_game_state
@@ -90,18 +99,20 @@ module ActionCards
   end
 
   def use_resilient_population(city_name)
-    rv = use_action_card("Resilient Population") do |card|
+    # Try to use the Resilient Population card with validation
+    result = use_action_card('Resilient Population') do |player_index|
       # Find the card in the infection discard pile
       card_index = @infection_discard.find_index { |infection_card| infection_card.name == city_name }
 
       # If card not found, return error message
-      break { success: false, message: "City '#{city_name}' not found in infection discard pile" } if card_index.nil?
-
-      nil
+      if card_index.nil?
+        { success: false, status: 'error', message: "City '#{city_name}' not found in infection discard pile" }
+      else
+        nil # Continue with the action
+      end
     end
 
-    # If error from use_action_card, return it
-    return rv if rv
+    return result if result # Return early if there was an error
 
     # Find and remove the card from infection discard pile
     card_index = @infection_discard.find_index { |card| card.name == city_name }
@@ -122,9 +133,9 @@ module ActionCards
   end
 
   def quiet_night!
-    err = use_action_card("One Quiet Night")
-
-    return err if err
+    # Try to use the One Quiet Night card
+    result = use_action_card('One Quiet Night')
+    return result if result # Return early if there was an error
 
     @quiet_night = true
 
@@ -142,26 +153,31 @@ module ActionCards
     return response
   end
 
-  # Government Grant action card
-  # Allows a player to build a research station in any city without discarding a city card
   def use_airlift(player_index, city_name)
-    rv = use_action_card("Airlift") do |card|
-
+    # Try to use the Airlift card with validation
+    result = use_action_card('Airlift') do |_|
       # Check if city exists
-      break { success: false, message: "City '#{city_name}' does not exist" } unless @cities[city_name]
-      nil
+      unless @cities[city_name]
+        { success: false, status: 'error', message: "City '#{city_name}' does not exist" }
+      else
+        nil # Continue with the action
+      end
     end
 
-    return rv if rv
+    return result if result # Return early if there was an error
 
-    # Build the research station and discard the card
+    # Move the player to the destination
+    old_location = @players[player_index].location
     @players[player_index].location = city_name
+
+    # Handle medic ability if applicable
+    medic_ability(@players[player_index], city_name) if @players[player_index].role == :medic
 
     # This doesn't consume an action, so don't call after_action
     response = {
       success: true,
       status: 'success',
-      message: "Successfully Airlifted #{@players[player_index].role} to #{city_name}",
+      message: "Successfully Airlifted #{@players[player_index].role} from #{old_location} to #{city_name}",
       game_state: to_json_state
     }
 
@@ -174,22 +190,25 @@ module ActionCards
   # Government Grant action card
   # Allows a player to build a research station in any city without discarding a city card
   def use_government_grant(city_name)
-    rv = use_action_card("Government Grant") do |card|
-
+    # Try to use the Government Grant card with validation
+    result = use_action_card('Government Grant') do |_|
       # Check maximum research stations limit
-      break { success: false, message: "Maximum number of research stations reached" } if @research_stations.size >= MAX_RESEARCH_STATIONS
-
+      if @research_stations.size >= MAX_RESEARCH_STATIONS
+        { success: false, status: 'error', message: "Maximum number of research stations reached" }
       # Check if city already has a research station
-      break { success: false, message: "Research station already exists in #{city_name}" } if @research_stations.include?(city_name)
-
+      elsif @research_stations.include?(city_name)
+        { success: false, status: 'error', message: "Research station already exists in #{city_name}" }
       # Check if city exists
-      break { success: false, message: "City '#{city_name}' does not exist" } unless @cities[city_name]
-      nil
+      elsif !@cities[city_name]
+        { success: false, status: 'error', message: "City '#{city_name}' does not exist" }
+      else
+        nil # Continue with the action
+      end
     end
 
-    return rv if rv
+    return result if result # Return early if there was an error
 
-    # Build the research station and discard the card
+    # Build the research station
     @research_stations << city_name
 
     # This doesn't consume an action, so don't call after_action
@@ -204,20 +223,5 @@ module ActionCards
     save_game_state
 
     return response
-  end
-
-  private
-
-  def use_action_card(card_name)
-    @players.each_with_index do |player, pidx|
-      player.hand.each_with_index do |card, hidx|
-        if card.name == card_name
-          err = yield(card) if block_given?
-          discard_player_card(pidx, hidx, card.retrieved?) unless err
-          return err
-        end
-      end
-    end
-    return { success: false, message: "Card not found in player's hand" }
   end
 end

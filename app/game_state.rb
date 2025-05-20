@@ -112,11 +112,69 @@ class GameState
     end
   end
 
-  def discard_player_card(player_index, card_index, retrieved = false)
+  # NEW HELPER METHODS FOR CARD NAMES
+
+  # Find a card by name in a player's hand and return both the card and its index
+  def find_card_in_player_hand(player_index, card_name)
     player = @players[player_index]
-    card = player.hand.delete_at(card_index)
-    player.hand = player.sorted_hand
-    @player_discard << card if card && !retrieved
+    card_index = player.hand.find_index { |card| card.name == card_name }
+
+    if card_index.nil?
+      return nil, nil
+    else
+      return player.hand[card_index], card_index
+    end
+  end
+
+  # Find a city card by name in a player's hand and return both the card and its index
+  def find_city_card_in_player_hand(player_index, city_name)
+    player = @players[player_index]
+    card_index = player.hand.find_index { |card| card.type == :city && card.name == city_name }
+
+    if card_index.nil?
+      return nil, nil
+    else
+      return player.hand[card_index], card_index
+    end
+  end
+
+  # Find an action card by name in a player's hand and return both the card and its index
+  def find_action_card_in_player_hand(player_index, card_name)
+    player = @players[player_index]
+    card_index = player.hand.find_index { |card| card.type == :action && card.name == card_name }
+
+    if card_index.nil?
+      return nil, nil
+    else
+      return player.hand[card_index], card_index
+    end
+  end
+
+  # Discard a card by name from a player's hand
+  def discard_player_card_by_name(player_index, card_name, retrieved = false)
+    _, card_index = find_card_in_player_hand(player_index, card_name)
+
+    if card_index.nil?
+      return false
+    else
+      player = @players[player_index]
+      card = player.hand.delete_at(card_index)
+      player.hand = player.sorted_hand
+      @player_discard << card if card && !retrieved
+      return true
+    end
+  end
+
+  # New version of has_city_card that doesn't depend on an existing method
+  def has_city_card?(player_index, city_name)
+    player = @players[player_index]
+    player.hand.any? { |card| card.type == :city && card.name == city_name }
+  end
+
+  # Check if a player has a specific action card
+  def has_action_card?(player_index, card_name)
+    player = @players[player_index]
+    player.hand.any? { |card| card.type == :action && card.name == card_name }
   end
 
   private
@@ -196,13 +254,7 @@ class GameState
     @difficulty_level = :normal
   end
 
-  # Helper methods
-
-  def has_city_card?(player_index, city_name)
-    player = @players[player_index]
-    player.hand.any? { |card| card.type == :city && card.name == city_name }
-  end
-
+  # Helper method for medic ability
   def medic_ability(requested_player, destination)
     raise unless requested_player.is_a?(Player)
 

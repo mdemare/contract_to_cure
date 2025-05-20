@@ -1,24 +1,22 @@
 module PlayerActions
   include GameStateConfig
 
-  def move(player_index, destination, card_index = nil)
+  def move(player_index, destination, card_name = nil)
     player = @players[player_index]
     current_location = player.location
+
     # Check if move is valid
     if @cities[current_location].connections.include?(destination)
       move_type = 'drive / ferry'
     elsif @research_stations.include?(current_location) && @research_stations.include?(destination)
       move_type = 'shuttle flight'
-    elsif current_player.role == :operations_expert and @research_stations.include?(current_location) and not current_player.city_cards.empty?
-      puts 1
-      puts current_player.hand[card_index].description if card_index
-      if card_index and current_player.hand[card_index].type == :city
-
+    elsif current_player.role == :operations_expert && @research_stations.include?(current_location) && !current_player.city_cards.empty?
+      if card_name and find_city_card_in_player_hand(@current_player_idx, card_name)[0]
         # The operation expert can go anywhere from a research station by discarding a city card
         move_type = 'operation researcher special move'
-        discard_player_card(@current_player_idx, card_index)
+        discard_player_card_by_name(@current_player_idx, card_name)
       else
-        # Request card index for operations expert move
+        # Request card selection for operations expert move
         return {
           success: false,
           status: 'card_required',
@@ -26,18 +24,26 @@ module PlayerActions
           movement_type: 'operations_expert_special'
         }
       end
-    elsif current_player.role == :dispatcher and @players.any? { |p| p.location == destination && p.index != player_index }
+    elsif current_player.role == :dispatcher && @players.any? { |p| p.location == destination && p.index != player_index }
       # The dispatcher can bring players together
       move_type = 'dispatcher special move'
     elsif has_city_card?(player_index, destination)
-      hand = current_player.hand
       if has_city_card?(player_index, current_location)
-        if card_index and hand[card_index].type == :city and hand[card_index].name == destination
-          move_type = 'direct flight'
-          discard_player_card(player_index, card_index)
-        elsif card_index and hand[card_index].type == :city and hand[card_index].name == current_location
-          move_type = 'charter flight'
-          discard_player_card(player_index, card_index)
+        if card_name
+          # Check if the card name matches either destination or current location
+          if card_name == destination
+            move_type = 'direct flight'
+            discard_player_card_by_name(player_index, card_name)
+          elsif card_name == current_location
+            move_type = 'charter flight'
+            discard_player_card_by_name(player_index, card_name)
+          else
+            return {
+              success: false,
+              status: 'error',
+              message: "Selected card does not match either the current location or destination"
+            }
+          end
         else
           # Request card selection when player has both current location and destination cards
           return {
@@ -50,23 +56,11 @@ module PlayerActions
         end
       else
         move_type = 'direct flight'
-
-        # Check if player has the destination city card for direct flight
-        card_index = player.hand.find_index do |card|
-          card.type == :city && card.name == destination
-        end
-
-        discard_player_card(player_index, card_index)
+        discard_player_card_by_name(player_index, destination)
       end
     elsif has_city_card?(player_index, current_location)
       move_type = 'charter flight'
-
-      # Check if player has the current location city card for charter flight
-      card_index = player.hand.find_index do |card|
-        card.type == :city && card.name == current_location
-      end
-
-      discard_player_card(player_index, card_index)
+      discard_player_card_by_name(player_index, current_location)
     else
       return { success: false, status: 'error', message: "Cannot move player to destination #{destination} from #{current_location}" }
     end
@@ -95,9 +89,8 @@ module PlayerActions
     end
 
     # Otherwise, player needs the city card
-    player_card_index = current_player.hand.find_index { |card| card.type == :city && card.name == city_name }
-    if player_card_index
-      discard_player_card(current_player_idx, player_card_index)
+    if has_city_card?(current_player_idx, city_name)
+      discard_player_card_by_name(current_player_idx, city_name)
       @research_stations << city_name
       return after_action(true, "Successfully built a research station in #{city_name}")
     end
@@ -133,10 +126,8 @@ module PlayerActions
     return after_action(false, 'Both players must be in the same city to share knowledge') unless giving_player.location == receiving_player.location
 
     # Find the card in the giving player's hand
-    card_index = giving_player.hand.find_index { |card| card.type == :city && card.name == city_name }
-    return after_action(false, "Player does not have the #{city_name} city card") unless card_index
-
-    card = giving_player.hand[card_index]
+    card, card_index = find_city_card_in_player_hand(giving_player_index, city_name)
+    return after_action(false, "Player does not have the #{city_name} city card") unless card
 
     # The card must be a city card matching the current location, or the player must be a researcher
     unless card.name == giving_player.location || giving_player.role == :researcher
@@ -154,7 +145,7 @@ module PlayerActions
     if receiving_player.hand.size > 7
       exceeded_limit = {
         player_index: receiving_player_index,
-        discard_count: receiving_player.hand.size - 7
+        excess_cards: receiving_player.hand.map(&:name).last(receiving_player.hand.size - 7)
       }
     end
 
@@ -164,7 +155,7 @@ module PlayerActions
     response
   end
 
-  def cure_disease(color, card_indices)
+  def cure_disease(color, card_names)
     raise "color must be a symbol" unless color.is_a?(Symbol)
     # Player must be at a research station
     return after_action(false, 'Player must be at a research station to discover a cure') unless @research_stations.include?(current_player.location)
@@ -174,17 +165,28 @@ module PlayerActions
 
     # Determine number of cards needed
     cards_needed = current_player.role == :scientist ? CARDS_NEEDED_FOR_CURE[:scientist] : CARDS_NEEDED_FOR_CURE[:default]
-    return after_action(false, "Need #{cards_needed} cards of the same color to discover a cure") if card_indices.size != cards_needed
+    return after_action(false, "Need #{cards_needed} cards of the same color to discover a cure") if card_names.size != cards_needed
 
-    # Check if all selected cards are of the right color
-    selected_cards = card_indices.map do |idx|
-      current_player.hand[idx]
-    end.select { |card| card.type == :city && card.color == color }
+    # Find all cards in the player's hand that match the provided names and are of the right color
+    selected_cards = []
+    selected_card_indices = []
 
+    card_names.each do |card_name|
+      card, card_index = find_city_card_in_player_hand(current_player.index, card_name)
+
+      if card && card.color == color
+        selected_cards << card
+        selected_card_indices << card_index
+      end
+    end
+
+    # Check if we found enough matching cards
     return after_action(false, "All selected cards must be #{color} city cards") if selected_cards.size != cards_needed
 
-    # Discard the cards
-    card_indices.sort.reverse.each { |idx| discard_player_card(current_player.index, idx) }
+    # Discard the cards (in reverse order to avoid index shifting issues)
+    selected_card_indices.sort.reverse.each do |idx|
+      discard_player_card(current_player.index, idx)
+    end
 
     # Mark the cure as discovered
     @cures[color] = true
@@ -227,7 +229,7 @@ module PlayerActions
     if current_player.hand.size > 7
       exceeded_limit = {
         player_index: current_player_idx,
-        discard_count: current_player.hand.size - 7
+        excess_cards: current_player.hand.map(&:name).last(current_player.hand.size - 7)
       }
       response = after_action(true, "Successfully retrieved '#{action_card_name}' action card")
       response[:exceeded_hand_limit] = exceeded_limit
