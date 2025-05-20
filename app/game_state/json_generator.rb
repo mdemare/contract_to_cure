@@ -12,7 +12,7 @@ module JsonGenerator
         outbreaks: @outbreak_count,
         infectionRate: @infection_rate,
         infectionRatePosition: @infection_rate_marker,
-        currentPlayerIndex: @current_player_index,
+        currentPlayerIndex: @current_player_idx,
         forecast_active: @forecast_active,
         forecast_cards: @forecast_cards,
         phase: 'playerActions' # This would need to be tracked separately in the full implementation

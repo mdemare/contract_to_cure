@@ -12,7 +12,7 @@ class EndTurn
     end
 
     card = @game_state.player_deck.pop
-    event = { type: :draw_card, player: @game_state.current_player_index, card: card.description }
+    event = { type: :draw_card, player: @game_state.current_player_idx, card: card.description }
     current_player = @game_state.current_player
 
     if card.type != :epidemic
@@ -24,7 +24,7 @@ class EndTurn
     if i == 1 and current_player.hand.size > 7
       event[:exceeded_hand_limit] = true
       event[:discard_count] = current_player.hand.size - 7
-      event[:player_index] = @game_state.current_player_index
+      event[:player_index] = @game_state.current_player_idx
       puts event.inspect
     end
 

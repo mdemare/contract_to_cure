@@ -16,7 +16,7 @@ module PlayerActions
 
         # The operation expert can go anywhere from a research station by discarding a city card
         move_type = 'operation researcher special move'
-        discard_player_card(@current_player_index, card_index)
+        discard_player_card(@current_player_idx, card_index)
       else
         # Request card index for operations expert move
         return {
@@ -97,7 +97,7 @@ module PlayerActions
     # Otherwise, player needs the city card
     player_card_index = current_player.hand.find_index { |card| card.type == :city && card.name == city_name }
     if player_card_index
-      discard_player_card(current_player_index, player_card_index)
+      discard_player_card(current_player_idx, player_card_index)
       @research_stations << city_name
       return after_action(true, "Successfully built a research station in #{city_name}")
     end
@@ -226,7 +226,7 @@ module PlayerActions
     # Handle hand limit check if needed
     if current_player.hand.size > 7
       exceeded_limit = {
-        player_index: current_player_index,
+        player_index: current_player_idx,
         discard_count: current_player.hand.size - 7
       }
       response = after_action(true, "Successfully retrieved '#{action_card_name}' action card")

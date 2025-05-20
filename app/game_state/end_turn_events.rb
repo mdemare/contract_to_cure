@@ -20,8 +20,8 @@ module EndTurnEvents
     end
 
     # Go to next player
-    @current_player_index = (@current_player_index + 1) % @players.size
-    @current_player = @players[@current_player_index]
+    @current_player_idx = (@current_player_idx + 1) % @players.size
+    @current_player = @players[@current_player_idx]
     @actions_remaining = 4
     @turn += 1
 
@@ -44,7 +44,7 @@ module EndTurnEvents
           outbreaks: @outbreak_count,
           infection_rate: @infection_rate,
           infection_rate_position: @infection_rate_marker,
-          current_player_index: @current_player_index,
+          current_player_idx: @current_player_idx,
           quiet_night: @quiet_night
         },
         disease_cubes: COLORS.each_with_object({}) do |color, hash|

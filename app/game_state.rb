@@ -18,7 +18,7 @@ class GameState
   include JsonGenerator
   include Setup
 
-  attr_reader :cities, :players, :current_player_index, :infection_deck, :infection_discard,
+  attr_reader :cities, :players, :current_player_idx, :infection_deck, :infection_discard,
               :player_deck, :player_discard, :research_stations, :disease_cubes, :cures,
               :outbreak_count, :infection_rate, :infection_rate_marker, :game_over,
               :game_over_reason, :difficulty_level, :current_player, :forecast_active,
@@ -74,7 +74,7 @@ class GameState
 
     @forecast_active = false
     @forecast_cards = nil
-    @current_player_index = 0
+    @current_player_idx = 0
     @outbreak_count = 0
     @infection_rate_marker = 0
     @infection_rate = INFECTION_RATE_TRACK[@infection_rate_marker]
@@ -131,7 +131,7 @@ class GameState
     @outbreak_count = state[:game_status][:outbreaks]
     @infection_rate = state[:game_status][:infection_rate]
     @infection_rate_marker = state[:game_status][:infection_rate_position]
-    @current_player_index = state[:game_status][:current_player_index]
+    @current_player_idx = state[:game_status][:current_player_idx]
     @quiet_night = state[:game_status][:quiet_night]
     @forecast_active = state[:game_status][:forecast_active] || false
     @forecast_cards = state[:game_status][:forecast_cards]
@@ -171,7 +171,7 @@ class GameState
     end
 
     # Current player reference
-    @current_player = @players[@current_player_index]
+    @current_player = @players[@current_player_idx]
 
     # Decks
     @player_deck = state[:decks][:player_deck].map do |card_data|
