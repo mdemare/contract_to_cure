@@ -162,3 +162,13 @@
     font-size: 28px;
   }
 }
+
+#continue-btn {
+  background-color: #4CAF50; /* Green background */
+  color: white;
+  font-weight: bold;
+}
+
+#continue-btn:hover {
+  background-color: #45a049; /* Darker green on hover */
+}

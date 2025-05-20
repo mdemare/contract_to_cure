@@ -2,7 +2,7 @@
 // Handles all action card related functionality, including button creation,
 // displaying cards in a modal, and handling specific action card behaviors.
 import { getCurrentGameState } from './game_state.js';
-import { showGeneralCardSelectionModal } from './select_cards.js';
+import { showGeneralCardSelectionModal, showForecastModal } from './select_cards.js';
 import { toggleMode, resetMode } from './action_buttons.js';
 import { useAirlift, useQuietNight, useResilientPopulation } from './player_actions.js';
 import { createSimpleElement } from './dom.js';
@@ -99,6 +99,10 @@ function handleActionCardsClick() {
         console.log('Airlift card selected');
         handleAirlift(cardSource);
         break;
+      case 'Forecast':
+        console.log('Forecast card selected');
+        handleForecast(cardSource);
+        break;
       case 'Resilient Population':
         console.log('Resilient Population card selected');
         handleResilientPopulation(cardSource);
@@ -119,6 +123,81 @@ function handleActionCardsClick() {
     }
   },
   {customTitle: 'Select Action Card', useArrayIndex: true});
+}
+
+/**
+ * Handle Forecast action card
+ * Allows player to examine and reorder the top 6 cards of the infection deck
+ * @param {Object} cardSource - The source of the card (player index and card index)
+ */
+function handleForecast(cardSource) {
+  // Close the card selection modal
+  if (document.querySelector('.modal-backdrop')) {
+    document.body.removeChild(document.querySelector('.modal-backdrop'));
+  }
+
+  // Store the card source for later use
+  currentActionCardSource = cardSource;
+
+  // Call the backend to get the top 6 cards of the infection deck
+  fetch('/action_card', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      card: 'Forecast'
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'success' && data.type === 'forecast_view') {
+      // Show the cards in a reorderable modal
+      showForecastModal(data.cards);
+    } else {
+      // Show error message
+      showErrorMessage(data.message || "Failed to use Forecast card");
+    }
+  })
+  .catch(error => {
+    console.error('Error using Forecast card:', error);
+    showErrorMessage("Error using Forecast card. Please try again.");
+  });
+}
+
+/**
+ * Complete the Forecast action by submitting the new card order
+ * @param {Array} cardOrder - Array of city names in the desired order
+ */
+export function completeForecast(cardOrder) {
+  // Call the backend to apply the new card order
+  fetch('/action_card', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      card: 'Forecast',
+      card_order: cardOrder
+    })
+  })
+  .then(response => response.json())
+  .then(data => {
+    if (data.status === 'success' || data.players) {
+      // The forecast was successful, reload the game state
+      loadGameState();
+    } else {
+      // Show error message
+      showErrorMessage(data.message || "Failed to apply Forecast card order");
+    }
+  })
+  .catch(error => {
+    console.error('Error applying Forecast card order:', error);
+    showErrorMessage("Error applying Forecast card order. Please try again.");
+  });
+
+  // Reset the action card source
+  currentActionCardSource = null;
 }
 
 /**

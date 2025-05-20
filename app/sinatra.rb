@@ -74,7 +74,7 @@ post '/move' do
   card_index = data['card_index']&.to_i
 
   # Validate required parameters
-  return { status: 'error', message: 'Missing required parameters' }.to_json unless player_index && destination
+  return [500, { status: 'error', message: 'Missing required parameters' }.to_json] unless player_index && destination
 
   # Perform the move and get result
   game_state.move(player_index, destination, card_index).to_json
@@ -109,7 +109,7 @@ post '/retrieve' do
   action_card_name = data['action_card_name']
 
   # Validate required parameters
-  return { status: 'error', message: 'Missing required parameters' }.to_json unless action_card_name
+  return [500, { status: 'error', message: 'Missing required parameters' }.to_json] unless action_card_name
 
   # Perform the action and get result
   game_state.retrieve(action_card_name).to_json
@@ -127,7 +127,7 @@ post '/share_knowledge' do
 
   # Validate required parameters
   unless giving_player_index && receiving_player_index && city_name
-    return { status: 'error', message: 'Missing required parameters' }.to_json
+    return [500, { status: 'error', message: 'Missing required parameters' }.to_json]
   end
 
   # Perform the action and get result
@@ -141,6 +141,19 @@ post '/pass' do
   # Perform the action and get result
   game_state.pass.to_json
 end
+
+post '/continue' do
+  # Handle end of turn if no actions remaining
+  if game_state.actions_remaining.zero?
+    response = game_state.after_action_response(nil, {})
+    response[:end_turn_events] = game_state.end_turn
+    response[:game_state] = game_state.to_json_state
+    response.to_json
+  else
+    {"status": "success"}.to_json
+  end
+end
+
 
 # Build research station endpoint
 post '/build_research_station' do
@@ -160,7 +173,7 @@ post '/discard_cards' do
   card_indices = data['card_indices']
 
   # Validate required parameters
-  return { status: 'error', message: 'Missing required parameters' }.to_json unless player_index.is_a?(Integer) && card_indices.is_a?(Array)
+  return [500, { status: 'error', message: 'Missing required parameters' }.to_json] unless player_index.is_a?(Integer) && card_indices.is_a?(Array)
 
   # Sort indices in descending order to avoid issues when removing from array
   card_indices.sort.reverse.each do |card_index|
@@ -213,7 +226,7 @@ post '/action_card' do
     game_state.use_forecast
   # Add cases for other action cards as they are implemented
   else
-    { status: 'error', message: "Unknown action card: #{card_name}" }
+    [500, { status: 'error', message: "Unknown action card: #{card_name}" }]
   end
 
   result.to_json

@@ -105,3 +105,122 @@
     font-size: 0.9rem;
   }
 }
+
+/* CSS for Forecast card functionality */
+
+/* Styles for the forecast modal */
+.forecast-modal {
+  max-width: 90%;
+  width: 600px;
+}
+
+.forecast-cards-container {
+  display: flex;
+  flex-direction: row;
+  justify-content: center;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 20px 0;
+  padding: 10px;
+  background-color: rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  min-height: 120px;
+}
+
+.forecast-card {
+  width: 90px;
+  height: 120px;
+  border-radius: 4px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+  display: flex;
+  flex-direction: column;
+  cursor: grab;
+  position: relative;
+  padding: 5px;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.forecast-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
+}
+
+.forecast-card.dragging {
+  opacity: 0.7;
+  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.4);
+}
+
+.forecast-card.drag-over {
+  border: 2px dashed #666;
+}
+
+.forecast-card .card-position {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  width: 20px;
+  height: 20px;
+  background-color: rgba(255, 255, 255, 0.8);
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  font-weight: bold;
+  font-size: 12px;
+}
+
+.forecast-card .card-name {
+  text-align: center;
+  font-size: 12px;
+  font-weight: bold;
+  margin-top: auto;
+  margin-bottom: auto;
+  padding: 0 5px;
+  word-break: break-word;
+  color: black;
+  background-color: rgba(255, 255, 255, 0.7);
+  border-radius: 3px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 70%;
+}
+
+/* Color classes for the cards */
+.forecast-card.blue {
+  background-color: #3498db;
+}
+
+.forecast-card.yellow {
+  background-color: #f1c40f;
+}
+
+.forecast-card.black {
+  background-color: #333;
+}
+
+.forecast-card.black .card-name {
+  color: white;
+  background-color: rgba(255, 255, 255, 0.5);
+}
+
+.forecast-card.red {
+  background-color: #e74c3c;
+}
+
+/* Mobile adjustments */
+@media (max-width: 600px) {
+  .forecast-cards-container {
+    gap: 5px;
+  }
+
+  .forecast-card {
+    width: 70px;
+    height: 100px;
+  }
+
+  .forecast-card .card-name {
+    font-size: 10px;
+  }
+}

@@ -1,11 +1,12 @@
-// action_buttons.js - updated with retrieve card functionality
-import { getCurrentGameState } from './game_state.js';
+// action_buttons.js - updated with retrieve card functionality and continue button
+import { getCurrentGameState, getCurrentLocation, getCurrentPlayer } from './game_state.js';
 import { treatDisease, pass, cureDisease, setSelectedPlayerIndex } from './player_actions.js';
 import { initShareKnowledge, updateShareKnowledgeButtonState } from './share_knowledge.js';
-import { handleAirliftPlayerSelected, completeAirlift, initActionCardsButton, updateActionCardsButtonState } from './action_cards.js';
+import { handleAirliftPlayerSelected, initActionCardsButton, updateActionCardsButtonState } from './action_cards.js';
 import { hidePlayerSelectionPanel, isDispatcher, showPlayerSelectionPanel } from './player_selection.js';
 import { updatePlayerHand } from './player_hand.js';
 import { initRetrieveCard, updateRetrieveButtonState } from './retrieve_card.js';
+import { processAPIRequest, showSuccessMessage, showErrorMessage } from './player_action_utils.js';
 
 // Game mode state to track which action is currently selected
 let currentMode = null;
@@ -28,6 +29,7 @@ export function initActionButtons() {
   const cureBtn = document.getElementById('cure-btn');
   const shareBtn = document.getElementById('share-btn');
   const passBtn = document.getElementById('pass-btn');
+  const continueBtn = document.getElementById('continue-btn');
 
   // Add click event listeners
   moveBtn.addEventListener('click', () => toggleMode('move'));
@@ -35,8 +37,14 @@ export function initActionButtons() {
   cureBtn.addEventListener('click', () => cureDisease());
   shareBtn.addEventListener('click', () => toggleMode('trade'));
   // Build button is handled by player_actions.js
-
   passBtn.addEventListener('click', handlePassAction);
+
+  // Add continue button event listener
+  if (continueBtn) {
+    continueBtn.addEventListener('click', handleContinueAction);
+  } else {
+    console.error('Continue button not found in the DOM');
+  }
 
   // Create and add Action Cards button if not already present
   initActionCardsButton();
@@ -121,8 +129,36 @@ export function updateButtonStates() {
   // Determine which actions are available based on game state
   const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
   const currentPlayer = gameState.players[currentPlayerIndex];
+  const actionsRemaining = gameState.gameStatus.actions_remaining;
 
   if (!currentPlayer) return;
+
+  // Check for no actions remaining, show continue button and hide action buttons
+  const continueBtn = document.getElementById('continue-btn');
+  const actionButtonsContainer = document.getElementById('action-buttons-container');
+  const actionButtonsList = document.querySelectorAll('.action-btn:not(#continue-btn)');
+
+  if (actionsRemaining <= 0) {
+    // Hide all other action buttons
+    actionButtonsList.forEach(button => {
+      button.style.display = 'none';
+    });
+
+    // Show continue button
+    if (continueBtn) {
+      continueBtn.style.display = 'flex';
+    }
+  } else {
+    // Show action buttons
+    actionButtonsList.forEach(button => {
+      button.style.display = 'flex';
+    });
+
+    // Hide continue button
+    if (continueBtn) {
+      continueBtn.style.display = 'none';
+    }
+  }
 
   // Check for build station action availability
   const buildBtn = document.getElementById('build-btn');
@@ -155,8 +191,10 @@ export function updateButtonStates() {
   // Update retrieve card button visibility
   updateRetrieveButtonState();
 
-  // For now, all other buttons are enabled
-  enableAllButtons();
+  // For now, all other buttons are enabled if actions remaining
+  if (actionsRemaining > 0) {
+    enableAllButtons();
+  }
 }
 
 // Handler for pass action
@@ -164,8 +202,22 @@ function handlePassAction() {
   pass();
 }
 
+// Handler for continue action
+async function handleContinueAction() {
+  try {
+    await processAPIRequest(
+      '/continue',
+      {},
+      'Continuing to next phase',
+      'Failed to continue to next phase'
+    );
+  } catch (error) {
+    showErrorMessage(`Network error: ${error.message}`);
+  }
+}
+
 // Helper functions for game actions
-function disableAllButtons() {
+export function disableAllButtons() {
   const buttons = document.querySelectorAll('.action-btn');
   buttons.forEach(button => {
     button.classList.add('disabled');
@@ -173,15 +225,15 @@ function disableAllButtons() {
   });
 }
 
-function enableAllButtons() {
-  const buttons = document.querySelectorAll('.action-btn');
+export function enableAllButtons() {
+  const buttons = document.querySelectorAll('.action-btn:not(#continue-btn)');
   buttons.forEach(button => {
     button.classList.remove('disabled');
     button.disabled = false;
   });
 }
 
-function enableSpecificButtons(buttonIds) {
+export function enableSpecificButtons(buttonIds) {
   // First disable all buttons
   disableAllButtons();
 
@@ -199,6 +251,3 @@ function enableSpecificButtons(buttonIds) {
 export function getCurrentMode() {
   return currentMode;
 }
-
-// Export helper functions for use in other modules
-export { disableAllButtons, enableAllButtons, enableSpecificButtons };

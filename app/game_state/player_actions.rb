@@ -238,6 +238,17 @@ module PlayerActions
     after_action(true, "Successfully retrieved '#{action_card_name}' action card")
   end
 
+  def after_action_response(message, additional_data)
+    # Prepare the base response
+    {
+      success: true,
+      status: 'success',
+      message: message,
+      actions_remaining: @actions_remaining,
+      end_turn: @actions_remaining.zero?
+    }.merge(additional_data)
+  end
+
   private
 
   # Common after-action method to handle action consumption, end of turn, and response creation
@@ -247,23 +258,9 @@ module PlayerActions
     # Consume an action
     @actions_remaining -= 1
 
-    # Prepare the base response
-    response = {
-      success: true,
-      status: 'success',
-      message: message,
-      actions_remaining: @actions_remaining,
-      end_turn: @actions_remaining.zero?
-    }.merge(additional_data)
+    response = after_action_response(message, additional_data)
 
-    # Handle end of turn if no actions remaining
-    if @actions_remaining.zero?
-      end_turn_events = end_turn
-      response[:end_turn_events] = end_turn_events
-    else
-      # Save game state after every action (not just at end of turn)
-      save_game_state
-    end
+    save_game_state
 
     response.merge(game_state: to_json_state)
   end

@@ -3,6 +3,7 @@ import { getCurrentGameState } from '/js/game_state.js';
 import { getCityColor } from './player_action_utils.js';
 import { createSimpleElement } from './dom.js';
 import { loadGameState } from './game_state.js';
+import { completeForecast } from './action_cards.js';
 
 /**
  * Creates a selectable card element for the card selection modal
@@ -341,4 +342,138 @@ export function handleHandLimitCheck(playerIndex, discardCount, completionCallba
     // Call completion callback
     if (completionCallback) completionCallback();
   }, {customTitle, playerIndex, hideCancel: true});
+}
+
+/**
+ * Shows a modal with the top infection cards for Forecast
+ * Allows cards to be reordered by dragging
+ * @param {Array} cards - Array of infection cards from the top of the deck
+ */
+export function showForecastModal(cards) {
+  // Create modal backdrop
+  const modalBackdrop = createSimpleElement('div', 'modal-backdrop');
+
+  // Create modal content with forecast styling
+  const modalContent = createSimpleElement('div', ['modal-content', 'card-selection-modal', 'forecast-modal']);
+
+  // Add title
+  const modalTitle = createSimpleElement('h3', null, 'Forecast: Reorder Infection Cards');
+  modalContent.appendChild(modalTitle);
+
+  // Add instructions
+  const instructions = createSimpleElement('p', 'modal-instructions',
+    'Drag to reorder the top cards of the infection deck. The first card will be drawn next.');
+  modalContent.appendChild(instructions);
+
+  // Create container for the cards
+  const cardContainer = createSimpleElement('div', ['forecast-cards-container', 'draggable-container']);
+
+  // Create reorderable cards
+  cards.forEach((card, index) => {
+    const cardElement = createSimpleElement('div', ['forecast-card', 'draggable-card', card.color]);
+    cardElement.dataset.cityName = card.name;
+    cardElement.draggable = true;
+
+    // Add number indicating position in the deck (1 is top card)
+    const positionIndicator = createSimpleElement('div', 'card-position', String(index + 1));
+    cardElement.appendChild(positionIndicator);
+
+    // Add card name
+    const cardName = createSimpleElement('div', 'card-name', card.name);
+    cardElement.appendChild(cardName);
+
+    // Set up drag handlers
+    cardElement.addEventListener('dragstart', dragStart);
+    cardElement.addEventListener('dragover', dragOver);
+    cardElement.addEventListener('drop', drop);
+    cardElement.addEventListener('dragenter', dragEnter);
+    cardElement.addEventListener('dragleave', dragLeave);
+
+    cardContainer.appendChild(cardElement);
+  });
+
+  modalContent.appendChild(cardContainer);
+
+  // Add button container
+  const buttonContainer = createSimpleElement('div', 'modal-buttons');
+
+  // Add confirm button
+  const confirmButton = createSimpleElement('button', 'confirm-btn', 'Confirm Order');
+  confirmButton.addEventListener('click', () => {
+    const cardOrder = Array.from(cardContainer.children).map(card => card.dataset.cityName);
+    closeModal();
+    completeForecast(cardOrder);
+  });
+  buttonContainer.appendChild(confirmButton);
+
+  modalContent.appendChild(buttonContainer);
+
+  // Assemble and show the modal
+  modalBackdrop.appendChild(modalContent);
+  document.body.appendChild(modalBackdrop);
+
+  // Function to close the modal
+  function closeModal() {
+    if (modalBackdrop.parentNode) {
+      document.body.removeChild(modalBackdrop);
+    }
+  }
+
+  // Drag and drop functions
+  let draggedCard = null;
+
+  function dragStart(e) {
+    draggedCard = this;
+    setTimeout(() => this.classList.add('dragging'), 0);
+    e.dataTransfer.effectAllowed = 'move';
+  }
+
+  function dragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    return false;
+  }
+
+  function dragEnter(e) {
+    this.classList.add('drag-over');
+  }
+
+  function dragLeave(e) {
+    this.classList.remove('drag-over');
+  }
+
+  function drop(e) {
+    e.preventDefault();
+    this.classList.remove('drag-over');
+
+    // Don't do anything if dropping onto the same card
+    if (draggedCard === this) return false;
+
+    // Get the positions in the container
+    const cards = Array.from(cardContainer.children);
+    const fromIndex = cards.indexOf(draggedCard);
+    const toIndex = cards.indexOf(this);
+
+    // Reorder the elements
+    if (fromIndex < toIndex) {
+      cardContainer.insertBefore(draggedCard, this.nextSibling);
+    } else {
+      cardContainer.insertBefore(draggedCard, this);
+    }
+
+    // Update position indicators
+    updatePositionIndicators();
+
+    return false;
+  }
+
+  function updatePositionIndicators() {
+    const cards = Array.from(cardContainer.children);
+    cards.forEach((card, index) => {
+      const positionIndicator = card.querySelector('.card-position');
+      if (positionIndicator) {
+        positionIndicator.textContent = String(index + 1);
+      }
+    });
+  }
 }
