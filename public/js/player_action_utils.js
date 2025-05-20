@@ -14,7 +14,7 @@ export async function initializeModules() {
 async function handleSuccessfulAPIRequest(result, successMessage, eventData) {
   // Check if we need to handle hand limit
   if (result.exceeded_hand_limit) {
-    const { player_index, discard_count } = result;
+    const { player_index, discard_count } = result.exceeded_hand_limit;
     const gameState = getCurrentGameState();
     if (player_index) {
       console.log(`${gameState.players[player_index].role} exceeded hand limit`)
