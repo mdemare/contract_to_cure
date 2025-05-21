@@ -3,12 +3,22 @@ require_relative 'end_turn'
 
 module EndTurnEvents
   include GameStateConfig
-  def end_turn
+  def draw_cards
     end_turn = EndTurn.new(self)
     2.times do |i|
       end_turn.draw_player_card(i)
       return if game_over
     end
+
+    end_turn.events << { type: :wait_infect_cities }
+      # Save game state after turn is complete
+    save_game_state
+
+    { game_over: false, events: end_turn.events } # Return events if game is not over
+  end
+
+  def infect_cities
+    end_turn = EndTurn.new(self)
     if @quiet_night
       @quiet_night = false
       end_turn.events << { type: :quiet_night }

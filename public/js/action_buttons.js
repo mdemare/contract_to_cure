@@ -1,5 +1,5 @@
-// action_buttons.js - updated with retrieve card functionality and continue button
-import { getCurrentGameState, getCurrentLocation, getCurrentPlayer } from './game_state.js';
+// action_buttons.js - updated with retrieve card functionality and draw cards button
+import { getCurrentGameState } from './game_state.js';
 import { treatDisease, pass, cureDisease, setSelectedPlayerIndex } from './player_actions.js';
 import { initShareKnowledge, updateShareKnowledgeButtonState } from './share_knowledge.js';
 import { handleAirliftPlayerSelected, initActionCardsButton, updateActionCardsButtonState } from './action_cards.js';
@@ -7,6 +7,7 @@ import { hidePlayerSelectionPanel, isDispatcher, showPlayerSelectionPanel } from
 import { updatePlayerHand } from './player_hand.js';
 import { initRetrieveCard, updateRetrieveButtonState } from './retrieve_card.js';
 import { processAPIRequest, showSuccessMessage, showErrorMessage } from './player_action_utils.js';
+import { continueAnimationAfterInfect } from './end_turn_events.js';
 
 // Game mode state to track which action is currently selected
 let currentMode = null;
@@ -29,7 +30,8 @@ export function initActionButtons() {
   const cureBtn = document.getElementById('cure-btn');
   const shareBtn = document.getElementById('share-btn');
   const passBtn = document.getElementById('pass-btn');
-  const continueBtn = document.getElementById('continue-btn');
+  const drawCardsBtn = document.getElementById('draw-cards-btn');
+  const infectCitiesBtn = document.getElementById('infect-cities-btn');
 
   // Add click event listeners
   moveBtn.addEventListener('click', () => toggleMode('move'));
@@ -39,11 +41,18 @@ export function initActionButtons() {
   // Build button is handled by player_actions.js
   passBtn.addEventListener('click', handlePassAction);
 
-  // Add continue button event listener
-  if (continueBtn) {
-    continueBtn.addEventListener('click', handleContinueAction);
+  // Add draw cards button event listener
+  if (drawCardsBtn) {
+    drawCardsBtn.addEventListener('click', handleDrawCardsAction);
   } else {
-    console.error('Continue button not found in the DOM');
+    console.error('Draw cards button not found in the DOM');
+  }
+
+  // Add infect cities button event listener
+  if (infectCitiesBtn) {
+    infectCitiesBtn.addEventListener('click', handleInfectCitiesAction);
+  } else {
+    console.error('Infect cities button not found in the DOM');
   }
 
   // Create and add Action Cards button if not already present
@@ -101,7 +110,6 @@ function updateActiveModeUI() {
     button.classList.remove('active');
   });
 
-
   // Add active class to the current mode button
   if (currentMode) {
     const activeButton = document.getElementById(`${currentMode}-btn`);
@@ -133,10 +141,15 @@ export function updateButtonStates() {
 
   if (!currentPlayer) return;
 
-  // Check for no actions remaining, show continue button and hide action buttons
-  const continueBtn = document.getElementById('continue-btn');
-  const actionButtonsContainer = document.getElementById('action-buttons-container');
-  const actionButtonsList = document.querySelectorAll('.action-btn:not(#continue-btn)');
+  // Check for no actions remaining, show draw cards button and hide action buttons
+  const drawCardsBtn = document.getElementById('draw-cards-btn');
+  const infectCitiesBtn = document.getElementById('infect-cities-btn');
+  const actionButtonsList = document.querySelectorAll('.action-btn:not(#draw-cards-btn):not(#infect-cities-btn)');
+
+  // Hide infect cities button by default - it will be shown only when needed
+  if (infectCitiesBtn) {
+    infectCitiesBtn.style.display = 'none';
+  }
 
   if (actionsRemaining <= 0) {
     // Hide all other action buttons
@@ -144,9 +157,9 @@ export function updateButtonStates() {
       button.style.display = 'none';
     });
 
-    // Show continue button
-    if (continueBtn) {
-      continueBtn.style.display = 'flex';
+    // Show draw cards button
+    if (drawCardsBtn) {
+      drawCardsBtn.style.display = 'flex';
     }
   } else {
     // Show action buttons
@@ -154,9 +167,9 @@ export function updateButtonStates() {
       button.style.display = 'flex';
     });
 
-    // Hide continue button
-    if (continueBtn) {
-      continueBtn.style.display = 'none';
+    // Hide draw cards button
+    if (drawCardsBtn) {
+      drawCardsBtn.style.display = 'none';
     }
   }
 
@@ -203,14 +216,60 @@ function handlePassAction() {
 }
 
 // Handler for continue action
-async function handleContinueAction() {
+async function handleDrawCardsAction() {
   try {
     await processAPIRequest(
-      '/continue',
+      '/draw_cards',
       {},
       'Continuing to next phase',
       'Failed to continue to next phase'
     );
+  } catch (error) {
+    showErrorMessage(`Network error: ${error.message}`);
+  }
+}
+
+// Handler for infect cities action
+async function handleInfectCitiesAction() {
+  try {
+    // First hide the infect cities button
+    const infectCitiesBtn = document.getElementById('infect-cities-btn');
+    if (infectCitiesBtn) {
+      infectCitiesBtn.style.display = 'none';
+    }
+
+    // Process the API request with custom handling for animation continuation
+    const response = await fetch('/infect_cities', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({})
+    });
+
+    if (response.ok) {
+      const result = await response.json();
+
+      if (result.status === 'success') {
+        // Continue animations with new events
+        await continueAnimationAfterInfect(result.end_turn_events);
+
+        // Update game state
+        if (result.game_state) {
+          const gameStateModule = await import('./game_state.js');
+          await gameStateModule.loadGameState(result.game_state);
+        } else {
+          const gameStateModule = await import('./game_state.js');
+          await gameStateModule.loadGameState();
+        }
+
+        showSuccessMessage(result.message || 'Cities infected');
+      } else {
+        showErrorMessage(result.message || 'Failed to infect cities');
+      }
+    } else {
+      showErrorMessage(`Failed to infect cities (${response.status}). The backend might not be implemented yet.`);
+    }
   } catch (error) {
     showErrorMessage(`Network error: ${error.message}`);
   }
@@ -226,7 +285,7 @@ export function disableAllButtons() {
 }
 
 export function enableAllButtons() {
-  const buttons = document.querySelectorAll('.action-btn:not(#continue-btn)');
+  const buttons = document.querySelectorAll('.action-btn:not(#draw-cards-btn):not(#infect-cities-btn)');
   buttons.forEach(button => {
     button.classList.remove('disabled');
     button.disabled = false;

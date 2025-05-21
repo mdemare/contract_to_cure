@@ -142,11 +142,23 @@ post '/pass' do
   game_state.pass.to_json
 end
 
-post '/continue' do
+post '/draw_cards' do
   # Handle end of turn if no actions remaining
   if game_state.actions_remaining.zero?
     response = game_state.after_action_response(nil, {})
-    response[:end_turn_events] = game_state.end_turn
+    response[:end_turn_events] = game_state.draw_cards
+    response[:game_state] = game_state.to_json_state
+    response.to_json
+  else
+    {"status": "success"}.to_json
+  end
+end
+
+post '/infect_cities' do
+  # Handle end of turn if no actions remaining
+  if game_state.actions_remaining.zero?
+    response = game_state.after_action_response(nil, {})
+    response[:end_turn_events] = game_state.infect_cities
     response[:game_state] = game_state.to_json_state
     response.to_json
   else

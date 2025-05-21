@@ -163,12 +163,49 @@
   }
 }
 
-#continue-btn {
+#draw-cards-btn {
   background-color: #4CAF50; /* Green background */
   color: white;
   font-weight: bold;
 }
 
-#continue-btn:hover {
+#draw-cards-btn:hover {
   background-color: #45a049; /* Darker green on hover */
+}
+
+/* Infect Cities Button */
+.action-btn.infect-cities {
+  background-color: #d32f2f;
+  color: white;
+  display: none; /* Hidden by default */
+}
+
+.action-btn.infect-cities i:before {
+  content: "🦠"; /* Microbe emoji */
+}
+
+.action-btn.infect-cities:hover {
+  background-color: #b71c1c;
+}
+
+.action-btn.infect-cities:active {
+  background-color: #e53935;
+}
+
+/* Adjust existing draw-cards button styles if needed */
+.action-btn.draw-cards, .action-btn.infect-cities {
+  font-weight: bold;
+  letter-spacing: 0.5px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: all 0.3s ease;
+}
+
+.action-btn.draw-cards:hover, .action-btn.infect-cities:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+}
+
+.action-btn.draw-cards:active, .action-btn.infect-cities:active {
+  transform: translateY(1px);
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }

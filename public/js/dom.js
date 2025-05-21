@@ -24,6 +24,8 @@ export function createCardElement(event) {
       return createQuietNightElement(event);
     case 'resilient_population':
       return createResilientPopulationElement(event);
+    case 'wait_infect_cities':
+      return createWaitInfectElement(event);
     default:
       return createUnknownEventElement(event);
   }
@@ -109,6 +111,39 @@ function createQuietNightElement(event) {
     fontSize: '14px',
     marginTop: '10px',
     color: '#7a4cb5',
+    fontStyle: 'italic'
+  });
+  cardElement.appendChild(cardDetail);
+
+  return cardElement;
+}
+
+/**
+ * Creates a wait infect element
+ * @param {Object} event - The wait infect event data
+ * @returns {HTMLElement} The wait infect element
+ */
+function createWaitInfectElement(event) {
+  // Create the base card element with wait infect styling
+  const cardElement = createSimpleElement('div', ['animated-card', 'wait-infect-event']);
+
+  // Add card header
+  const cardHeader = createSimpleElement('div', 'card-header', 'Infection Phase');
+  cardElement.appendChild(cardHeader);
+
+  // Add card title
+  const cardTitle = createSimpleElement('div', 'card-title', 'Press "Infect Cities" to continue');
+  cardElement.appendChild(cardTitle);
+
+  // Add additional detail element for more context
+  const cardDetail = createSimpleElement('div', 'card-detail', 'Cities need to be infected');
+
+  // Style using object format
+  Object.assign(cardDetail.style, {
+    textAlign: 'center',
+    fontSize: '14px',
+    marginTop: '10px',
+    color: '#d32f2f',
     fontStyle: 'italic'
   });
   cardElement.appendChild(cardDetail);

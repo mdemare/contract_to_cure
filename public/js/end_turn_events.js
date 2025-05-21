@@ -1,5 +1,6 @@
 // end_turn_events.js
 import { createCardElement, createSimpleElement } from './dom.js';
+import { updateButtonStates } from './action_buttons.js';
 
 /**
  * Creates a Promise that resolves after the specified delay
@@ -46,19 +47,6 @@ function getAnimContainer() {
   return animContainer;
 }
 
-// Function to animate card draws
-async function startAnimationSequence(events) {
-  // Get the animation container
-  const animContainer = getAnimContainer();
-
-  // Make container visible
-  animContainer.style.display = 'flex';
-  // Start the animation stack
-  await animateCardStack(animContainer, events.map((x) => x));
-
-  return true
-}
-
 // Function to handle end of turn events
 export async function handleEndOfTurnEvents(endTurnData) {
   if (!endTurnData || !endTurnData.events || !Array.isArray(endTurnData.events)) {
@@ -91,7 +79,14 @@ export async function handleEndOfTurnEvents(endTurnData) {
   }
 
   // Start the animation sequence with all grouped events
-  return startAnimationSequence(animationEvents.events);
+  const animContainer = getAnimContainer();
+
+  // Make container visible
+  animContainer.style.display = 'flex';
+  // Start the animation stack
+  await animateCardStack(animContainer, animationEvents.events.map((x) => x));
+
+  return true;
 }
 
 /**
@@ -113,6 +108,28 @@ async function animateCardStack(animContainer, eventStack) {
 
   // Get the event to animate
   const eventToAnimate = eventStack.shift();
+
+  // Check if we need to pause for wait_infect_cities event
+  if (eventToAnimate.type === 'wait_infect_cities') {
+    console.log('Pausing animation for wait_infect_cities event');
+
+    // Show the infect cities button
+    const infectCitiesBtn = document.getElementById('infect-cities-btn');
+    if (infectCitiesBtn) {
+      infectCitiesBtn.style.display = 'flex';
+
+      // Hide all other action buttons
+      const actionButtonsList = document.querySelectorAll('.action-btn:not(#infect-cities-btn)');
+      actionButtonsList.forEach(button => {
+        button.style.display = 'none';
+      });
+    } else {
+      console.log("DID NOT FIND IT")
+    }
+
+    return animateCardStack(animContainer, eventStack);
+  }
+
   const cardElement = createCardElement(eventToAnimate);
 
   // Call the appropriate handler function
@@ -149,6 +166,33 @@ async function animateCardStack(animContainer, eventStack) {
       await handleCardAnimation(animContainer, cardElement, eventStack);
     }
   }
+}
+
+/**
+ * Continues animation with any remaining events after wait_infect_cities
+ * @param {Object} newEvents - New events from infect_cities API call
+ * @returns {Promise} Promise that resolves when all animations complete
+ */
+export async function continueAnimationAfterInfect(newEvents) {
+  // Get stored events
+  const remainingEvents = window.remainingEvents || [];
+
+  // Merge with new events if available
+  let allEvents = [...remainingEvents];
+  if (newEvents && newEvents.events && Array.isArray(newEvents.events)) {
+    allEvents = [...allEvents, ...newEvents.events];
+  }
+
+  // Clear the stored events
+  window.remainingEvents = null;
+
+  // Continue animation if there are events
+  if (allEvents.length > 0) {
+    const animContainer = getAnimContainer();
+    return animateCardStack(animContainer, allEvents);
+  }
+
+  return true;
 }
 
 /**
