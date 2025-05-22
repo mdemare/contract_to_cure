@@ -167,25 +167,12 @@ module PlayerActions
     cards_needed = current_player.role == :scientist ? CARDS_NEEDED_FOR_CURE[:scientist] : CARDS_NEEDED_FOR_CURE[:default]
     return after_action(false, "Need #{cards_needed} cards of the same color to discover a cure") if card_names.size != cards_needed
 
-    # Find all cards in the player's hand that match the provided names and are of the right color
-    selected_cards = []
-    selected_card_indices = []
-
-    card_names.each do |card_name|
-      card, card_index = find_city_card_in_player_hand(current_player.index, card_name)
-
-      if card && card.color == color
-        selected_cards << card
-        selected_card_indices << card_index
-      end
+    unless card_names.all? {|card_name| find_city_card_in_player_hand(current_player.index, card_name).first&.color == color }
+      return after_action(false, "All selected cards must be #{color} city cards")
     end
 
-    # Check if we found enough matching cards
-    return after_action(false, "All selected cards must be #{color} city cards") if selected_cards.size != cards_needed
-
-    # Discard the cards (in reverse order to avoid index shifting issues)
-    selected_card_indices.sort.reverse.each do |idx|
-      discard_player_card(current_player.index, idx)
+    for card_name in card_names
+      discard_player_card_by_name(current_player.index, card_name)
     end
 
     # Mark the cure as discovered

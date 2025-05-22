@@ -226,15 +226,11 @@ export async function cureDisease() {
       // If exactly the right number of cards, use them all
       cureWithCardNames(colorCards, selectedColor);
     } else {
-      // If more than needed, show selection modal
       showGeneralCardSelectionModal(cardsNeeded, colorCards, (selectedIndices) => {
-        // Convert selected indices to actual card objects
-        const selectedCards = selectedIndices.map(index => {
-          return colorCards.find(card => card.index === index);
-        });
-
+        const selectedCards = selectedIndices.map(arrayIndex => colorCards[arrayIndex]);
         cureWithCardNames(selectedCards, selectedColor);
-      }, {customTitle: `Select ${cardsNeeded} ${selectedColor} cards to cure the disease`});
+      },
+      {customTitle: `Select ${cardsNeeded} ${selectedColor} cards to cure the disease`});
     }
   }
 }

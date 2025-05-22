@@ -12,22 +12,21 @@ export async function initializeModules() {
 }
 
 async function handleSuccessfulAPIRequest(result, successMessage, eventData) {
-  // Check if we need to handle hand limit
+  // Update game state FIRST
+  if (result.game_state) {
+    await loadGameState(result.game_state);
+  } else {
+    await loadGameState();
+  }
+
+  // THEN handle hand limit with updated state
   if (result.exceeded_hand_limit) {
     const { player_index, discard_count } = result.exceeded_hand_limit;
-    const gameState = getCurrentGameState();
-    if (player_index) {
-      console.log(`${gameState.players[player_index].role} exceeded hand limit`)
-    } else {
-      console.error(`result does not contain player_index - ${result}`)
-    }
 
-    // Load selectCardsModule if not already loaded
     if (!selectCardsModule) {
       selectCardsModule = await import('./select_cards.js');
     }
 
-    // Handle hand limit exceeded
     await new Promise(resolve => {
       selectCardsModule.handleHandLimitCheck(player_index, discard_count, resolve);
     });

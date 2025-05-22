@@ -137,8 +137,8 @@ async function animateCardStack(animContainer, eventStack) {
   } else {
     // Keep the exceeded_hand_limit case unchanged for now
     if (eventToAnimate.exceeded_hand_limit) {
-      const nrCardsToDiscard = eventToAnimate.discard_count;
-      const playerIndex = eventToAnimate.player_index;
+      const nrCardsToDiscard = eventToAnimate.exceeded_hand_limit.discard_count;
+      const playerIndex = eventToAnimate.exceeded_hand_limit.player_index;
 
       // First handle the card animation
       await handleCardAnimation(animContainer, cardElement, [], false);
