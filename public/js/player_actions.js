@@ -1,5 +1,5 @@
 // player_actions.js
-import { getCurrentGameState, getCurrentLocation, getCurrentPlayer } from './game_state.js';
+import { getCurrentGameState, getCurrentLocation, getCurrentPlayer, resetMode, getCurrentMode } from './game_state.js';
 import { getActionCardSource, completeAirlift } from './action_cards.js';
 import { showHandSelectionModal, showGeneralCardSelectionModal } from './select_cards.js';
 import { processAPIRequest, getCityColor, showSuccessMessage, showErrorMessage, showInvalidActionMessage } from './player_action_utils.js'
@@ -87,13 +87,10 @@ async function handleCityClick(event) {
   // Get the current player
   const currentPlayer = getCurrentPlayer();
 
-  // Import action buttons to get current mode
-  const actionButtons = await import('./action_buttons.js');
-
-  switch (actionButtons.getCurrentMode()) {
+  switch (getCurrentMode()) {
     case 'governmentGrant':
       // Reset the mode after handling the action
-      actionButtons.resetMode();
+      resetMode();
 
       // Check if there's already a research station here
       const hasStation = getCurrentGameState().researchStations?.locations?.includes(cityName);
@@ -114,7 +111,7 @@ async function handleCityClick(event) {
       // Get the selected player index
       if (selectedPlayerIndex !== null) {
         // Reset the mode after handling the action
-        actionButtons.resetMode();
+        resetMode();
 
         // Move the selected player to the clicked city
         await movePlayer(selectedPlayerIndex, cityName);

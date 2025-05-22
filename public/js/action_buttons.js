@@ -1,26 +1,12 @@
 // action_buttons.js - updated with retrieve card functionality and draw cards button
-import { getCurrentGameState } from './game_state.js';
-import { treatDisease, pass, cureDisease, setSelectedPlayerIndex } from './player_actions.js';
+import { getCurrentGameState, toggleMode } from './game_state.js';
+import { updatePlayerHand } from './ui.js';
+import { treatDisease, pass, cureDisease } from './player_actions.js';
 import { initShareKnowledge, updateShareKnowledgeButtonState } from './share_knowledge.js';
-import { handleAirliftPlayerSelected, initActionCardsButton, updateActionCardsButtonState } from './action_cards.js';
-import { hidePlayerSelectionPanel, isDispatcher, showPlayerSelectionPanel } from './player_selection.js';
-import { updatePlayerHand } from './player_hand.js';
+import { initActionCardsButton, updateActionCardsButtonState } from './action_cards.js';
 import { initRetrieveCard, updateRetrieveButtonState } from './retrieve_card.js';
 import { processAPIRequest, showSuccessMessage, showErrorMessage } from './player_action_utils.js';
 import { continueAnimationAfterInfect } from './end_turn_events.js';
-
-// Game mode state to track which action is currently selected
-let currentMode = null;
-
-document.addEventListener('playerSelectedForMove', (event) => {
-  if (currentMode !== 'airlift') {
-    toggleMode('moveSelectedPlayer');
-    setSelectedPlayerIndex(event.detail.playerIndex);
-  } else {
-    // Handle airlift player selection
-    handleAirliftPlayerSelected();
-  }
-});
 
 // Initialize the action buttons
 export function initActionButtons() {
@@ -71,63 +57,6 @@ export function initActionButtons() {
   updatePlayerHand(getCurrentGameState());
 }
 
-// Toggle action mode when a button is clicked
-export function toggleMode(mode) {
-  // If the mode is already active, deactivate it
-  if (currentMode === mode) {
-    resetMode();
-    return;
-  }
-
-  console.log(`Set mode to ${mode}`)
-  // Set the new mode
-  currentMode = mode;
-
-  // Update UI to show active mode
-  updateActiveModeUI();
-
-  console.log(`Mode switched to: ${mode}`);
-}
-
-// Reset the current mode
-export function resetMode() {
-  currentMode = null;
-  updateActiveModeUI();
-
-  // Also reset selected player when mode is reset
-  hidePlayerSelectionPanel();
-
-  // Dispatch event to notify that the mode has been reset
-  const modeResetEvent = new CustomEvent('actionModeReset');
-  document.dispatchEvent(modeResetEvent);
-}
-
-// Update UI to highlight the active mode button
-function updateActiveModeUI() {
-  // Remove active class from all buttons
-  const buttons = document.querySelectorAll('.action-btn');
-  buttons.forEach(button => {
-    button.classList.remove('active');
-  });
-
-  // Add active class to the current mode button
-  if (currentMode) {
-    const activeButton = document.getElementById(`${currentMode}-btn`);
-    if (activeButton) {
-      activeButton.classList.add('active');
-    }
-
-    // Handle Dispatcher move mode - show player selection
-    if (currentMode === 'move' && isDispatcher()) {
-      showPlayerSelectionPanel();
-    } else {
-      hidePlayerSelectionPanel();
-    }
-  } else {
-    hidePlayerSelectionPanel();
-  }
-}
-
 // Update button states based on game state
 export function updateButtonStates() {
   const gameState = getCurrentGameState();
@@ -138,38 +67,33 @@ export function updateButtonStates() {
   const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
   const currentPlayer = gameState.players[currentPlayerIndex];
   const actionsRemaining = gameState.gameStatus.actions_remaining;
+  const phase = gameState.gameStatus.phase
+  console.log(`phase = ${phase}`)
 
   if (!currentPlayer) return;
 
   // Check for no actions remaining, show draw cards button and hide action buttons
   const drawCardsBtn = document.getElementById('draw-cards-btn');
   const infectCitiesBtn = document.getElementById('infect-cities-btn');
-  const actionButtonsList = document.querySelectorAll('.action-btn:not(#draw-cards-btn):not(#infect-cities-btn)');
+  const actionButtonsList = document.querySelectorAll('.action-btn');
 
-  // Hide infect cities button by default - it will be shown only when needed
-  if (infectCitiesBtn) {
+  if (phase === 'player_actions') {
+    // Show all other action buttons
+    actionButtonsList.forEach(button => {
+      button.style.display = 'flex';
+    });
+    drawCardsBtn.style.display = 'none';
     infectCitiesBtn.style.display = 'none';
-  }
-
-  if (actionsRemaining <= 0) {
+  } else {
     // Hide all other action buttons
     actionButtonsList.forEach(button => {
       button.style.display = 'none';
     });
 
-    // Show draw cards button
-    if (drawCardsBtn) {
+    if (phase === 'draw_cards') {
       drawCardsBtn.style.display = 'flex';
-    }
-  } else {
-    // Show action buttons
-    actionButtonsList.forEach(button => {
-      button.style.display = 'flex';
-    });
-
-    // Hide draw cards button
-    if (drawCardsBtn) {
-      drawCardsBtn.style.display = 'none';
+    } else {
+      infectCitiesBtn.style.display = 'flex';
     }
   }
 
@@ -232,12 +156,6 @@ async function handleDrawCardsAction() {
 // Handler for infect cities action
 async function handleInfectCitiesAction() {
   try {
-    // First hide the infect cities button
-    const infectCitiesBtn = document.getElementById('infect-cities-btn');
-    if (infectCitiesBtn) {
-      infectCitiesBtn.style.display = 'none';
-    }
-
     // Process the API request with custom handling for animation continuation
     const response = await fetch('/infect_cities', {
       method: 'POST',
@@ -254,12 +172,11 @@ async function handleInfectCitiesAction() {
         // Continue animations with new events
         await continueAnimationAfterInfect(result.end_turn_events);
 
+        const gameStateModule = await import('./game_state.js');
         // Update game state
         if (result.game_state) {
-          const gameStateModule = await import('./game_state.js');
           await gameStateModule.loadGameState(result.game_state);
         } else {
-          const gameStateModule = await import('./game_state.js');
           await gameStateModule.loadGameState();
         }
 
@@ -304,9 +221,4 @@ export function enableSpecificButtons(buttonIds) {
       button.disabled = false;
     }
   });
-}
-
-// Get the current action mode
-export function getCurrentMode() {
-  return currentMode;
 }

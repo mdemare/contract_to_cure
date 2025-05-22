@@ -1,16 +1,99 @@
 // game_state.js
-import { renderPandemicCities } from './map.js';
-import { updatePlayerHand } from './player_hand.js';
-import { updatePlayerPanel } from './player_panel.js';
-import { updateCurrentPlayer } from './current_player.js';
-import { checkGameOver } from './game_over.js';
-
-// Define color keys for disease tracking
-const COLOR_KEYS = ['blue', 'yellow', 'black', 'red'];
+import { updateGameUI } from './ui.js';
+import { showPlayerSelectionPanel, hidePlayerSelectionPanel } from './player_selection.js';
+import { setSelectedPlayerIndex } from './player_actions.js';
 
 // Global variable to store the current game state
 let currentGameState = null;
+// Game mode state to track which action is currently selected
+let currentMode = null;
 export let CITIES = null;
+
+// Get the current action mode
+export function getCurrentMode() {
+  return currentMode;
+}
+
+document.addEventListener('playerSelectedForMove', (event) => {
+  if (currentMode === 'airlift') {
+    handleAirliftPlayerSelected();
+  } else {
+    toggleMode('moveSelectedPlayer');
+    setSelectedPlayerIndex(event.detail.playerIndex);
+  }
+});
+
+// Toggle action mode when a button is clicked
+export function toggleMode(mode) {
+  // If the mode is already active, deactivate it
+  if (currentMode === mode) {
+    resetMode();
+    return;
+  }
+
+  console.log(`Set mode to ${mode}`)
+  // Set the new mode
+  currentMode = mode;
+
+  // Update UI to show active mode
+  updateActiveModeUI();
+
+  console.log(`Mode switched to: ${mode}`);
+}
+
+// Reset the current mode
+export function resetMode() {
+  currentMode = null;
+  updateActiveModeUI();
+
+  // Also reset selected player when mode is reset
+  hidePlayerSelectionPanel();
+
+  // Dispatch event to notify that the mode has been reset
+  const modeResetEvent = new CustomEvent('actionModeReset');
+  document.dispatchEvent(modeResetEvent);
+}
+
+/**
+ * Check if current player is the Dispatcher
+ * @returns {boolean} True if current player is the Dispatcher
+ */
+export function isDispatcher() {
+  const gameState = getCurrentGameState();
+  if (!gameState || !gameState.players || !gameState.gameStatus) return false;
+
+  const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
+  const currentPlayer = gameState.players[currentPlayerIndex];
+
+  return currentPlayer && currentPlayer.role &&
+         String(currentPlayer.role).toLowerCase() === 'dispatcher';
+}
+
+// Update UI to highlight the active mode button
+function updateActiveModeUI() {
+  // Remove active class from all buttons
+  const buttons = document.querySelectorAll('.action-btn');
+  buttons.forEach(button => {
+    button.classList.remove('active');
+  });
+
+  // Add active class to the current mode button
+  if (currentMode) {
+    const activeButton = document.getElementById(`${currentMode}-btn`);
+    if (activeButton) {
+      activeButton.classList.add('active');
+    }
+
+    // Handle Dispatcher move mode - show player selection
+    if (currentMode === 'move' && isDispatcher()) {
+      showPlayerSelectionPanel();
+    } else {
+      hidePlayerSelectionPanel();
+    }
+  } else {
+    hidePlayerSelectionPanel();
+  }
+}
 
 export async function loadCities() {
   const jsonUrl = '/cities.json';
@@ -54,13 +137,6 @@ export async function loadGameState(providedGameState = null) {
     // Update the UI with the new game state
     updateGameUI(gameState);
 
-    // Check if the game is over
-    checkGameOver(gameState);
-
-    document.dispatchEvent(new CustomEvent('gameStateLoaded', {
-      detail: { gameState: gameState }
-    }));
-
     return gameState;
   } catch (error) {
     console.error('Error loading game state:', error);
@@ -68,148 +144,6 @@ export async function loadGameState(providedGameState = null) {
       `<div class="error-message">Failed to load game state: ${error.message}</div>`;
     return null;
   }
-}
-
-// Update the game UI with the new state
-function updateGameUI(gameState) {
-  try {
-    // Check if we have valid game state data
-    if (!gameState || !gameState.gameStatus) {
-      console.error('Invalid game state data:', gameState);
-      return;
-    }
-
-    // Update actions counter
-    if (gameState.gameStatus.actions_remaining !== undefined) {
-      document.getElementById('action-counter').textContent = gameState.gameStatus.actions_remaining;
-    }
-
-    // Update turn counter
-    if (gameState.gameStatus.turn !== undefined) {
-      document.getElementById('turn-counter').textContent = gameState.gameStatus.turn;
-    }
-
-    // Update outbreak counter
-    if (gameState.gameStatus.outbreaks !== undefined) {
-      document.getElementById('outbreak-counter').textContent = gameState.gameStatus.outbreaks;
-    }
-
-    // Update player cards count
-    if (gameState.decks && gameState.decks.playerDeck) {
-      document.getElementById('player-cards').textContent = gameState.decks.playerDeck;
-    }
-
-    // Update infection cards count
-    if (gameState.decks && gameState.decks.infectionDeck) {
-      document.getElementById('infection-cards').textContent = gameState.decks.infectionDeck;
-    }
-
-    updateCureStatus(gameState);
-    updatePlayerPanel(gameState);
-    updatePlayerHand(gameState);
-    updateCurrentPlayer(gameState);
-    updateMapState(gameState);
-  } catch (error) {
-    console.error('Error updating game UI:', error);
-  }
-}
-
-// Update the cure status UI
-function updateCureStatus(gameState) {
-  // Update cure status for each disease color
-  COLOR_KEYS.forEach(color => {
-    const cureElement = document.getElementById(`${color}-cure`);
-
-    // Check if the color exists in the game state
-    if (gameState.diseaseCubes && gameState.diseaseCubes[color]) {
-      const diseaseInfo = gameState.diseaseCubes[color];
-
-      if (cureElement) {
-        if (diseaseInfo.cured) {
-          cureElement.textContent = diseaseInfo.eradicated ? 'ERADICATED' : 'CURED';
-          cureElement.classList.add('cured');
-        } else {
-          cureElement.textContent = 'Not Cured';
-          cureElement.classList.remove('cured');
-        }
-      }
-    }
-  });
-}
-
-// Update the map with disease cubes, research stations, and player pawns
-async function updateMapState(gameState) {
-  if(CITIES === undefined) { throw new Error("Cities not loaded")}
-  try {
-    // Prepare the map data with the current game state
-    const updatedMap = prepareMapWithGameState(CITIES, gameState);
-
-    // Render the updated map
-    renderPandemicCities(updatedMap);
-
-  } catch (error) {
-    console.error('Error updating map state:', error);
-  }
-}
-
-// Prepare the map data with the current game state
-function prepareMapWithGameState(citiesData, gameState) {
-  const updatedMap = {};
-
-  // First, initialize all cities with their basic data
-  for (const [cityName, cityData] of Object.entries(citiesData)) {
-    updatedMap[cityName] = {
-      ...cityData,
-      cubes: {},          // Will be populated with disease cubes
-      pawns: [],          // Will be populated with player pawns
-      hasStation: false   // Will be set if the city has a research station
-    };
-
-    // Initialize empty cubes for all colors
-    updatedMap[cityName].cubes = 0;
-  }
-
-  // Add disease cubes
-  if (gameState.diseaseCubes) {
-    COLOR_KEYS.forEach(color => {
-      const diseaseInfo = gameState.diseaseCubes[color];
-      if (diseaseInfo && diseaseInfo.onBoard) {
-        Object.entries(diseaseInfo.onBoard).forEach(([cityName, cubeCount]) => {
-          if (updatedMap[cityName]) {
-            updatedMap[cityName].cubes = cubeCount;
-          }
-        });
-      }
-    });
-  }
-
-  // Add research stations
-  if (gameState.researchStations && Array.isArray(gameState.researchStations.locations)) {
-    gameState.researchStations.locations.forEach(cityName => {
-      if (updatedMap[cityName]) {
-        updatedMap[cityName].hasStation = true;
-      }
-    });
-  }
-
-  // Add player pawns
-  if (gameState.players && Array.isArray(gameState.players)) {
-    let nrPlayers = gameState.players.length;
-    let orderedPlayers = gameState.players.map(item => item);
-    orderedPlayers.forEach((pl,idx) => { pl.order = (nrPlayers + pl.index - gameState.gameStatus.currentPlayerIndex) % nrPlayers });
-    orderedPlayers.sort((a, b) => a.order - b.order).forEach((player, idx) => {
-      if (player && player.location) {
-        const cityName = player.location;
-        if (updatedMap[cityName]) {
-          // Use the player's role or index as an identifier
-          const pawnIdentifier = String(player.role).toLowerCase();
-          updatedMap[cityName].pawns.push(pawnIdentifier);
-        }
-      }
-    });
-  }
-
-  return updatedMap;
 }
 
 // Export the current game state

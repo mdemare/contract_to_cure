@@ -1,9 +1,8 @@
 // action_cards.js
 // Handles all action card related functionality, including button creation,
 // displaying cards in a modal, and handling specific action card behaviors.
-import { getCurrentGameState } from './game_state.js';
+import { toggleMode, resetMode, getCurrentGameState } from './game_state.js';
 import { showGeneralCardSelectionModal, showForecastModal } from './select_cards.js';
-import { toggleMode, resetMode } from './action_buttons.js';
 import { useAirlift, useQuietNight, useResilientPopulation } from './player_actions.js';
 import { createSimpleElement } from './dom.js';
 import { showPlayerSelectionPanel, getSelectedPlayerIndex } from './player_selection.js';

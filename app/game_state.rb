@@ -82,6 +82,7 @@ class GameState
     @turn = 1
     @game_over_reason = nil
     @actions_remaining = 4
+    @phase = 'player_actions'
 
     # Initialize diseases
     @disease_cubes = {}
@@ -184,6 +185,7 @@ class GameState
     # Basic game state
     @actions_remaining = state[:game_status][:actions_remaining]
     @turn = state[:game_status][:turn]
+    @phase = state[:game_status][:phase]
     @game_over = state[:game_status][:game_over]
     @game_over_reason = state[:game_status][:game_over_reason]
     @outbreak_count = state[:game_status][:outbreaks]

@@ -246,7 +246,6 @@ module PlayerActions
       success: true,
       status: 'success',
       message: message,
-      actions_remaining: @actions_remaining,
       end_turn: @actions_remaining.zero?
     }.merge(additional_data)
   end
@@ -259,6 +258,10 @@ module PlayerActions
 
     # Consume an action
     @actions_remaining -= 1
+
+    if @actions_remaining <= 0
+      @phase = 'draw_cards'
+    end
 
     response = after_action_response(message, additional_data)
 

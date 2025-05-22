@@ -7,6 +7,7 @@ module JsonGenerator
     {
       gameStatus: {
         actions_remaining: @actions_remaining,
+        phase: @phase,
         turn: @turn,
         gameOver: @game_over,
         outbreaks: @outbreak_count,
@@ -14,8 +15,7 @@ module JsonGenerator
         infectionRatePosition: @infection_rate_marker,
         currentPlayerIndex: @current_player_idx,
         forecast_active: @forecast_active,
-        forecast_cards: @forecast_cards,
-        phase: 'playerActions' # This would need to be tracked separately in the full implementation
+        forecast_cards: @forecast_cards
       },
       diseaseCubes: COLORS.each_with_object({}) do |color, hash|
         # Only include cities with cubes

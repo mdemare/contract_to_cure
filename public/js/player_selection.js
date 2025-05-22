@@ -1,27 +1,11 @@
 // player_selection.js
 // Manages the Dispatcher-specific player selection panel and player button creation/handling.
 
-import { getCurrentGameState } from './game_state.js';
-import { resetMode, getCurrentMode } from './action_buttons.js';
+import { getCurrentGameState, resetMode, getCurrentMode } from './game_state.js';
 import { createSimpleElement } from './dom.js';
 
 // Store the selected player index for dispatcher move action
 let selectedPlayerIndex = null;
-
-/**
- * Check if current player is the Dispatcher
- * @returns {boolean} True if current player is the Dispatcher
- */
-export function isDispatcher() {
-  const gameState = getCurrentGameState();
-  if (!gameState || !gameState.players || !gameState.gameStatus) return false;
-
-  const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
-  const currentPlayer = gameState.players[currentPlayerIndex];
-
-  return currentPlayer && currentPlayer.role &&
-         String(currentPlayer.role).toLowerCase() === 'dispatcher';
-}
 
 /**
  * Create and show the player selection panel

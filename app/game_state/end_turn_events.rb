@@ -11,6 +11,7 @@ module EndTurnEvents
     end
 
     end_turn.events << { type: :wait_infect_cities }
+    @phase = 'infect_cities'
       # Save game state after turn is complete
     save_game_state
 
@@ -33,6 +34,7 @@ module EndTurnEvents
     @current_player_idx = (@current_player_idx + 1) % @players.size
     @current_player = @players[@current_player_idx]
     @actions_remaining = 4
+    @phase = 'player_actions'
     @turn += 1
 
     # Save game state after turn is complete
@@ -48,6 +50,7 @@ module EndTurnEvents
       game_state = {
         game_status: {
           actions_remaining: @actions_remaining,
+          phase: @phase,
           turn: @turn,
           game_over: @game_over,
           game_over_reason: @game_over_reason,

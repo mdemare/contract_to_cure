@@ -1,6 +1,5 @@
 // end_turn_events.js
 import { createCardElement, createSimpleElement } from './dom.js';
-import { updateButtonStates } from './action_buttons.js';
 
 /**
  * Creates a Promise that resolves after the specified delay
@@ -173,23 +172,11 @@ async function animateCardStack(animContainer, eventStack) {
  * @param {Object} newEvents - New events from infect_cities API call
  * @returns {Promise} Promise that resolves when all animations complete
  */
-export async function continueAnimationAfterInfect(newEvents) {
-  // Get stored events
-  const remainingEvents = window.remainingEvents || [];
-
-  // Merge with new events if available
-  let allEvents = [...remainingEvents];
-  if (newEvents && newEvents.events && Array.isArray(newEvents.events)) {
-    allEvents = [...allEvents, ...newEvents.events];
-  }
-
-  // Clear the stored events
-  window.remainingEvents = null;
-
+export async function continueAnimationAfterInfect(endTurnData) {
+  console.log('continueAnimationAfterInfect')
   // Continue animation if there are events
-  if (allEvents.length > 0) {
-    const animContainer = getAnimContainer();
-    return animateCardStack(animContainer, allEvents);
+  if (endTurnData.events.length > 0) {
+    return await handleEndOfTurnEvents(endTurnData)
   }
 
   return true;

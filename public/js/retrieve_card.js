@@ -1,8 +1,7 @@
 // retrieve_card.js
-import { getCurrentGameState, getCurrentPlayer } from './game_state.js';
+import { getCurrentGameState, getCurrentPlayer, resetMode } from './game_state.js';
 import { showGeneralCardSelectionModal } from './select_cards.js';
 import { processAPIRequest, showErrorMessage } from './player_action_utils.js';
-import { resetMode } from './action_buttons.js';
 
 // Function to extract action cards from discard pile
 function getDiscardedActionCards(gameState) {
