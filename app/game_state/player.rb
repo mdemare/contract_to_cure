@@ -3,6 +3,16 @@ class Player
   attr_reader :role, :role_abilities, :index
   attr_accessor :location, :hand
 
+  ROLE_NAMES = {
+    medic: "Medic",
+    scientist: "Scientist",
+    researcher: "Researcher",
+    operations_expert: "Operations Expert",
+    dispatcher: "Dispatcher",
+    contingency_planner: "Contingency Planner",
+    quarantine_specialist: "Quarantine Specialist",
+  }.freeze
+
   def initialize(role, index, location = 'Wuhan')
     @role = role
     @index = index
@@ -17,6 +27,10 @@ class Player
 
   def sorted_hand
     @hand.sort_by { [it.type, it.color] }
+  end
+
+  def role_name
+    ROLE_NAMES[role]
   end
 
   private

@@ -1,5 +1,6 @@
 // end_turn_events.js
 import { createCardElement, createSimpleElement } from './dom.js';
+import { getCurrentGameState } from './game_state.js';
 
 /**
  * Creates a Promise that resolves after the specified delay
@@ -72,8 +73,11 @@ export async function handleEndOfTurnEvents(endTurnData) {
     return result;
   }, { events: [], hasPlayerHeader: false, hasInfectionHeader: false, hasEpidemicHeader: false });
 
+  const gameState = getCurrentGameState()
+  const phase = gameState.gameStatus.phase
+
   // Special case: if there are no infection events but we have other events, add a "Quiet Night" header
-  if (!animationEvents.hasInfectionHeader) {
+  if (!animationEvents.hasInfectionHeader && phase === 'player_actions') {
     animationEvents.events.push({ type: 'header', message: 'A Quiet Night' });
   }
 
@@ -122,8 +126,6 @@ async function animateCardStack(animContainer, eventStack) {
       actionButtonsList.forEach(button => {
         button.style.display = 'none';
       });
-    } else {
-      console.log("DID NOT FIND IT")
     }
 
     return animateCardStack(animContainer, eventStack);
@@ -132,11 +134,14 @@ async function animateCardStack(animContainer, eventStack) {
   const cardElement = createCardElement(eventToAnimate);
 
   // Call the appropriate handler function
-  if (eventToAnimate.type === 'header') {
-    await handleHeaderAnimation(animContainer, cardElement, eventStack);
-  } else {
-    // Keep the exceeded_hand_limit case unchanged for now
-    if (eventToAnimate.exceeded_hand_limit) {
+  switch (eventToAnimate.type) {
+    case 'header':
+      return await handleHeaderAnimation(animContainer, cardElement, eventStack);
+    default:
+      if (!eventToAnimate.exceeded_hand_limit) {
+        return await handleCardAnimation(animContainer, cardElement, eventStack)
+      }
+
       const nrCardsToDiscard = eventToAnimate.exceeded_hand_limit.discard_count;
       const playerIndex = eventToAnimate.exceeded_hand_limit.player_index;
 
@@ -161,25 +166,7 @@ async function animateCardStack(animContainer, eventStack) {
         console.error('Failed to import select_cards module:', error);
         return animateCardStack(animContainer, eventStack);
       }
-    } else {
-      await handleCardAnimation(animContainer, cardElement, eventStack);
-    }
   }
-}
-
-/**
- * Continues animation with any remaining events after wait_infect_cities
- * @param {Object} newEvents - New events from infect_cities API call
- * @returns {Promise} Promise that resolves when all animations complete
- */
-export async function continueAnimationAfterInfect(endTurnData) {
-  console.log('continueAnimationAfterInfect')
-  // Continue animation if there are events
-  if (endTurnData.events.length > 0) {
-    return await handleEndOfTurnEvents(endTurnData)
-  }
-
-  return true;
 }
 
 /**

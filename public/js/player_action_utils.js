@@ -1,5 +1,6 @@
 // player_action_utils.js
-import { getCurrentGameState, loadGameState, CITIES } from './game_state.js';
+
+import { loadGameState, CITIES } from './game_state.js';
 
 // Avoid circular dependencies by using dynamic imports
 let endTurnEventsModule = null;
@@ -40,15 +41,6 @@ async function handleSuccessfulAPIRequest(result, successMessage, eventData) {
     }
 
     await endTurnEventsModule.handleEndOfTurnEvents(result.end_turn_events);
-  }
-
-  // Use the game state directly from the response
-  if (result.game_state) {
-    // Update the game state in game_state.js module
-    await loadGameState(result.game_state);
-  } else {
-    // Fallback to loading game state if not provided in response
-    await loadGameState();
   }
 
   // Dispatch event if provided

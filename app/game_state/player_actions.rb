@@ -27,16 +27,16 @@ module PlayerActions
     elsif current_player.role == :dispatcher && @players.any? { |p| p.location == destination && p.index != player_index }
       # The dispatcher can bring players together
       move_type = 'dispatcher special move'
-    elsif has_city_card?(player_index, destination)
-      if has_city_card?(player_index, current_location)
+    elsif has_city_card?(@current_player_idx, destination)
+      if has_city_card?(@current_player_idx, current_location)
         if card_name
           # Check if the card name matches either destination or current location
           if card_name == destination
             move_type = 'direct flight'
-            discard_player_card_by_name(player_index, card_name)
+            discard_player_card_by_name(@current_player_idx, card_name)
           elsif card_name == current_location
             move_type = 'charter flight'
-            discard_player_card_by_name(player_index, card_name)
+            discard_player_card_by_name(@current_player_idx, card_name)
           else
             return {
               success: false,
@@ -143,10 +143,7 @@ module PlayerActions
     # Check hand limit (7 cards)
     exceeded_limit = nil
     if receiving_player.hand.size > 7
-      exceeded_limit = {
-        player_index: receiving_player_index,
-        excess_cards: receiving_player.hand.map(&:name).last(receiving_player.hand.size - 7)
-      }
+      exceeded_limit = { player_index: receiving_player_index, discard_count: receiving_player.hand.size - 7 }
     end
 
     # Return success with hand limit info if applicable

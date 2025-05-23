@@ -67,6 +67,7 @@ end
 post '/move' do
   content_type :json
   request.body.rewind
+  r = game_state.check_action and next r
   data = JSON.parse(request.body.read)
 
   player_index = data['player_index'].to_i
@@ -74,7 +75,7 @@ post '/move' do
   card_name = data['card_name']  # Changed from card_index to card_name
 
   # Validate required parameters
-  return [500, { status: 'error', message: 'Missing required parameters' }.to_json] unless player_index && destination
+  return [422, { status: 'error', message: 'Missing required parameters' }.to_json] unless player_index && destination
 
   # Perform the move and get result
   game_state.move(player_index, destination, card_name).to_json
@@ -83,6 +84,7 @@ end
 # Treat disease endpoint
 post '/treat' do
   content_type :json
+  r = game_state.check_action and next r
 
   game_state.treat_disease.to_json
 end
@@ -90,6 +92,7 @@ end
 # Treat disease endpoint
 post '/cure_disease' do
   content_type :json
+  r = game_state.check_action and next r
 
   request.body.rewind
   data = JSON.parse(request.body.read)
@@ -104,12 +107,13 @@ end
 post '/retrieve' do
   content_type :json
   request.body.rewind
+  r = game_state.check_action and next r
   data = JSON.parse(request.body.read)
 
   action_card_name = data['action_card_name']
 
   # Validate required parameters
-  return [500, { status: 'error', message: 'Missing required parameters' }.to_json] unless action_card_name
+  return [422, { status: 'error', message: 'Missing required parameters' }.to_json] unless action_card_name
 
   # Perform the action and get result
   game_state.retrieve(action_card_name).to_json
@@ -119,6 +123,7 @@ end
 post '/share_knowledge' do
   content_type :json
   request.body.rewind
+  r = game_state.check_action and next r
   data = JSON.parse(request.body.read)
 
   giving_player_index = data['giving_player_index'].to_i
@@ -127,7 +132,7 @@ post '/share_knowledge' do
 
   # Validate required parameters
   unless giving_player_index && receiving_player_index && city_name
-    return [500, { status: 'error', message: 'Missing required parameters' }.to_json]
+    return [422, { status: 'error', message: 'Missing required parameters' }.to_json]
   end
 
   # Perform the action and get result
@@ -155,7 +160,6 @@ post '/draw_cards' do
 end
 
 post '/infect_cities' do
-  # Handle end of turn if no actions remaining
   if game_state.actions_remaining.zero?
     response = game_state.after_action_response(nil, {})
     response[:end_turn_events] = game_state.infect_cities
@@ -168,6 +172,7 @@ end
 
 # Build research station endpoint
 post '/build_research_station' do
+  r = game_state.check_action and next r
   content_type :json
 
   # Perform the action and get result
@@ -184,7 +189,7 @@ post '/discard_cards' do
   card_names = data['card_names']  # Changed from card_indices to card_names
 
   # Validate required parameters
-  return [500, { status: 'error', message: 'Missing required parameters' }.to_json] unless player_index.is_a?(Integer) && card_names.is_a?(Array)
+  return [422, { status: 'error', message: 'Missing required parameters' }.to_json] unless player_index.is_a?(Integer) && card_names.is_a?(Array)
 
   # Discard each card by name
   discarded_count = 0

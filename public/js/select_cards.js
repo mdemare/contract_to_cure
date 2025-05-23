@@ -289,8 +289,14 @@ export function handleHandLimitCheck(playerIndex, discardCount, completionCallba
   }
 
   const player = gameState.players[playerIndex];
-  if (!player || !player.hand) {
-    console.error('Player data not available for hand limit check');
+  if (!player) {
+    console.error(`Player data not available for hand limit check, index ${playerIndex}`);
+    if (completionCallback) completionCallback();
+    return;
+  }
+  if (!player.hand) {
+    console.error('Player HAND not available for hand limit check');
+    console.error(player);
     if (completionCallback) completionCallback();
     return;
   }

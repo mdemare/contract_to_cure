@@ -6,7 +6,7 @@ import { initShareKnowledge, updateShareKnowledgeButtonState } from './share_kno
 import { initActionCardsButton, updateActionCardsButtonState } from './action_cards.js';
 import { initRetrieveCard, updateRetrieveButtonState } from './retrieve_card.js';
 import { processAPIRequest, showSuccessMessage, showErrorMessage } from './player_action_utils.js';
-import { continueAnimationAfterInfect } from './end_turn_events.js';
+import { handleEndOfTurnEvents } from './end_turn_events.js';
 
 // Initialize the action buttons
 export function initActionButtons() {
@@ -169,8 +169,7 @@ async function handleInfectCitiesAction() {
       const result = await response.json();
 
       if (result.status === 'success') {
-        // Continue animations with new events
-        await continueAnimationAfterInfect(result.end_turn_events);
+        await handleEndOfTurnEvents(result.end_turn_events)
 
         const gameStateModule = await import('./game_state.js');
         // Update game state

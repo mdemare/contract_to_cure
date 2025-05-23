@@ -25,11 +25,53 @@ export function createCardElement(event) {
     case 'resilient_population':
       return createResilientPopulationElement(event);
     case 'wait_infect_cities':
-      return createWaitInfectElement(event);
+      return createWaitInfectElementElement(event);
+    case 'turn_start':
+      return createTurnStartElement(event);
     default:
       return createUnknownEventElement(event);
   }
 }
+
+/**
+ * Creates a turn start element
+ * @param {Object} event - The turn start event data
+ * @returns {HTMLElement} The turn start element
+ */
+function createTurnStart(event) {
+  // Create the base turn start element
+  const turnStartElement = createSimpleElement('div', ['animated-card', 'turn-start-event']);
+
+  // Apply styles for transparent background with blur effect
+  Object.assign(turnStartElement.style, {
+    position: 'fixed',
+    top: '50%',
+    left: '0',
+    width: '100vw',
+    height: '60px', // Low height as specified
+    transform: 'translateY(-50%)', // Center vertically
+    backgroundColor: 'rgba(255, 255, 255, 0.1)', // Transparent background
+    backdropFilter: 'blur(10px)', // Background blur
+    webkitBackdropFilter: 'blur(10px)', // Safari support
+    border: '1px solid rgba(255, 255, 255, 0.2)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: '1000',
+    fontSize: '18px',
+    fontWeight: 'bold',
+    color: '#333',
+    textAlign: 'center',
+    letterSpacing: '1px',
+    textTransform: 'uppercase'
+  });
+
+  // Set the text content
+  turnStartElement.textContent = `TURN START: ${event.role}`;
+
+  return turnStartElement;
+}
+
 /**
  * Creates a draw card element
  * @param {Object} event - The draw card event data
@@ -308,4 +350,19 @@ function appendCardContent(cardElement, headerText, titleText) {
 
   cardElement.appendChild(cardHeader);
   cardElement.appendChild(cardTitle);
+}
+
+/**
+ * Creates a turn start element
+ * @param {Object} event - The turn start event data
+ * @returns {HTMLElement} The turn start element
+ */
+function createTurnStartElement(event) {
+  // Create the base turn start element
+  const turnStartElement = createSimpleElement('div', ['animated-card', 'turn-start-event']);
+
+  // Set the text content
+  turnStartElement.textContent = `TURN START: ${event.role}`;
+
+  return turnStartElement;
 }

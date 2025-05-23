@@ -702,3 +702,26 @@
   transform: translate(-50%, -30%);
   opacity: 0.2;
 }
+
+.turn-start-event {
+  position: fixed;
+  top: 50%;
+  left: 0;
+  width: 100vw;
+  height: 60px;
+  transform: translateY(-50%);
+  background-color: rgba(255, 255, 255, 0.1);
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 1000;
+  font-size: 18px;
+  font-weight: bold;
+  color: #333;
+  text-align: center;
+  letter-spacing: 1px;
+  text-transform: uppercase;
+}
