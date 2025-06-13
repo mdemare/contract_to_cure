@@ -30,14 +30,18 @@ class GameState
     reset_game(difficulty_level)
   end
 
-  # Load game state from a YAML file if it exists
-  def self.load_from_yaml(file_path = 'current_game.yaml')
+  # Load game state from Redis if it exists
+  def self.load_from_redis(redis_key = 'contract-to-cure/current-game')
+    require 'redis'
     require 'yaml'
 
-    if File.exist?(file_path)
+    redis = Redis.new
+    saved_data = redis.get(redis_key)
+
+    if saved_data
       begin
-        puts "Loading game state from #{file_path}"
-        saved_state = YAML.load_file(file_path)
+        puts "Loading game state from Redis key: #{redis_key}"
+        saved_state = YAML.load(saved_data)
 
         # Create a new instance without initialization
         game = allocate
@@ -47,14 +51,17 @@ class GameState
 
         return game
       rescue => e
-        puts "Error loading game state from file: #{e.message}"
+        puts "Error loading game state from Redis: #{e.message}"
         puts e.backtrace
         return nil
       end
     else
-      puts "No saved game state found at #{file_path}"
+      puts "No saved game state found in Redis key: #{redis_key}"
       return nil
     end
+  rescue Redis::BaseError => e
+    puts "Redis connection error: #{e.message}"
+    return nil
   end
 
   def game_over!(reason)
@@ -70,8 +77,10 @@ class GameState
     end
   end
 
-  # Public method to save game state from outside
-  def save_game_state
+  # Public method to save game state to Redis
+  def save_game_state(redis_key = 'contract-to-cure/current-game')
+    require 'redis'
+    
     begin
       # Create a hash with all game state, including hidden information like decks
       game_state = {
@@ -123,10 +132,14 @@ class GameState
         }
       }
 
-      # Write to the file
-      File.write('current_game.yaml', game_state.to_yaml)
+      # Save to Redis
+      redis = Redis.new
+      redis.set(redis_key, game_state.to_yaml)
+      puts "Game state saved to Redis key: #{redis_key}"
+    rescue Redis::BaseError => e
+      puts "Redis connection error while saving: #{e.message}"
     rescue => e
-      puts "Error saving game state to file: #{e.message}"
+      puts "Error saving game state to Redis: #{e.message}"
     end
   end
 
