@@ -94,12 +94,13 @@ public/
 
 3. Start the development server:
    ```bash
-   ruby app/sinatra.rb
+   bundle exec puma -C config/puma.rb
    ```
 
 4. Open your browser to `http://localhost:4567`
 
 ### Command Line Options
+The Sinatra application supports these options when run directly:
 ```bash
 ruby app/sinatra.rb [options]
 
@@ -109,13 +110,13 @@ Options:
   -h, --help                    Show help message
 ```
 
-Examples:
+However, when using Puma, pass these options as environment variables:
 ```bash
 # Start a new heroic difficulty game
-ruby app/sinatra.rb -d heroic -n
+DIFFICULTY=heroic NEW_GAME=true bundle exec puma -C config/puma.rb
 
 # Load saved game on normal difficulty
-ruby app/sinatra.rb -d normal
+DIFFICULTY=normal bundle exec puma -C config/puma.rb
 ```
 
 ## Game Persistence
