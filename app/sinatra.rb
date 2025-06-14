@@ -3,33 +3,36 @@ require 'json'
 require_relative 'game_state'
 require 'optparse'
 
-# Parse command line options
+# Parse command line options only when run directly
 options = {
   difficulty: :heroic,  # Default to heroic difficulty
   new_game: false       # Default to loading from saved state if available
 }
 
-OptionParser.new do |opts|
-  opts.banner = "Usage: ruby sinatra.rb [options]"
+# Only parse command line arguments when running directly (not through Rack/Puma)
+if __FILE__ == $0
+  OptionParser.new do |opts|
+    opts.banner = "Usage: ruby sinatra.rb [options]"
 
-  opts.on("-d", "--difficulty DIFFICULTY", [:introductory, :normal, :heroic],
-          "Set game difficulty (introductory, normal, heroic)") do |d|
-    options[:difficulty] = d
-  end
+    opts.on("-d", "--difficulty DIFFICULTY", [:introductory, :normal, :heroic],
+            "Set game difficulty (introductory, normal, heroic)") do |d|
+      options[:difficulty] = d
+    end
 
-  opts.on("-n", "--new", "Start a new game (ignore saved state)") do
-    options[:new_game] = true
-  end
+    opts.on("-n", "--new", "Start a new game (ignore saved state)") do
+      options[:new_game] = true
+    end
 
-  opts.on("-h", "--help", "Show this help message") do
-    puts opts
-    exit
-  end
-end.parse!
+    opts.on("-h", "--help", "Show this help message") do
+      puts opts
+      exit
+    end
+  end.parse!
 
-puts "Game Settings:"
-puts "  Difficulty: #{options[:difficulty]}"
-puts "  New Game: #{options[:new_game]}"
+  puts "Game Settings:"
+  puts "  Difficulty: #{options[:difficulty]}"
+  puts "  New Game: #{options[:new_game]}"
+end
 
 # Serve static files from the 'public' folder
 set :public_folder, "/Users/mdemare/projects/contract_to_cure/public"
