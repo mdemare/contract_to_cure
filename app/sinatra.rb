@@ -35,7 +35,7 @@ if __FILE__ == $0
 end
 
 # Serve static files from the 'public' folder
-set :public_folder, "/Users/mdemare/projects/contract_to_cure/public"
+set :public_folder, File.expand_path('../public', __dir__)
 set :bind, '0.0.0.0'
 
 # Initialize game state based on options
