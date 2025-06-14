@@ -14,8 +14,8 @@ services:
     env_file:
       - .env
     volumes:
-      - ./log:/app/log
-      - ./tmp:/app/tmp
+      - contracttocure_logs:/app/log
+      - contracttocure_tmp:/app/tmp
     restart: unless-stopped
     command: ["bundle", "exec", "puma", "-C", "config/puma.rb"]
     healthcheck:
@@ -24,3 +24,7 @@ services:
       timeout: 10s
       retries: 3
       start_period: 40s
+
+volumes:
+  contracttocure_logs:
+  contracttocure_tmp:
