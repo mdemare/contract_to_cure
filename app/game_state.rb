@@ -35,7 +35,8 @@ class GameState
     require 'redis'
     require 'yaml'
 
-    redis = Redis.new
+    redis_url = ENV['REDIS_URL'] || 'redis://localhost:6379'
+    redis = Redis.new(url: redis_url)
     saved_data = redis.get(redis_key)
 
     if saved_data
@@ -133,7 +134,8 @@ class GameState
       }
 
       # Save to Redis
-      redis = Redis.new
+      redis_url = ENV['REDIS_URL'] || 'redis://localhost:6379'
+      redis = Redis.new(url: redis_url)
       redis.set(redis_key, game_state.to_yaml)
       puts "Game state saved to Redis key: #{redis_key}"
     rescue Redis::BaseError => e
