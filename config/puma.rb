@@ -2,7 +2,7 @@
 # For more information see: https://puma.io/puma/
 
 # Change to the app directory
-directory '/Users/mdemare/projects/contract_to_cure/app'
+directory File.expand_path('../app', __dir__)
 
 # Bind to all interfaces on port 4567 (Sinatra default) or 3000 (for Docker)
 port_number = ENV['PORT'] || '4567'
