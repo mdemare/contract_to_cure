@@ -80,6 +80,12 @@ export async function processAPIRequest(endpoint, requestData, successMessage, f
       if(!result) { throw new Error("no result")}
       if (result.status === 'success') {
         handleSuccessfulAPIRequest(result, successMessage, eventData)
+      } else if (result.status === 'action_unavailable') {
+        // Action was not available, reload game state to ensure UI is in sync
+        if (result.game_state) {
+          await loadGameState(result.game_state);
+        }
+        showInvalidActionMessage(result.message);
       } else if (result.status === 'card_required' && endpoint === '/move') {
         // Handle operations expert special move card selection
         if (result.movement_type === 'operations_expert_special') {

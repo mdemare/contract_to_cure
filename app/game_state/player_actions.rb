@@ -108,7 +108,7 @@ module PlayerActions
     color = city.color
 
     # Check if there are any cubes of this color to treat
-    return { success: false, message: "No #{color} disease cubes to treat in #{city.name}" } if city.disease_cubes.zero?
+    return { success: false, status: 'action_unavailable', message: "No #{color} disease cubes to treat in #{city.name}", game_state: to_json_state } if city.disease_cubes.zero?
 
     # Medic can remove all cubes
     cubes_removed = (current_player.role == :medic || @cures[color]) ? city.disease_cubes : 1

@@ -77,6 +77,9 @@ export function updateButtonStates() {
   const infectCitiesBtn = document.getElementById('infect-cities-btn');
   const actionButtonsList = document.querySelectorAll('.action-btn');
 
+  // Get action cards button separately as it should be available in all phases
+  const actionCardsBtn = document.getElementById('action-cards-btn');
+  
   if (phase === 'player_actions') {
     // Show all other action buttons
     actionButtonsList.forEach(button => {
@@ -85,9 +88,11 @@ export function updateButtonStates() {
     drawCardsBtn.style.display = 'none';
     infectCitiesBtn.style.display = 'none';
   } else {
-    // Hide all other action buttons
+    // Hide all other action buttons except action cards
     actionButtonsList.forEach(button => {
-      button.style.display = 'none';
+      if (button.id !== 'action-cards-btn') {
+        button.style.display = 'none';
+      }
     });
 
     if (phase === 'draw_cards') {
@@ -95,6 +100,14 @@ export function updateButtonStates() {
     } else {
       infectCitiesBtn.style.display = 'flex';
     }
+  }
+  
+  // Always show action cards button if any player has event cards
+  if (actionCardsBtn) {
+    const hasEventCards = gameState.players.some(player => 
+      player.hand.some(card => card.type === 'event')
+    );
+    actionCardsBtn.style.display = hasEventCards ? 'flex' : 'none';
   }
 
   // Check for build station action availability
