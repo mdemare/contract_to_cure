@@ -35,7 +35,7 @@ pidfile 'tmp/pids/puma.pid'
 state_path 'tmp/pids/puma.state'
 
 # Logging
-stdout_redirect 'log/puma.stdout.log', 'log/puma.stderr.log', true
+# stdout_redirect 'log/puma.stdout.log', 'log/puma.stderr.log', true
 
 # Create necessary directories
 FileUtils.mkdir_p 'tmp/pids'
