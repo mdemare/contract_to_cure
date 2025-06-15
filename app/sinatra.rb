@@ -39,12 +39,18 @@ set :public_folder, File.expand_path('../public', __dir__)
 set :bind, '0.0.0.0'
 
 # Initialize game state based on options
-if options[:new_game] || !File.exist?('current_game.yaml')
+if options[:new_game]
   puts "Starting new game with difficulty: #{options[:difficulty]}"
   game_state = GameState.new(4, options[:difficulty])
 else
-  puts "Loading game from saved state"
-  game_state = GameState.load_from_yaml || GameState.new(4, options[:difficulty])
+  puts "Attempting to load game from Redis"
+  game_state = GameState.load_from_redis
+  if game_state
+    puts "Successfully loaded game from Redis"
+  else
+    puts "No saved game found in Redis, starting new game with difficulty: #{options[:difficulty]}"
+    game_state = GameState.new(4, options[:difficulty])
+  end
 end
 
 before do
