@@ -38,6 +38,11 @@ end
 set :public_folder, File.expand_path('../public', __dir__)
 set :bind, '0.0.0.0'
 
+# Redirect root URL to index.html
+get '/' do
+  redirect '/index.html'
+end
+
 # Initialize game state based on options
 if options[:new_game]
   puts "Starting new game with difficulty: #{options[:difficulty]}"
