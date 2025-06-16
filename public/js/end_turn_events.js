@@ -89,7 +89,28 @@ export async function handleEndOfTurnEvents(endTurnData) {
   // Start the animation stack
   await animateCardStack(animContainer, animationEvents.events.map((x) => x));
 
+  // After all events are animated, check if the game is over and show dialog if needed
+  await checkGameOverAfterEvents();
+
   return true;
+}
+
+// Check for game over after events are complete and show dialog
+async function checkGameOverAfterEvents() {
+  try {
+    const gameOverModule = await import('./game_over.js');
+    const gameStateModule = await import('./game_state.js');
+    const currentGameState = gameStateModule.getCurrentGameState();
+    
+    // Check if the game is over and show dialog
+    if (currentGameState && currentGameState.gameStatus && currentGameState.gameStatus.gameOver === true) {
+      // Brief pause before showing dialog
+      await delay(500);
+      gameOverModule.checkGameOver(currentGameState);
+    }
+  } catch (error) {
+    console.error('Failed to check game over after events:', error);
+  }
 }
 
 /**
@@ -137,8 +158,6 @@ async function animateCardStack(animContainer, eventStack) {
   switch (eventToAnimate.type) {
     case 'header':
       return await handleHeaderAnimation(animContainer, cardElement, eventStack);
-    case 'game_over':
-      return await handleGameOverEvent(animContainer, cardElement, eventStack);
     default:
       if (!eventToAnimate.exceeded_hand_limit) {
         return await handleCardAnimation(animContainer, cardElement, eventStack)
@@ -217,41 +236,6 @@ function createCardsWrapper() {
   return cardsWrapper;
 }
 
-/**
- * Handles game over event animation and triggers game over dialog
- * @param {HTMLElement} animContainer - The animation container
- * @param {HTMLElement} cardElement - The card element to animate
- * @param {Array} eventStack - Remaining events to animate
- * @returns {Promise} Promise that resolves when animation completes
- */
-async function handleGameOverEvent(animContainer, cardElement, eventStack) {
-  // Show the game over event as a header first
-  await handleHeaderAnimation(animContainer, cardElement, []);
-  
-  // Continue with any remaining events
-  if (eventStack.length > 0) {
-    await animateCardStack(animContainer, eventStack);
-  }
-  
-  // After all events are done, trigger the game over dialog
-  await delay(1000); // Brief pause before showing dialog
-  
-  // Import and trigger game over check
-  try {
-    const gameOverModule = await import('./game_over.js');
-    const gameStateModule = await import('./game_state.js');
-    const currentGameState = gameStateModule.getCurrentGameState();
-    
-    // Force the game state to show as game over
-    if (currentGameState && currentGameState.gameStatus) {
-      currentGameState.gameStatus.gameOver = true;
-    }
-    
-    gameOverModule.checkGameOver(currentGameState);
-  } catch (error) {
-    console.error('Failed to trigger game over dialog:', error);
-  }
-}
 
 /**
  * Handles card animation with Promise-based delays

@@ -7,14 +7,7 @@ module EndTurnEvents
     end_turn = EndTurn.new(self)
     2.times do |i|
       end_turn.draw_player_card(i)
-    end
-
-    # Check if game over was deferred and add final event
-    final_event = finalize_game_over_if_deferred
-    end_turn.events << final_event if final_event
-
-    if game_over
-      return { game_over: true, reason: game_over_reason, events: end_turn.events }
+      return if game_over
     end
 
     end_turn.events << { type: :wait_infect_cities }
@@ -33,15 +26,8 @@ module EndTurnEvents
     else
       @infection_rate.times do
         end_turn.infect_city
+        return if game_over
       end
-    end
-
-    # Check if game over was deferred and add final event
-    final_event = finalize_game_over_if_deferred
-    end_turn.events << final_event if final_event
-
-    if game_over
-      return { game_over: true, reason: game_over_reason, events: end_turn.events }
     end
 
     # Go to next player
@@ -70,7 +56,8 @@ module EndTurnEvents
 
   def out_of_cubes(color)
     disease_cubes[color] = 0
-    defer_game_over!(:no_cubes)
+    @game_over = true
+    @game_over_reason = :no_cubes
   end
 
   def increase_infection_rate
@@ -98,8 +85,9 @@ module EndTurnEvents
 
     # Check for game over
     if @outbreak_count >= MAX_OUTBREAKS
-      defer_game_over!(:too_many_outbreaks)
-      return { type: :outbreak, city: city_name, color: @cities[city_name].color, outbreak_chain: outbreak_chain }
+      @game_over = true
+      @game_over_reason = :too_many_outbreaks
+      return { type: :game_over, reason: :too_many_outbreaks }
     end
 
     # Spread disease to connected cities
@@ -128,16 +116,18 @@ module EndTurnEvents
       end
 
       if @disease_cubes[color].zero?
-        defer_game_over!(:no_cubes)
-        return { type: :outbreak, city: city_name, color: @cities[city_name].color, outbreak_chain: outbreak_chain }
+        @game_over = true
+        @game_over_reason = :no_cubes
+        return { type: :game_over, reason: :no_cubes, color: color }
       end
 
       # Normal case - add cubes
 
       if (connected_city.disease_cubes < 3) && (@disease_cubes[color] == 1)
         @disease_cubes[color] = 0
-        defer_game_over!(:no_cubes)
-        return { type: :outbreak, city: city_name, color: @cities[city_name].color, outbreak_chain: outbreak_chain }
+        @game_over = true
+        @game_over_reason = :no_cubes
+        return { type: :game_over, reason: :no_cubes, color: color }
       end
 
       outbreak = connected_city.disease_cubes == 3
@@ -171,9 +161,9 @@ module EndTurnEvents
     if count >= disease_cubes[color] and city.disease_cubes < 3
       # Adding all remaining cubes then game over
       city.disease_cubes = [3, city.disease_cubes + count].min
-      disease_cubes[color] = 0
-      defer_game_over!(:no_cubes)
-      return nil
+
+      out_of_cubes(color)
+      return { type: :game_over, reason: :no_cubes, color: color }
     end
 
     if city.disease_cubes + count > 3
