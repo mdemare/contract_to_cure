@@ -1,7 +1,7 @@
 source 'https://rubygems.org'
 
 # Rails
-gem 'rails', '~> 7.0'
+gem 'rails', '~> 8.0'
 
 # Boot performance
 gem 'bootsnap', require: false

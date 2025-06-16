@@ -3,6 +3,10 @@ class Player
   attr_reader :role, :role_abilities, :index
   attr_accessor :location, :hand
 
+  # Alias for compatibility with tests
+  alias_method :cards, :hand
+  alias_method :cards=, :hand=
+
   ROLE_NAMES = {
     medic: "Medic",
     scientist: "Scientist",

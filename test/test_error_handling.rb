@@ -152,8 +152,10 @@ class TestErrorHandling < TestHelper
       city_name = current_player.location
 
       # Ensure city has no disease cubes
-      %w[red blue yellow black].each do |color|
-        state.disease_cubes[color][city_name] = 0
+      %i[red blue yellow black].each do |color|
+        # Reset disease cubes for the city by setting city's disease cubes to 0
+        city = state.cities[city_name]
+        city.disease_cubes = 0 if city
       end
     end
 

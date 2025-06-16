@@ -4,6 +4,8 @@ class ApplicationController < ActionController::API
   before_action :load_game_state
   before_action :check_forecast_active, except: [:index, :state, :action_card]
 
+  rescue_from JSON::ParserError, with: :handle_invalid_json
+
   # Redirect root URL to index.html
   def index
     redirect_to '/index.html'
@@ -29,4 +31,8 @@ class ApplicationController < ActionController::API
   end
 
   attr_reader :game_state
+
+  def handle_invalid_json
+    render json: { status: 'error', message: 'Invalid JSON' }, status: 500
+  end
 end

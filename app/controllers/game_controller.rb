@@ -176,7 +176,7 @@ class GameController < ApplicationController
                game_state.use_forecast
              # Add cases for other action cards as they are implemented
              else
-               { status: 'error', message: "Unknown action card: #{card_name}" }
+               return render json: { status: 'error', message: "Unknown action card: #{card_name}" }, status: 500
     end
 
     render json: result
