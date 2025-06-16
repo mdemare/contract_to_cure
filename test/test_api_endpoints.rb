@@ -74,21 +74,24 @@ class TestApiEndpoints < TestHelper
       player = state.players[state.current_player_idx]
       require_relative '../app/game_state/card'
 
+      # Ensure player is not a scientist (who needs only 4 cards)
+      player.instance_variable_set(:@role, :medic) if player.role == :scientist
+
       # Clear existing hand and add blue city cards
       player.hand.clear
-      ['Atlanta', 'Chicago', 'Montreal', 'Washington', 'New York'].each do |city|
+      ['Chicago', 'Montreal', 'Washington', 'New York', 'London'].each do |city|
         card = Card.new(:city, city, :blue)
         player.hand << card
       end
 
       # Ensure player is at a research station
-      player.location = 'Atlanta'
-      state.research_stations << 'Atlanta' unless state.research_stations.include?('Atlanta')
+      player.location = 'Chicago'
+      state.research_stations << 'Chicago' unless state.research_stations.include?('Chicago')
     end
 
     post '/cure_disease', {
       color: 'blue',
-      card_names: ['Atlanta', 'Chicago', 'Montreal', 'Washington', 'New York']
+      card_names: ['Chicago', 'Montreal', 'Washington', 'New York', 'London']
     }.to_json, { 'CONTENT_TYPE' => 'application/json' }
 
     assert_successful_response(last_response)
@@ -98,20 +101,19 @@ class TestApiEndpoints < TestHelper
   def test_share_knowledge_endpoint
     create_game_with_custom_state do |state|
       # Place two players in same city
-      state.players[0].location = 'Atlanta'
-      state.players[1].location = 'Atlanta'
+      state.players[0].location = 'Chicago'
+      state.players[1].location = 'Chicago'
 
-      # Give first player the Atlanta card
+      # Give first player the Chicago card
       require_relative '../app/game_state/card'
       state.players[0].hand.clear
-      state.players[0].hand << Card.new(:city, 'Atlanta', :blue)
       state.players[0].hand << Card.new(:city, 'Chicago', :blue)
     end
 
     post '/share_knowledge', {
       giving_player_index: 0,
       receiving_player_index: 1,
-      city_name: 'Atlanta'
+      city_name: 'Chicago'
     }.to_json, { 'CONTENT_TYPE' => 'application/json' }
 
     assert_successful_response(last_response)
@@ -120,16 +122,14 @@ class TestApiEndpoints < TestHelper
 
   def test_build_research_station_endpoint
     create_game_with_custom_state do |state|
-      # Give current player the card for their current location
+      # Move player to a city without a research station
       current_player = state.players[state.current_player_idx]
-      location = current_player.location
+      current_player.location = 'Chicago'  # Move away from Wuhan
       require_relative '../app/game_state/card'
 
-      # Check if player already has location card, if not add it
-      has_location_card = current_player.hand.any? { |card| card.name == location }
-      unless has_location_card
-        current_player.hand << Card.new(:city, location, :blue)
-      end
+      # Give player the Chicago card to build research station
+      current_player.hand.clear
+      current_player.hand << Card.new(:city, 'Chicago', :blue)
     end
 
     post '/build_research_station'
@@ -155,7 +155,7 @@ class TestApiEndpoints < TestHelper
       require_relative '../app/game_state/card'
 
       player.hand.clear
-      ['Atlanta', 'Chicago', 'Montreal', 'Washington', 'New York', 'Miami', 'London', 'Madrid', 'Paris'].each do |city|
+      ['Chicago', 'Montreal', 'Washington', 'New York', 'London', 'Paris', 'Barcelona', 'Stockholm', 'Rome'].each do |city|
         player.hand << Card.new(:city, city, :blue)
       end
     end

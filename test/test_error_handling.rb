@@ -38,7 +38,7 @@ class TestErrorHandling < TestHelper
     create_game_with_custom_state do |state|
       # Give player cards but ensure they're not at a research station
       player = state.players[state.current_player_idx]
-      player.cards = ['Atlanta', 'Chicago', 'Montreal', 'Washington', 'New York']
+      player.cards = ['Chicago', 'Montreal', 'Washington', 'New York', 'London']
       player.location = 'London' # Not a research station by default
 
       # Make sure London is not a research station
@@ -47,7 +47,7 @@ class TestErrorHandling < TestHelper
 
     post '/cure_disease', {
       color: 'blue',
-      card_names: ['Atlanta', 'Chicago', 'Montreal', 'Washington', 'New York']
+      card_names: ['Chicago', 'Montreal', 'Washington', 'New York', 'London']
     }.to_json, { 'CONTENT_TYPE' => 'application/json' }
 
     refute last_response.successful?
@@ -60,15 +60,15 @@ class TestErrorHandling < TestHelper
       require_relative '../app/game_state/card'
 
       player.hand.clear
-      player.hand << Card.new(:city, 'Atlanta', :blue)
+      player.hand << Card.new(:city, 'Chicago', :blue)
       player.hand << Card.new(:city, 'Chicago', :blue) # Only 2 cards, need 5
-      player.location = 'Atlanta'
-      state.research_stations << 'Atlanta'
+      player.location = 'Chicago'
+      state.research_stations << 'Chicago'
     end
 
     post '/cure_disease', {
       color: 'blue',
-      card_names: %w[Atlanta Chicago]
+      card_names: %w[Chicago Chicago]
     }.to_json, { 'CONTENT_TYPE' => 'application/json' }
 
     refute last_response.successful?
@@ -78,17 +78,17 @@ class TestErrorHandling < TestHelper
   def test_share_knowledge_players_not_in_same_city
     create_game_with_custom_state do |state|
       # Place players in different cities
-      state.players[0].location = 'Atlanta'
+      state.players[0].location = 'Chicago'
       state.players[1].location = 'London'
       require_relative '../app/game_state/card'
       state.players[0].hand.clear
-      state.players[0].hand << Card.new(:city, 'Atlanta', :blue)
+      state.players[0].hand << Card.new(:city, 'Chicago', :blue)
     end
 
     post '/share_knowledge', {
       giving_player_index: 0,
       receiving_player_index: 1,
-      city_name: 'Atlanta'
+      city_name: 'Chicago'
     }.to_json, { 'CONTENT_TYPE' => 'application/json' }
 
     refute last_response.successful?
@@ -98,17 +98,17 @@ class TestErrorHandling < TestHelper
   def test_share_knowledge_without_required_card
     create_game_with_custom_state do |state|
       # Place players in same city but giver doesn't have the card
-      state.players[0].location = 'Atlanta'
-      state.players[1].location = 'Atlanta'
+      state.players[0].location = 'Chicago'
+      state.players[1].location = 'Chicago'
       require_relative '../app/game_state/card'
       state.players[0].hand.clear
-      state.players[0].hand << Card.new(:city, 'Chicago', :blue) # Has Chicago, not Atlanta
+      state.players[0].hand << Card.new(:city, 'London', :blue) # Has London, not Chicago
     end
 
     post '/share_knowledge', {
       giving_player_index: 0,
       receiving_player_index: 1,
-      city_name: 'Atlanta'
+      city_name: 'Chicago'
     }.to_json, { 'CONTENT_TYPE' => 'application/json' }
 
     refute last_response.successful?
@@ -121,7 +121,7 @@ class TestErrorHandling < TestHelper
       current_player.location = 'London'
       require_relative '../app/game_state/card'
       current_player.hand.clear
-      current_player.hand << Card.new(:city, 'Atlanta', :blue) # Has Atlanta card, not London
+      current_player.hand << Card.new(:city, 'Chicago', :blue) # Has Chicago card, not London
     end
 
     post '/build_research_station'
@@ -133,11 +133,12 @@ class TestErrorHandling < TestHelper
   def test_build_research_station_where_one_exists
     create_game_with_custom_state do |state|
       current_player = state.players[state.current_player_idx]
-      current_player.location = 'Atlanta'
+      current_player.location = 'Chicago'
       require_relative '../app/game_state/card'
       current_player.hand.clear
-      current_player.hand << Card.new(:city, 'Atlanta', :blue)
-      # Atlanta already has a research station by default
+      current_player.hand << Card.new(:city, 'Chicago', :blue)
+      # Add Chicago to research stations to test the error case
+      state.research_stations << 'Chicago'
     end
 
     post '/build_research_station'
@@ -152,8 +153,10 @@ class TestErrorHandling < TestHelper
       city_name = current_player.location
 
       # Ensure city has no disease cubes
-      %w[red blue yellow black].each do |color|
-        state.disease_cubes[color][city_name] = 0
+      %i[red blue yellow black].each do |color|
+        # Reset disease cubes for the city by setting city's disease cubes to 0
+        city = state.cities[city_name]
+        city.disease_cubes = 0 if city
       end
     end
 
@@ -168,7 +171,7 @@ class TestErrorHandling < TestHelper
       current_player = state.players[state.current_player_idx]
       require_relative '../app/game_state/card'
       current_player.hand.clear
-      current_player.hand << Card.new(:city, 'Atlanta', :blue) # Doesn't have Airlift
+      current_player.hand << Card.new(:city, 'Chicago', :blue) # Doesn't have Airlift
     end
 
     post '/action_card', {
@@ -196,12 +199,12 @@ class TestErrorHandling < TestHelper
       player = state.players[0]
       require_relative '../app/game_state/card'
       player.hand.clear
-      player.hand << Card.new(:city, 'Atlanta', :blue) # Only has Atlanta
+      player.hand << Card.new(:city, 'Chicago', :blue) # Only has Chicago
     end
 
     post '/discard_cards', {
       player_index: 0,
-      card_names: ['Chicago'] # Trying to discard Chicago
+      card_names: ['London'] # Trying to discard London (player doesn't have it)
     }.to_json, { 'CONTENT_TYPE' => 'application/json' }
 
     assert_successful_response(last_response) # Should succeed but discard 0 cards
@@ -212,6 +215,7 @@ class TestErrorHandling < TestHelper
   def test_actions_when_no_actions_remaining
     create_game_with_custom_state do |state|
       state.instance_variable_set(:@actions_remaining, 0)
+      state.instance_variable_set(:@phase, 'draw_cards')  # Set phase to not be 'player_actions'
     end
 
     post '/move', {

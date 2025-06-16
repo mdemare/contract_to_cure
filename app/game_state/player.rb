@@ -3,6 +3,10 @@ class Player
   attr_reader :role, :role_abilities, :index
   attr_accessor :location, :hand
 
+  # Alias for compatibility with tests
+  alias_method :cards, :hand
+  alias_method :cards=, :hand=
+
   ROLE_NAMES = {
     medic: "Medic",
     scientist: "Scientist",
@@ -22,11 +26,11 @@ class Player
   end
 
   def city_cards
-    @hand.select { it.type == :city }
+    @hand.select { |card| card.type == :city }
   end
 
   def sorted_hand
-    @hand.sort_by { [it.type, it.color] }
+    @hand.sort_by { |card| [card.type, card.color] }
   end
 
   def role_name
