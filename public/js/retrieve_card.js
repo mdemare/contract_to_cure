@@ -33,8 +33,8 @@ export function updateRetrieveButtonState() {
 
   const currentPlayer = getCurrentPlayer();
 
-  // Show the button only for the Contingency Planner
-  if (currentPlayer && currentPlayer.role === 'contingency_planner') {
+  // Show the button only for the Contingency Planner during player actions phase
+  if (currentPlayer && currentPlayer.role === 'contingency_planner' && gameState.gameStatus.phase === 'player_actions') {
     retrieveBtn.style.display = 'flex';
 
     // Get discarded action cards
