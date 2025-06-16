@@ -13,7 +13,8 @@ class City
   end
 
   def disease_cubes=(value)
-    raise "Illegal value #{value}" unless [0,1,2,3].include?(value)
+    raise "Illegal value #{value}" unless [0, 1, 2, 3].include?(value)
+
     @disease_cubes = value
   end
 end

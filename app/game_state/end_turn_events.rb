@@ -12,7 +12,7 @@ module EndTurnEvents
 
     end_turn.events << { type: :wait_infect_cities }
     @phase = 'infect_cities'
-      # Save game state after turn is complete
+    # Save game state after turn is complete
     save_game_state
 
     { game_over: false, events: end_turn.events } # Return events if game is not over
@@ -40,7 +40,7 @@ module EndTurnEvents
     # Save game state after turn is complete
     save_game_state
 
-    end_turn.events << { message: "TURN START: #{@current_player.role_name}", type: 'header'}
+    end_turn.events << { message: "TURN START: #{@current_player.role_name}", type: 'header' }
 
     { game_over: false, events: end_turn.events } # Return events if game is not over
   end
@@ -115,7 +115,7 @@ module EndTurnEvents
         @disease_cubes[color] = 0
       end
 
-      if @disease_cubes[color] == 0
+      if @disease_cubes[color].zero?
         @game_over = true
         @game_over_reason = :no_cubes
         return { type: :game_over, reason: :no_cubes, color: color }

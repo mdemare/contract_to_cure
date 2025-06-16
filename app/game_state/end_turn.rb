@@ -29,18 +29,19 @@ class EndTurn
     end
 
     @events << event
-    if not @game_state.game_over and event[:card][:type] == :epidemic
+    if !@game_state.game_over and event[:card][:type] == :epidemic
       handle_epidemic
     end
-    if @game_state.game_over
-      # Save final game state when the game is over
-      @game_state.save_game_state
-      return { game_over: true, reason: @game_state.game_over_reason, events: @events }
-    end
+    return unless @game_state.game_over
+
+    # Save final game state when the game is over
+    @game_state.save_game_state
+    return { game_over: true, reason: @game_state.game_over_reason, events: @events }
   end
 
   def infect_city
     return nil if @game_state.infection_deck.empty? # Return nil if no city infected
+
     card = @game_state.infection_deck.pop
     @game_state.infection_discard << card
 
@@ -50,9 +51,9 @@ class EndTurn
 
     return infection_event if infection_event&.dig(:type) == :game_over # Propagate game over event
 
-    if @game_state.game_over
-      return { game_over: true, reason: @game_state.game_over_reason, events: @events }
-    end
+    return unless @game_state.game_over
+
+    return { game_over: true, reason: @game_state.game_over_reason, events: @events }
   end
 
   private

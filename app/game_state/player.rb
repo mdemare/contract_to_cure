@@ -10,7 +10,7 @@ class Player
     operations_expert: "Operations Expert",
     dispatcher: "Dispatcher",
     contingency_planner: "Contingency Planner",
-    quarantine_specialist: "Quarantine Specialist",
+    quarantine_specialist: "Quarantine Specialist"
   }.freeze
 
   def initialize(role, index, location = 'Wuhan')

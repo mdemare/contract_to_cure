@@ -15,5 +15,6 @@ class Card
   end
 
   def retrieved? = @retrieved
-  def retrieved=(v) @retrieved = v; end
+
+  attr_writer :retrieved
 end

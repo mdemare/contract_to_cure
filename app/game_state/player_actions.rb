@@ -51,7 +51,7 @@ module PlayerActions
             status: 'card_required',
             message: "You can use either a direct flight (discard destination card) or a charter flight (discard current location card)",
             movement_type: 'flight_choice',
-            options: ['direct_flight', 'charter_flight']
+            options: %w[direct_flight charter_flight]
           }
         end
       else
@@ -111,11 +111,11 @@ module PlayerActions
     return { success: false, status: 'action_unavailable', message: "No #{color} disease cubes to treat in #{city.name}", game_state: to_json_state } if city.disease_cubes.zero?
 
     # Medic can remove all cubes
-    cubes_removed = (current_player.role == :medic || @cures[color]) ? city.disease_cubes : 1
+    cubes_removed = current_player.role == :medic || @cures[color] ? city.disease_cubes : 1
     city.disease_cubes -= cubes_removed
     @disease_cubes[color] += cubes_removed
 
-    return after_action(true, "Treated #{color} disease in #{city.name}", {cubes_removed: cubes_removed})
+    return after_action(true, "Treated #{color} disease in #{city.name}", { cubes_removed: cubes_removed })
   end
 
   def share_knowledge(giving_player_index, receiving_player_index, city_name)
@@ -164,11 +164,11 @@ module PlayerActions
     cards_needed = current_player.role == :scientist ? CARDS_NEEDED_FOR_CURE[:scientist] : CARDS_NEEDED_FOR_CURE[:default]
     return after_action(false, "Need #{cards_needed} cards of the same color to discover a cure") if card_names.size != cards_needed
 
-    unless card_names.all? {|card_name| find_city_card_in_player_hand(current_player.index, card_name).first&.color == color }
+    unless card_names.all? { |card_name| find_city_card_in_player_hand(current_player.index, card_name).first&.color == color }
       return after_action(false, "All selected cards must be #{color} city cards")
     end
 
-    for card_name in card_names
+    card_names.each do |card_name|
       discard_player_card_by_name(current_player.index, card_name)
     end
 

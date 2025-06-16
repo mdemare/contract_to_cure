@@ -7,7 +7,7 @@ module ActionCards
     # Find which player has the card
     player_index = nil
 
-    @players.each_with_index do |player, idx|
+    @players.each_with_index do |_player, idx|
       if has_action_card?(idx, card_name)
         player_index = idx
         break
@@ -67,7 +67,7 @@ module ActionCards
 
     # Validate that the card order contains all the forecasted cards
     unless card_order.size == @forecast_cards.size &&
-          card_order.all? { |card_name| @forecast_cards.include?(card_name) }
+           card_order.all? { |card_name| @forecast_cards.include?(card_name) }
       return { status: 'error', message: 'Invalid card order provided' }
     end
 
@@ -78,13 +78,13 @@ module ActionCards
     card_order.reverse_each do |card_name|
       # Find the original card with this name
       city = @cities[card_name]
-      color = city ? city.color : nil
+      color = city&.color
 
-      if color
-        # Create a new card and add it to the top of the infection deck
-        new_card = Card.new(:infection, card_name, color)
-        @infection_deck.unshift(new_card)
-      end
+      next unless color
+
+      # Create a new card and add it to the top of the infection deck
+      new_card = Card.new(:infection, card_name, color)
+      @infection_deck.unshift(new_card)
     end
 
     # Reset forecast mode
@@ -100,7 +100,7 @@ module ActionCards
 
   def use_resilient_population(city_name)
     # Try to use the Resilient Population card with validation
-    result = use_action_card('Resilient Population') do |player_index|
+    result = use_action_card('Resilient Population') do |_player_index|
       # Find the card in the infection discard pile
       card_index = @infection_discard.find_index { |infection_card| infection_card.name == city_name }
 
@@ -157,10 +157,10 @@ module ActionCards
     # Try to use the Airlift card with validation
     result = use_action_card('Airlift') do |_|
       # Check if city exists
-      unless @cities[city_name]
-        { success: false, status: 'error', message: "City '#{city_name}' does not exist" }
-      else
+      if @cities[city_name]
         nil # Continue with the action
+      else
+        { success: false, status: 'error', message: "City '#{city_name}' does not exist" }
       end
     end
 

@@ -19,8 +19,8 @@ module JsonGenerator
       },
       diseaseCubes: COLORS.each_with_object({}) do |color, hash|
         # Only include cities with cubes
-        cities_with_cubes = @cities.select { |_, city| city.color == color && city.disease_cubes.positive? }
-                                   .transform_values(&:disease_cubes)
+        cities_with_cubes = @cities.select { |_, city| city.color == color && city.disease_cubes.positive? }.
+                            transform_values(&:disease_cubes)
 
         hash[color] = {
           cured: @cures[color],
@@ -38,7 +38,10 @@ module JsonGenerator
           role: player.role,
           index: player.index,
           location: player.location,
-          hand: player.sorted_hand.map(&:description).map.with_index {|o,i| o[:index] = i; o}
+          hand: player.sorted_hand.map(&:description).map.with_index do |o, i|
+            o[:index] = i
+            o
+          end
         }
       end,
       decks: {

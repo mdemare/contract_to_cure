@@ -10,7 +10,7 @@ options = {
 }
 
 # Only parse command line arguments when running directly (not through Rack/Puma)
-if __FILE__ == $0
+if __FILE__ == $PROGRAM_NAME
   OptionParser.new do |opts|
     opts.banner = "Usage: ruby sinatra.rb [options]"
 
@@ -86,7 +86,7 @@ post '/move' do
 
   player_index = data['player_index'].to_i
   destination = data['destination']
-  card_name = data['card_name']  # Changed from card_index to card_name
+  card_name = data['card_name'] # Changed from card_index to card_name
 
   # Validate required parameters
   return [422, { status: 'error', message: 'Missing required parameters' }.to_json] unless player_index && destination
@@ -112,7 +112,7 @@ post '/cure_disease' do
   data = JSON.parse(request.body.read)
 
   color = data['color'].to_sym
-  card_names = data['card_names']  # Changed from card_indices to card_names
+  card_names = data['card_names'] # Changed from card_indices to card_names
 
   game_state.cure_disease(color, card_names).to_json
 end
@@ -169,7 +169,7 @@ post '/draw_cards' do
     response[:game_state] = game_state.to_json_state
     response.to_json
   else
-    {"status": "success"}.to_json
+    { status: "success" }.to_json
   end
 end
 
@@ -180,7 +180,7 @@ post '/infect_cities' do
     response[:game_state] = game_state.to_json_state
     response.to_json
   else
-    {"status": "success"}.to_json
+    { status: "success" }.to_json
   end
 end
 
@@ -200,7 +200,7 @@ post '/discard_cards' do
   data = JSON.parse(request.body.read)
 
   player_index = data['player_index'].to_i
-  card_names = data['card_names']  # Changed from card_indices to card_names
+  card_names = data['card_names'] # Changed from card_indices to card_names
 
   # Validate required parameters
   return [422, { status: 'error', message: 'Missing required parameters' }.to_json] unless player_index.is_a?(Integer) && card_names.is_a?(Array)
@@ -234,32 +234,31 @@ post '/action_card' do
   # Special handling for Forecast
   if game_state.forecast_active
     # Only allow Forecast with card_order when forecast is active
-    if card_name == 'Forecast' && data['card_order']
-      return game_state.apply_forecast(data['card_order']).to_json
-    else
-      return { status: 'error', message: 'Cannot perform action while Forecast is active. Please complete the Forecast action first.' }.to_json
-    end
+    return game_state.apply_forecast(data['card_order']).to_json if card_name == 'Forecast' && data['card_order']
+
+    return { status: 'error', message: 'Cannot perform action while Forecast is active. Please complete the Forecast action first.' }.to_json
+
   end
 
   # Normal action card processing when forecast is not active
   result = case card_name
-  when 'Airlift'
-    game_state.use_airlift(data['player_index'].to_i, city_name)
-  when 'One Quiet Night'
-    game_state.quiet_night!
-  when 'Resilient Population'
-    # Remove a card from the infection discard pile by city name
-    city_name = data['city']
-    game_state.use_resilient_population(city_name)
-  when 'Government Grant'
-    # Add a research station to the specified city without using a city card
-    game_state.use_government_grant(city_name)
-  when 'Forecast'
-    # Initial Forecast call
-    game_state.use_forecast
-  # Add cases for other action cards as they are implemented
-  else
-    [500, { status: 'error', message: "Unknown action card: #{card_name}" }]
+           when 'Airlift'
+             game_state.use_airlift(data['player_index'].to_i, city_name)
+           when 'One Quiet Night'
+             game_state.quiet_night!
+           when 'Resilient Population'
+             # Remove a card from the infection discard pile by city name
+             city_name = data['city']
+             game_state.use_resilient_population(city_name)
+           when 'Government Grant'
+             # Add a research station to the specified city without using a city card
+             game_state.use_government_grant(city_name)
+           when 'Forecast'
+             # Initial Forecast call
+             game_state.use_forecast
+           # Add cases for other action cards as they are implemented
+           else
+             [500, { status: 'error', message: "Unknown action card: #{card_name}" }]
   end
 
   result.to_json
@@ -270,10 +269,14 @@ post '/restart_game' do
   content_type :json
 
   request.body.rewind
-  data = JSON.parse(request.body.read) rescue {}
+  data = begin
+    JSON.parse(request.body.read)
+  rescue
+    {}
+  end
 
   # Extract difficulty level from request if provided, otherwise use current difficulty
-  difficulty_level = data['difficulty_level'] ? data['difficulty_level'].to_sym : nil
+  difficulty_level = data['difficulty_level']&.to_sym
 
   # Restart the game and return result
   result = game_state.reset_game(difficulty_level)

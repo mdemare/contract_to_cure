@@ -28,7 +28,7 @@ module Setup
   def init_cities
     # Load cities from JSON file
     # Use absolute path based on app directory
-    app_dir = File.dirname(File.dirname(__FILE__))
+    app_dir = File.dirname(__FILE__, 2)
     cities_json = File.read(File.join(app_dir, '..', 'public', 'cities.json'))
     cities_data = JSON.parse(cities_json)
     raise cities_data unless cities_data.size == 48
@@ -43,12 +43,12 @@ module Setup
       # Create a new City object
       cities[name] = City.new(name, color, connections)
       connections.each do |connected_city|
-        if cc = cities[connected_city]
-          raise "asymmetric error city #{name}" unless cc.connections.include?(name)
+        if (cc = cities[connected_city]) && !cc.connections.include?(name)
+          raise "asymmetric error city #{name}"
         end
       end
-      cities.each do |cn,city|
-        if city.connections.include?(name) and not connections.include?(cn)
+      cities.each do |cn, city|
+        if city.connections.include?(name) and !connections.include?(cn)
           raise "asymmetric error city #{name}"
         end
       end
@@ -121,7 +121,7 @@ module Setup
                      when :introductory then 4
                      when :normal then 5
                      when :heroic then 6
-                     end
+    end
 
     epidemic_cards = Array.new(epidemic_count) { Card.new(:epidemic, 'Event:Epidemic') }
 

@@ -13,7 +13,7 @@ bind "tcp://0.0.0.0:#{port_number}"
 
 # Number of worker processes
 # Use single mode (0 workers) for development
-workers ENV.fetch("WEB_CONCURRENCY") { 0 }
+workers ENV.fetch("WEB_CONCURRENCY", 0)
 
 # Minimum and maximum number of threads per worker
 threads_count = Integer(ENV['PUMA_THREADS'] || 5)

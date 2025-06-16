@@ -73,15 +73,15 @@ class GameState
   end
 
   def check_action
-    if @phase != 'player_actions'
-      return [422, { status: 'error', message: 'No more actions allowed' }.to_json]
-    end
+    return unless @phase != 'player_actions'
+
+    return [422, { status: 'error', message: 'No more actions allowed' }.to_json]
   end
 
   # Public method to save game state to Redis
   def save_game_state(redis_key = 'contract-to-cure/current-game')
     require 'redis'
-    
+
     begin
       # Create a hash with all game state, including hidden information like decks
       game_state = {
@@ -149,8 +149,9 @@ class GameState
   def reset_game(difficulty_level)
     @difficulty_level = difficulty_level || @difficulty_level
     raise ArgumentError, 'Player count must be 2-4' unless (2..4).include?(@players_count)
-    if difficulty_level
-      raise ArgumentError, 'Difficulty must be :introductory, :normal, :heroic' unless %i[introductory normal heroic].include?(difficulty_level)
+
+    if difficulty_level && !%i[introductory normal heroic].include?(difficulty_level)
+      raise ArgumentError, 'Difficulty must be :introductory, :normal, :heroic'
     end
 
     @forecast_active = false
@@ -201,11 +202,9 @@ class GameState
     player = @players[player_index]
     card_index = player.hand.find_index { |card| card.name == card_name }
 
-    if card_index.nil?
-      return nil, nil
-    else
-      return player.hand[card_index], card_index
-    end
+    return nil, nil if card_index.nil?
+
+    return player.hand[card_index], card_index
   end
 
   # Find a city card by name in a player's hand and return both the card and its index
@@ -213,11 +212,9 @@ class GameState
     player = @players[player_index]
     card_index = player.hand.find_index { |card| card.type == :city && card.name == city_name }
 
-    if card_index.nil?
-      return nil, nil
-    else
-      return player.hand[card_index], card_index
-    end
+    return nil, nil if card_index.nil?
+
+    return player.hand[card_index], card_index
   end
 
   # Find an action card by name in a player's hand and return both the card and its index
@@ -225,26 +222,22 @@ class GameState
     player = @players[player_index]
     card_index = player.hand.find_index { |card| card.type == :action && card.name == card_name }
 
-    if card_index.nil?
-      return nil, nil
-    else
-      return player.hand[card_index], card_index
-    end
+    return nil, nil if card_index.nil?
+
+    return player.hand[card_index], card_index
   end
 
   # Discard a card by name from a player's hand
   def discard_player_card_by_name(player_index, card_name, retrieved = false)
     _, card_index = find_card_in_player_hand(player_index, card_name)
 
-    if card_index.nil?
-      return false
-    else
-      player = @players[player_index]
-      card = player.hand.delete_at(card_index)
-      player.hand = player.sorted_hand
-      @player_discard << card if card && !retrieved
-      return true
-    end
+    return false if card_index.nil?
+
+    player = @players[player_index]
+    card = player.hand.delete_at(card_index)
+    player.hand = player.sorted_hand
+    @player_discard << card if card && !retrieved
+    return true
   end
 
   # New version of has_city_card that doesn't depend on an existing method
