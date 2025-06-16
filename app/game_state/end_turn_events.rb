@@ -56,8 +56,8 @@ module EndTurnEvents
 
   def out_of_cubes(color)
     disease_cubes[color] = 0
-    @game_state.game_over = true
-    @game_state.game_over_reason = :no_cubes
+    @game_over = true
+    @game_over_reason = :no_cubes
   end
 
   def increase_infection_rate

@@ -2,7 +2,6 @@
 import { renderPandemicCities } from './map.js';
 import { updatePlayerPanel } from './player_panel.js';
 import { updateCurrentPlayer } from './current_player.js';
-import { checkGameOver } from './game_over.js';
 import { CITIES } from './game_state.js';
 import { updateButtonStates } from './action_buttons.js';
 
@@ -101,7 +100,6 @@ export function updateGameUI(gameState) {
     updateButtonStates()
     updateCurrentPlayer(gameState);
     updateMapState(gameState);
-    checkGameOver(gameState);
   } catch (error) {
     console.error('Error updating game UI:', error);
   }
