@@ -105,7 +105,7 @@ export function updateButtonStates() {
   // Always show action cards button if any player has event cards
   if (actionCardsBtn) {
     const hasEventCards = gameState.players.some(player => 
-      player.hand.some(card => card.type === 'event')
+      player.hand.some(card => card.type === 'action')
     );
     actionCardsBtn.style.display = hasEventCards ? 'flex' : 'none';
   }
