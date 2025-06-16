@@ -31,9 +31,12 @@ class GameState
   end
 
   # Load game state from Redis if it exists
-  def self.load_from_redis(redis_key = 'contract-to-cure/current-game')
+  def self.load_from_redis(redis_key = nil)
     require 'redis'
     require 'yaml'
+
+    # Use thread-local key if set (for testing), otherwise use default
+    redis_key ||= Thread.current[:game_redis_key] || 'contract-to-cure/current-game'
 
     redis_url = ENV['REDIS_URL'] || 'redis://localhost:6379'
     redis = Redis.new(url: redis_url)
@@ -41,10 +44,17 @@ class GameState
 
     if saved_data
       begin
-        puts "Loading game state from Redis key: #{redis_key}"
-        saved_state = YAML.load(saved_data)
+        # Try to load as Marshal first (for tests), then fall back to YAML
+        saved_state = begin
+          Marshal.load(saved_data)
+        rescue TypeError, ArgumentError
+          YAML.load(saved_data, permitted_classes: [GameState, Player, Card, City, Symbol])
+        end
 
-        # Create a new instance without initialization
+        # If we got a GameState object directly (from Marshal), return it
+        return saved_state if saved_state.is_a?(GameState)
+
+        # Otherwise, create a new instance without initialization
         game = allocate
 
         # Set up instance variables from the saved state
@@ -79,8 +89,11 @@ class GameState
   end
 
   # Public method to save game state to Redis
-  def save_game_state(redis_key = 'contract-to-cure/current-game')
+  def save_game_state(redis_key = nil)
     require 'redis'
+
+    # Use thread-local key if set (for testing), otherwise use default
+    redis_key ||= Thread.current[:game_redis_key] || 'contract-to-cure/current-game'
 
     begin
       # Create a hash with all game state, including hidden information like decks
@@ -137,7 +150,6 @@ class GameState
       redis_url = ENV['REDIS_URL'] || 'redis://localhost:6379'
       redis = Redis.new(url: redis_url)
       redis.set(redis_key, game_state.to_yaml)
-      puts "Game state saved to Redis key: #{redis_key}"
     rescue Redis::BaseError => e
       puts "Redis connection error while saving: #{e.message}"
     rescue => e

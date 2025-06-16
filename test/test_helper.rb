@@ -1,3 +1,5 @@
+ENV['RACK_ENV'] = 'test'
+
 require 'minitest/autorun'
 require 'minitest/pride'
 require 'rack/test'
@@ -5,6 +7,12 @@ require 'json'
 require 'redis'
 require 'yaml'
 require 'securerandom'
+
+# Set Sinatra settings before loading the app
+require 'sinatra/base'
+Sinatra::Base.set :environment, :test
+Sinatra::Base.set :protection, false
+
 require_relative '../app/sinatra'
 require_relative '../app/game_state/player'
 require_relative '../app/game_state/card'
@@ -20,17 +28,16 @@ class TestHelper < Minitest::Test
   def setup
     @redis = Redis.new(url: ENV['REDIS_URL'] || 'redis://localhost:6379')
     @test_redis_key = generate_test_redis_key
-    @original_game_state = nil
+    # Set thread-local variable for game state to use
+    Thread.current[:game_redis_key] = @test_redis_key
   end
 
   def teardown
     # Clean up test Redis keys
     @redis.del(@test_redis_key) if @test_redis_key
-
-    # Restore original game state if it was backed up
-    return unless @original_game_state
-
-    @redis.set('contract-to-cure/current-game', @original_game_state)
+    
+    # Clear thread-local variable
+    Thread.current[:game_redis_key] = nil
   end
 
   private
@@ -47,18 +54,10 @@ class TestHelper < Minitest::Test
     game_state.instance_variable_set(:@actions_remaining, 4)
 
     # Save to test Redis key with 5-minute expiry
-    game_data = YAML.dump(game_state, permitted_classes: [GameState, Player, Card, City])
+    game_data = Marshal.dump(game_state)
     @redis.setex(@test_redis_key, 300, game_data) # 300 seconds = 5 minutes
 
-    # Override the current game state in the application
-    backup_current_game_state
-    @redis.set('contract-to-cure/current-game', game_data)
-
     game_state
-  end
-
-  def backup_current_game_state
-    @original_game_state = @redis.get('contract-to-cure/current-game')
   end
 
   def create_game_with_custom_state
@@ -66,9 +65,8 @@ class TestHelper < Minitest::Test
     yield(game_state) if block_given?
 
     # Save the modified state
-    game_data = YAML.dump(game_state, permitted_classes: [GameState, Player, Card, City])
+    game_data = Marshal.dump(game_state)
     @redis.setex(@test_redis_key, 300, game_data)
-    @redis.set('contract-to-cure/current-game', game_data)
 
     game_state
   end

@@ -43,22 +43,29 @@ get '/' do
   redirect '/index.html'
 end
 
-# Initialize game state based on options
-if options[:new_game]
-  puts "Starting new game with difficulty: #{options[:difficulty]}"
-  game_state = GameState.new(4, options[:difficulty])
-else
-  puts "Attempting to load game from Redis"
-  game_state = GameState.load_from_redis
-  if game_state
-    puts "Successfully loaded game from Redis"
-  else
-    puts "No saved game found in Redis, starting new game with difficulty: #{options[:difficulty]}"
-    game_state = GameState.new(4, options[:difficulty])
+# Store default options at app level
+set :default_difficulty, :heroic
+set :default_players, 4
+
+# Helper method to get current game state
+helpers do
+  def game_state
+    @game_state ||= begin
+      loaded_state = GameState.load_from_redis
+      if loaded_state
+        loaded_state
+      else
+        puts "No saved game found in Redis, starting new game with difficulty: #{settings.default_difficulty}"
+        GameState.new(settings.default_players, settings.default_difficulty)
+      end
+    end
   end
 end
 
 before do
+  # Load fresh game state from Redis for each request
+  @game_state = nil
+  
   # Skip this check for specific routes:
   # - GET routes (like game_state.json) should remain accessible
   # - The action_card endpoint needs special handling for forecast completion
