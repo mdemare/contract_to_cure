@@ -312,6 +312,9 @@ export function handleHandLimitCheck(playerIndex, discardCount, completionCallba
 
   // Show card selection modal
   showHandSelectionModal(discardCount, cardIndices, async (selectedIndices) => {
+    // Convert selected indices to card names
+    const selectedCardNames = selectedIndices.map(index => player.hand[index].name);
+    
     // Make API call to discard the selected cards
     try {
       const response = await fetch('/discard_cards', {
@@ -321,7 +324,7 @@ export function handleHandLimitCheck(playerIndex, discardCount, completionCallba
         },
         body: JSON.stringify({
           player_index: playerIndex,
-          card_indices: selectedIndices
+          card_names: selectedCardNames
         })
       });
 
