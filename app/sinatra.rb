@@ -2,6 +2,10 @@ require 'sinatra'
 require 'json'
 require_relative 'game_state'
 require 'optparse'
+require 'omniauth'
+require 'omniauth-google-oauth2'
+require 'omniauth/strategies/google_oauth2'
+require 'securerandom'
 
 # Parse command line options only when run directly
 options = {
@@ -37,6 +41,95 @@ end
 # Serve static files from the 'public' folder
 set :public_folder, File.expand_path('../public', __dir__)
 set :bind, '0.0.0.0'
+
+# Enable sessions for authentication
+enable :sessions
+set :session_secret, ENV.fetch('SESSION_SECRET') { SecureRandom.hex(64) }
+
+# Configure OmniAuth middleware
+use OmniAuth::Builder do
+  provider :google_oauth2,
+           ENV.fetch('GOOGLE_CLIENT_ID', nil),
+           ENV.fetch('GOOGLE_CLIENT_SECRET', nil),
+           {
+             scope: 'email,profile',
+             prompt: 'select_account',
+             image_aspect_ratio: 'square',
+             image_size: 200,
+             access_type: 'online',
+             callback_path: '/auth/google_oauth2/callback'
+           }
+end
+
+# Handle CSRF protection for OmniAuth
+OmniAuth.config.allowed_request_methods = [:post, :get]
+
+# Authentication helper methods
+helpers do
+  def current_user
+    @current_user ||= if session[:user_id]
+      {
+        uid: session[:user_id],
+        email: session[:user_email],
+        name: session[:user_name]
+      }
+    end
+  end
+
+  def logged_in?
+    !!current_user
+  end
+end
+
+# Authentication routes
+get '/auth/google_oauth2/callback' do
+  auth = request.env['omniauth.auth']
+
+  # Store user data in Redis for persistence
+  redis = Redis.new(url: ENV.fetch('REDIS_URL', 'redis://localhost:6379'))
+  user_key = "google_user:#{auth.uid}"
+  user_data = {
+    uid: auth.uid,
+    email: auth.info.email,
+    name: auth.info.name,
+    image: auth.info.image,
+    provider: auth.provider
+  }
+
+  # Store user data in Redis with expiry
+  redis.hset(user_key, user_data.map { |k, v| [k.to_s, v.to_s] }.flatten)
+  redis.expire(user_key, 30 * 24 * 60 * 60) # 30 days
+
+  # Store user ID in session
+  session[:user_id] = auth.uid
+  session[:user_email] = auth.info.email
+  session[:user_name] = auth.info.name
+
+  redirect '/', notice: 'Signed in successfully!'
+end
+
+get '/auth/failure' do
+  redirect '/', alert: "Authentication failed: #{params[:message]}"
+end
+
+get '/login' do
+  redirect '/auth/google_oauth2'
+end
+
+get '/logout' do
+  session.clear
+  redirect '/', notice: 'Signed out successfully!'
+end
+
+# API endpoint for getting current user info
+get '/current_user.json' do
+  content_type :json
+  if logged_in?
+    current_user.to_json
+  else
+    { logged_in: false }.to_json
+  end
+end
 
 # Redirect root URL to index.html
 get '/' do
