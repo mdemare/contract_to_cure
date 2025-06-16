@@ -8,7 +8,8 @@ class EndTurn
 
   def draw_player_card(i)
     if @game_state.player_deck.empty?
-      return @game_state.game_over!(:no_player_cards)
+      @game_state.defer_game_over!(:no_player_cards)
+      return { type: :game_over, reason: :no_player_cards }
     end
 
     card = @game_state.player_deck.pop
@@ -29,14 +30,9 @@ class EndTurn
     end
 
     @events << event
-    if !@game_state.game_over and event[:card][:type] == :epidemic
-      handle_epidemic
-    end
-    return unless @game_state.game_over
+    return unless !@game_state.game_over and !@game_state.deferred_game_over? and event[:card][:type] == :epidemic
 
-    # Save final game state when the game is over
-    @game_state.save_game_state
-    return { game_over: true, reason: @game_state.game_over_reason, events: @events }
+    handle_epidemic
   end
 
   def infect_city
@@ -47,13 +43,9 @@ class EndTurn
 
     city = @game_state.cities[card.name]
     @events << { type: :infect_city, city: city.name, color: city.color }
-    infection_event = @game_state.add_disease_cubes(city.name, city.color, 1, @events)
+    @game_state.add_disease_cubes(city.name, city.color, 1, @events)
 
-    return infection_event if infection_event&.dig(:type) == :game_over # Propagate game over event
-
-    return unless @game_state.game_over
-
-    return { game_over: true, reason: @game_state.game_over_reason, events: @events }
+    # Continue processing even if game over is deferred
   end
 
   private

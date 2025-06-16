@@ -28,6 +28,8 @@ export function createCardElement(event) {
       return createWaitInfectElementElement(event);
     case 'turn_start':
       return createTurnStartElement(event);
+    case 'game_over':
+      return createGameOverElement(event);
     default:
       return createUnknownEventElement(event);
   }
@@ -365,4 +367,36 @@ function createTurnStartElement(event) {
   turnStartElement.textContent = `TURN START: ${event.role}`;
 
   return turnStartElement;
+}
+
+/**
+ * Creates a game over element
+ * @param {Object} event - The game over event data
+ * @returns {HTMLElement} The game over element
+ */
+function createGameOverElement(event) {
+  // Create the base game over element
+  const gameOverElement = createSimpleElement('div', ['event-header', 'game-over-event']);
+
+  // Set the text content based on the reason
+  let gameOverText = 'Game Over';
+  if (event.reason) {
+    switch (event.reason) {
+      case 'no_player_cards':
+        gameOverText = 'Game Over - No Player Cards Remaining';
+        break;
+      case 'too_many_outbreaks':
+        gameOverText = 'Game Over - Too Many Outbreaks';
+        break;
+      case 'no_cubes':
+        gameOverText = 'Game Over - Disease Cubes Exhausted';
+        break;
+      default:
+        gameOverText = `Game Over - ${event.reason}`;
+    }
+  }
+
+  gameOverElement.textContent = gameOverText;
+
+  return gameOverElement;
 }

@@ -82,6 +82,23 @@ class GameState
     return { type: :game_over, reason: game_over_reason }
   end
 
+  def defer_game_over!(reason)
+    @deferred_game_over = true
+    @game_over_reason = reason
+  end
+
+  def finalize_game_over_if_deferred
+    return nil unless @deferred_game_over
+
+    @game_over = true
+    save_game_state
+    { type: :game_over, reason: @game_over_reason }
+  end
+
+  def deferred_game_over?
+    @deferred_game_over
+  end
+
   def check_action
     return unless @phase != 'player_actions'
 
