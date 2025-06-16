@@ -1,28 +1,22 @@
-ENV['RACK_ENV'] = 'test'
+ENV['RAILS_ENV'] = 'test'
 
-require 'minitest/autorun'
-require 'minitest/pride'
+require_relative "../config/environment"
+require "rails/test_help"
 require 'rack/test'
 require 'json'
 require 'redis'
 require 'yaml'
 require 'securerandom'
 
-# Set Sinatra settings before loading the app
-require 'sinatra/base'
-Sinatra::Base.set :environment, :test
-Sinatra::Base.set :protection, false
-
-require_relative '../app/sinatra'
 require_relative '../app/game_state/player'
 require_relative '../app/game_state/card'
 require_relative '../app/game_state/city'
 
-class TestHelper < Minitest::Test
+class TestHelper < ActiveSupport::TestCase
   include Rack::Test::Methods
 
   def app
-    Sinatra::Application
+    Rails.application
   end
 
   def setup
@@ -35,7 +29,7 @@ class TestHelper < Minitest::Test
   def teardown
     # Clean up test Redis keys
     @redis.del(@test_redis_key) if @test_redis_key
-    
+
     # Clear thread-local variable
     Thread.current[:game_redis_key] = nil
   end
@@ -80,7 +74,7 @@ class TestHelper < Minitest::Test
   end
 
   def assert_json_response(response, message = "Expected JSON response")
-    assert_equal 'application/json', response.content_type, message
+    assert_match(%r{^application/json}, response.content_type, message)
     begin
       JSON.parse(response.body)
     rescue JSON::ParserError => e
