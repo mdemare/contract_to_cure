@@ -64,11 +64,15 @@ async function handleSuccessfulAPIRequest(result, successMessage, eventData) {
 // Generic handler for API requests and responses
 export async function processAPIRequest(endpoint, requestData, successMessage, failurePrefix, eventData = null) {
   try {
+    // Get CSRF token from meta tag
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    
     // Make the API call
     const response = await fetch(endpoint, {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken
       },
       body: JSON.stringify(requestData)
     });

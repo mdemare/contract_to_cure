@@ -169,11 +169,15 @@ async function handleDrawCardsAction() {
 // Handler for infect cities action
 async function handleInfectCitiesAction() {
   try {
+    // Get CSRF token from meta tag
+    const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
+    
     // Process the API request with custom handling for animation continuation
     const response = await fetch('/infect_cities', {
       method: 'POST',
       headers: {
-        'Content-Type': 'application/json'
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': csrfToken
       },
       body: JSON.stringify({})
     });

@@ -142,7 +142,8 @@ function handleForecast(cardSource) {
   fetch('/action_card', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
     },
     body: JSON.stringify({
       card: 'Forecast'
@@ -173,7 +174,8 @@ export function completeForecast(cardOrder) {
   fetch('/action_card', {
     method: 'POST',
     headers: {
-      'Content-Type': 'application/json'
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
     },
     body: JSON.stringify({
       card: 'Forecast',
