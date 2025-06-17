@@ -8,7 +8,6 @@ Rails.application.routes.draw do
   get '/auth/:provider/callback', to: 'sessions#create'
   get '/auth/failure', to: 'sessions#failure'
   delete '/logout', to: 'sessions#destroy', as: :logout
-  get '/login', to: redirect('/auth/google_oauth2'), as: :login
 
   # Game state endpoint
   get 'game_state.json', to: 'game#state'
