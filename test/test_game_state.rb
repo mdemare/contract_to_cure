@@ -184,4 +184,37 @@ class TestGameState < TestHelper
     assert data['gameStatus']['currentPlayerIndex'].is_a?(Integer)
     assert data['gameStatus']['actions_remaining'].is_a?(Integer)
   end
+
+  def test_exceeded_hand_limit_structure_in_draw_cards
+    # Create a game state with player having 6 cards
+    game_state = create_test_game_state(:normal, 2)
+
+    # Clear the current player's hand and add exactly 6 cards
+    current_player = game_state.current_player
+    current_player.hand.clear
+
+    require_relative '../app/game_state/card'
+    ['Chicago', 'Montreal', 'Washington', 'New York', 'London', 'Paris'].each do |city|
+      current_player.hand << Card.new(:city, city, :blue)
+    end
+
+    # Ensure player deck has at least 2 cards for drawing
+    game_state.player_deck.clear
+    game_state.player_deck << Card.new(:city, 'Barcelona', :yellow)
+    game_state.player_deck << Card.new(:city, 'Madrid', :yellow)
+
+    # Call draw_cards which should trigger hand limit check on second card
+    result = game_state.draw_cards
+
+    # Find the event with exceeded_hand_limit
+    exceeded_event = result[:events].find { |event| event[:exceeded_hand_limit] }
+
+    # Verify the event exists and has correct structure
+    refute_nil exceeded_event, "Should have an event with exceeded_hand_limit"
+
+    exceeded_limit_data = exceeded_event[:exceeded_hand_limit]
+    assert exceeded_limit_data.is_a?(Hash), "exceeded_hand_limit should be a Hash"
+    assert_equal 1, exceeded_limit_data[:discard_count]
+    assert_equal game_state.current_player_idx, exceeded_limit_data[:player_index]
+  end
 end

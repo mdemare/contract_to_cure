@@ -22,9 +22,10 @@ class EndTurn
 
     # Check hand limit (7 cards)
     if i == 1 and current_player.hand.size > 7
-      event[:exceeded_hand_limit] = true
-      event[:discard_count] = current_player.hand.size - 7
-      event[:player_index] = @game_state.current_player_idx
+      event[:exceeded_hand_limit] = {
+        discard_count: current_player.hand.size - 7,
+        player_index: @game_state.current_player_idx
+      }
       puts event.inspect
     end
 
