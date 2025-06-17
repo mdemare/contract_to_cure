@@ -184,4 +184,206 @@ class TestGameState < TestHelper
     assert data['gameStatus']['currentPlayerIndex'].is_a?(Integer)
     assert data['gameStatus']['actions_remaining'].is_a?(Integer)
   end
+
+  def test_operations_expert_move_requires_card_selection
+    create_game_with_custom_state do |state|
+      # Set up Operations Expert at a research station with city cards
+      current_player = state.players[state.current_player_idx]
+      current_player.instance_variable_set(:@role, :operations_expert)
+      current_player.location = 'Chicago'
+
+      # Add Chicago as research station
+      state.research_stations << 'Chicago'
+
+      # Give player some city cards
+      require_relative '../app/game_state/card'
+      current_player.hand.clear
+      current_player.hand << Card.new(:city, 'Houston', :blue)
+      current_player.hand << Card.new(:city, 'London', :blue)
+    end
+
+    # Try to move without providing card - should require card selection
+    post '/move', {
+      player_index: 0,
+      destination: 'Paris' # Using a valid city from the game
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    refute last_response.successful?
+    data = parse_json_response(last_response)
+    assert_equal 'card_required', data['status']
+    assert_equal 'operations_expert_special', data['movement_type']
+    assert_includes data['message'].downcase, 'operations expert requires'
+  end
+
+  def test_operations_expert_move_with_card_succeeds
+    create_game_with_custom_state do |state|
+      # Set up Operations Expert at research station
+      current_player = state.players[state.current_player_idx]
+      current_player.instance_variable_set(:@role, :operations_expert)
+      current_player.location = 'Chicago'
+
+      state.research_stations << 'Chicago'
+
+      # Give player city cards
+      require_relative '../app/game_state/card'
+      current_player.hand.clear
+      current_player.hand << Card.new(:city, 'Houston', :blue)
+      current_player.hand << Card.new(:city, 'London', :blue)
+    end
+
+    # Move by providing a card name
+    post '/move', {
+      player_index: 0,
+      destination: 'Paris',
+      card_name: 'Houston'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_successful_response(last_response)
+    data = parse_json_response(last_response)
+    assert data['success']
+    assert_includes data['message'].downcase, 'moved'
+
+    # Verify player moved to Paris
+    game_state = get_current_game_state
+    assert_equal 'Paris', game_state.players[0].location
+
+    # Verify Houston card was discarded
+    player_card_names = game_state.players[0].hand.map(&:name)
+    refute_includes player_card_names, 'Houston'
+    assert_includes player_card_names, 'London'
+  end
+
+  def test_operations_expert_once_per_turn_limit
+    create_game_with_custom_state do |state|
+      # Set up Operations Expert at research station
+      current_player = state.players[state.current_player_idx]
+      current_player.instance_variable_set(:@role, :operations_expert)
+      current_player.location = 'Chicago'
+
+      state.research_stations << 'Chicago'
+      state.research_stations << 'London' # Add another research station
+
+      # Give player multiple city cards
+      require_relative '../app/game_state/card'
+      current_player.hand.clear
+      current_player.hand << Card.new(:city, 'London', :blue)
+      current_player.hand << Card.new(:city, 'Tokyo', :red)
+      current_player.hand << Card.new(:city, 'Seoul', :red)
+
+      # Ensure player has enough actions
+      state.instance_variable_set(:@actions_remaining, 4)
+    end
+
+    # First special move should succeed
+    post '/move', {
+      player_index: 0,
+      destination: 'Paris',
+      card_name: 'London'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_successful_response(last_response)
+
+    # Move to another research station using regular move (Paris -> London)
+    post '/move', {
+      player_index: 0,
+      destination: 'London'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_successful_response(last_response)
+
+    # Try second special move from research station - should fail
+    post '/move', {
+      player_index: 0,
+      destination: 'Tokyo',
+      card_name: 'Seoul'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    refute last_response.successful?
+    data = parse_json_response(last_response)
+    assert_includes data['message'].downcase, 'once per turn'
+  end
+
+  def test_operations_expert_build_without_card
+    create_game_with_custom_state do |state|
+      # Set up Operations Expert without the city card
+      current_player = state.players[state.current_player_idx]
+      current_player.instance_variable_set(:@role, :operations_expert)
+      current_player.location = 'London'
+
+      # Give player cards but NOT London
+      require_relative '../app/game_state/card'
+      current_player.hand.clear
+      current_player.hand << Card.new(:city, 'Chicago', :blue)
+
+      # Ensure London doesn't have research station yet
+      state.research_stations.delete('London')
+    end
+
+    # Operations Expert should be able to build without London card
+    post '/build_research_station'
+
+    assert_successful_response(last_response)
+    data = parse_json_response(last_response)
+    assert data['success']
+    assert_includes data['message'], 'Operations Expert ability'
+
+    # Verify research station was built
+    game_state = get_current_game_state
+    assert_includes game_state.research_stations, 'London'
+
+    # Verify no cards were discarded
+    player_card_names = game_state.players[0].hand.map(&:name)
+    assert_includes player_card_names, 'Chicago'
+  end
+
+  def test_operations_expert_no_city_cards_move_fails
+    create_game_with_custom_state do |state|
+      # Set up Operations Expert at research station with NO city cards
+      current_player = state.players[state.current_player_idx]
+      current_player.instance_variable_set(:@role, :operations_expert)
+      current_player.location = 'Chicago'
+
+      state.research_stations << 'Chicago'
+
+      # Clear hand - no city cards
+      current_player.hand.clear
+    end
+
+    # Try to move - should fail because no city cards available
+    post '/move', {
+      player_index: 0,
+      destination: 'Paris'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    refute last_response.successful?
+    data = parse_json_response(last_response)
+    # Should fall through to regular move logic and fail
+    assert_includes data['message'].downcase, 'cannot move'
+  end
+
+  private
+
+  def get_current_game_state
+    # Helper method to get current game state for verification
+    get '/game_state.json'
+    data = parse_json_response(last_response)
+
+    # Create a simple struct to access the data more easily
+    Struct.new(:players, :research_stations) do
+      def initialize(data)
+        self.players = data['players'].map do |p|
+          Struct.new(:location, :hand, :role) do
+            def initialize(player_data)
+              self.location = player_data['location']
+              self.hand = player_data['hand'].map { |card| Struct.new(:name).new(card['name']) }
+              self.role = player_data['role'].to_sym
+            end
+          end.new(p)
+        end
+        # Get research stations from correct structure
+        rs_data = data['researchStations'] || data['research_stations'] || {}
+        self.research_stations = rs_data['locations'] || rs_data || []
+      end
+    end.new(data)
+  end
 end
