@@ -1,10 +1,16 @@
 require_relative 'test_helper'
 
 class TestApiEndpoints < TestHelper
-  def test_root_redirects_to_index
+  def test_root_renders_index
     get '/'
-    assert_equal 302, last_response.status
-    assert_includes last_response.location, '/index.html'
+    assert_equal 200, last_response.status
+    assert_includes last_response.body, 'PANDEMIC'
+  end
+
+  def test_git_hash_not_displayed_in_development
+    get '/'
+    assert_equal 200, last_response.status
+    refute_includes last_response.body, 'git-hash', 'Git hash should not be displayed in development environment'
   end
 
   def test_game_state_json_endpoint
