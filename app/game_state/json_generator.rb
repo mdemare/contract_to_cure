@@ -1,4 +1,4 @@
-require_relative 'config'
+require_relative 'game_state_config'
 
 module JsonGenerator
   include GameStateConfig

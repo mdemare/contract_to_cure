@@ -10,7 +10,6 @@ services:
       - "3103:4567"
     environment:
       - PORT=4567
-      - REDIS_URL=redis://host.docker.internal:6379
     env_file:
       - .env
     volumes:

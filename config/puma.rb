@@ -26,7 +26,7 @@ preload_app!
 restart_command 'bundle exec puma -C config/puma.rb'
 
 # Environment
-environment ENV['RACK_ENV'] || 'development'
+environment ENV['RAILS_ENV'] || 'development'
 
 # Process ID file
 pidfile 'tmp/pids/puma.pid'

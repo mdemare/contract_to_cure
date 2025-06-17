@@ -1,5 +1,5 @@
 # Main entry point for the GameState components
-require_relative 'game_state/config'
+require_relative 'game_state/game_state_config'
 
 require_relative 'game_state/action_cards'
 require_relative 'game_state/player_actions'
