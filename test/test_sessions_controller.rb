@@ -93,6 +93,15 @@ class TestSessionsController < TestHelper
     assert last_response.ok?
   end
 
+  def test_login_route_redirects_to_oauth
+    # Test that /login returns a redirect to Google OAuth (not 404)
+    get '/login'
+    
+    assert last_response.redirect?
+    assert_equal 301, last_response.status
+    assert_equal 'http://example.org/auth/google_oauth2', last_response.location
+  end
+
   def teardown
     super
     OmniAuth.config.test_mode = false
