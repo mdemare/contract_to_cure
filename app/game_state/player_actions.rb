@@ -11,10 +11,16 @@ module PlayerActions
     elsif @research_stations.include?(current_location) && @research_stations.include?(destination)
       move_type = 'shuttle flight'
     elsif current_player.role == :operations_expert && @research_stations.include?(current_location) && !current_player.city_cards.empty?
+      # Check if Operations Expert has already used special move this turn
+      if @operations_expert_move_used
+        return { success: false, status: 'error', message: "Operations Expert can only use special move once per turn" }
+      end
+
       if card_name and find_city_card_in_player_hand(@current_player_idx, card_name)[0]
         # The operation expert can go anywhere from a research station by discarding a city card
         move_type = 'operation researcher special move'
         discard_player_card_by_name(@current_player_idx, card_name)
+        @operations_expert_move_used = true
       else
         # Request card selection for operations expert move
         return {

@@ -283,4 +283,198 @@ class TestApiEndpoints < TestHelper
 
     assert_error_response(last_response, 422, 'Cannot perform action while Forecast is active')
   end
+
+  def test_operations_expert_special_move_valid
+    create_game_with_custom_state do |state|
+      # Set first player as Operations Expert
+      current_player = state.players[state.current_player_idx]
+      current_player.instance_variable_set(:@role, :operations_expert)
+
+      # Place Operations Expert at research station (Wuhan starts with one)
+      current_player.location = 'Wuhan'
+
+      # Give Operations Expert city cards
+      require_relative '../app/game_state/card'
+      current_player.hand.clear
+      current_player.hand << Card.new(:city, 'London', :blue)
+      current_player.hand << Card.new(:city, 'Paris', :blue)
+    end
+
+    post '/move', {
+      player_index: 0,
+      destination: 'Tokyo',
+      card_name: 'London'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_successful_response(last_response)
+    assert_json_response(last_response)
+
+    data = parse_json_response(last_response)
+    assert_equal 'success', data['status']
+
+    # Verify the response contains updated game state with player in Tokyo
+    assert data.key?('game_state'), "Response should contain game_state"
+    assert_equal 'Tokyo', data['game_state']['players'][0]['location']
+
+    # Verify London card was discarded from the game state in response
+    player_hand = data['game_state']['players'][0]['hand']
+    card_names = player_hand.map { |card| card['name'] }
+    assert_not_includes card_names, 'London'
+    assert_includes card_names, 'Paris'
+  end
+
+  def test_operations_expert_special_move_card_selection
+    create_game_with_custom_state do |state|
+      # Set first player as Operations Expert
+      current_player = state.players[state.current_player_idx]
+      current_player.instance_variable_set(:@role, :operations_expert)
+
+      # Place Operations Expert at research station
+      current_player.location = 'Wuhan'
+
+      # Give Operations Expert city cards
+      require_relative '../app/game_state/card'
+      current_player.hand.clear
+      current_player.hand << Card.new(:city, 'London', :blue)
+      current_player.hand << Card.new(:city, 'Paris', :blue)
+    end
+
+    # Attempt move without specifying card - should trigger card selection
+    post '/move', {
+      player_index: 0,
+      destination: 'Tokyo'
+      # No card_name specified
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_equal 422, last_response.status
+    assert_json_response(last_response)
+
+    data = parse_json_response(last_response)
+    assert_equal 'card_required', data['status']
+    assert_equal 'operations_expert_special', data['movement_type']
+    assert_includes data['message'], 'Operations Expert requires a city card'
+  end
+
+  def test_operations_expert_prerequisites_not_at_station
+    create_game_with_custom_state do |state|
+      # Set first player as Operations Expert
+      current_player = state.players[state.current_player_idx]
+      current_player.instance_variable_set(:@role, :operations_expert)
+
+      # Place Operations Expert NOT at research station
+      current_player.location = 'London' # London doesn't have a research station
+
+      # Give Operations Expert city cards
+      require_relative '../app/game_state/card'
+      current_player.hand.clear
+      current_player.hand << Card.new(:city, 'Paris', :blue)
+    end
+
+    post '/move', {
+      player_index: 0,
+      destination: 'Tokyo',
+      card_name: 'Paris'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    # Should fail because not at research station - will try other move types
+    # This should result in invalid move since London and Tokyo aren't connected
+    assert_equal 422, last_response.status
+    assert_json_response(last_response)
+
+    data = parse_json_response(last_response)
+    assert_equal 'error', data['status']
+  end
+
+  def test_operations_expert_prerequisites_no_city_cards
+    create_game_with_custom_state do |state|
+      # Set first player as Operations Expert
+      current_player = state.players[state.current_player_idx]
+      current_player.instance_variable_set(:@role, :operations_expert)
+
+      # Place Operations Expert at research station
+      current_player.location = 'Wuhan'
+
+      # Give Operations Expert NO city cards (only action cards)
+      require_relative '../app/game_state/card'
+      current_player.hand.clear
+      current_player.hand << Card.new(:action, 'Airlift')
+    end
+
+    post '/move', {
+      player_index: 0,
+      destination: 'Tokyo'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    # Should fail because no city cards available
+    assert_equal 422, last_response.status
+    assert_json_response(last_response)
+
+    data = parse_json_response(last_response)
+    assert_equal 'error', data['status']
+  end
+
+  def test_non_operations_expert_cannot_use_special_move
+    create_game_with_custom_state do |state|
+      # Set first player as Medic (not Operations Expert)
+      current_player = state.players[state.current_player_idx]
+      current_player.instance_variable_set(:@role, :medic)
+
+      # Place at research station with city cards
+      current_player.location = 'Wuhan'
+
+      require_relative '../app/game_state/card'
+      current_player.hand.clear
+      current_player.hand << Card.new(:city, 'London', :blue)
+    end
+
+    post '/move', {
+      player_index: 0,
+      destination: 'Tokyo',
+      card_name: 'London'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    # Should fail because player is not Operations Expert
+    assert_equal 422, last_response.status
+    assert_json_response(last_response)
+
+    data = parse_json_response(last_response)
+    assert_equal 'error', data['status']
+  end
+
+  def test_operations_expert_integration_with_normal_moves
+    create_game_with_custom_state do |state|
+      # Set first player as Operations Expert
+      current_player = state.players[state.current_player_idx]
+      current_player.instance_variable_set(:@role, :operations_expert)
+
+      # Place Operations Expert at London (connected to several cities)
+      current_player.location = 'London'
+
+      # Give Operations Expert city cards
+      require_relative '../app/game_state/card'
+      current_player.hand.clear
+      current_player.hand << Card.new(:city, 'Paris', :blue)
+    end
+
+    # Operations Expert should be able to use normal drive/ferry moves
+    post '/move', {
+      player_index: 0,
+      destination: 'Paris' # London and Paris are connected
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_successful_response(last_response)
+    assert_json_response(last_response)
+
+    data = parse_json_response(last_response)
+    assert_equal 'success', data['status']
+
+    # Verify player moved to Paris via normal move (not special move)
+    assert data.key?('game_state'), "Response should contain game_state"
+    assert_equal 'Paris', data['game_state']['players'][0]['location']
+
+    # Verify Paris card was NOT discarded (normal drive/ferry doesn't require card)
+    player_hand = data['game_state']['players'][0]['hand']
+    card_names = player_hand.map { |card| card['name'] }
+    assert_includes card_names, 'Paris'
+  end
 end

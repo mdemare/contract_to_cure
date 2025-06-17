@@ -15,7 +15,8 @@ module JsonGenerator
         infectionRatePosition: @infection_rate_marker,
         currentPlayerIndex: @current_player_idx,
         forecast_active: @forecast_active,
-        forecast_cards: @forecast_cards
+        forecast_cards: @forecast_cards,
+        operations_expert_move_used: @operations_expert_move_used
       },
       diseaseCubes: COLORS.each_with_object({}) do |color, hash|
         # Only include cities with cubes
