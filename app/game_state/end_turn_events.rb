@@ -36,6 +36,7 @@ module EndTurnEvents
     @actions_remaining = 4
     @phase = 'player_actions'
     @turn += 1
+    @operations_expert_move_used = false
 
     # Save game state after turn is complete
     save_game_state

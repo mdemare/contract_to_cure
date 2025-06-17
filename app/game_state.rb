@@ -22,7 +22,7 @@ class GameState
               :player_deck, :player_discard, :research_stations, :disease_cubes, :cures,
               :outbreak_count, :infection_rate, :infection_rate_marker, :game_over,
               :game_over_reason, :difficulty_level, :current_player, :forecast_active,
-              :actions_remaining
+              :actions_remaining, :operations_expert_move_used
 
   # Initialize a new game state
   def initialize(players_count, difficulty_level = :heroic)
@@ -105,7 +105,8 @@ class GameState
           infection_rate: @infection_rate,
           infection_rate_position: @infection_rate_marker,
           current_player_idx: @current_player_idx,
-          quiet_night: @quiet_night
+          quiet_night: @quiet_night,
+          operations_expert_move_used: @operations_expert_move_used
         },
         disease_cubes: COLORS.each_with_object({}) do |color, hash|
           hash[color] = {
@@ -174,6 +175,7 @@ class GameState
     @game_over_reason = nil
     @actions_remaining = 4
     @phase = 'player_actions'
+    @operations_expert_move_used = false
 
     # Initialize diseases
     @disease_cubes = {}
@@ -278,6 +280,7 @@ class GameState
     @quiet_night = state[:game_status][:quiet_night]
     @forecast_active = state[:game_status][:forecast_active] || false
     @forecast_cards = state[:game_status][:forecast_cards]
+    @operations_expert_move_used = state[:game_status][:operations_expert_move_used] || false
 
     # Rebuild cities
     @cities = {}
