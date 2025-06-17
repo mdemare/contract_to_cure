@@ -12,9 +12,9 @@ class ApplicationController < ActionController::Base
 
   helper_method :current_user, :logged_in?
 
-  # Redirect root URL to index.html
+  # Render the main game page
   def index
-    redirect_to '/index.html'
+    render 'index'
   end
 
   private

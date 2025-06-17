@@ -26,8 +26,8 @@ class TestSessionsController < TestHelper
     get '/auth/google_oauth2/callback'
     follow_redirect!
 
-    assert last_response.redirect?
-    assert_equal '/', last_request.path
+    assert last_response.ok?
+    assert_includes last_response.body, 'PANDEMIC'
 
     # Verify user data was stored in Redis
     user_key = "google_user:123456"
