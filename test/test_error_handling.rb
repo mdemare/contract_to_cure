@@ -153,7 +153,7 @@ class TestErrorHandling < TestHelper
       city_name = current_player.location
 
       # Ensure city has no disease cubes
-      %i[red blue yellow black].each do |color|
+      %i[red blue yellow black].each do |_color|
         # Reset disease cubes for the city by setting city's disease cubes to 0
         city = state.cities[city_name]
         city.disease_cubes = 0 if city
@@ -215,7 +215,7 @@ class TestErrorHandling < TestHelper
   def test_actions_when_no_actions_remaining
     create_game_with_custom_state do |state|
       state.instance_variable_set(:@actions_remaining, 0)
-      state.instance_variable_set(:@phase, 'draw_cards')  # Set phase to not be 'player_actions'
+      state.instance_variable_set(:@phase, 'draw_cards') # Set phase to not be 'player_actions'
     end
 
     post '/move', {

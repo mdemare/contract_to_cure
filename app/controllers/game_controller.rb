@@ -1,7 +1,10 @@
 class GameController < ApplicationController
   # Get game state as JSON
   def state
-    render json: game_state.to_json_state
+    state_json = game_state.to_json_state
+    state_data = JSON.parse(state_json)
+    state_data['current_user'] = current_user
+    render json: state_data
   end
 
   # Move action endpoint

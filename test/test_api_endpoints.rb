@@ -124,7 +124,7 @@ class TestApiEndpoints < TestHelper
     create_game_with_custom_state do |state|
       # Move player to a city without a research station
       current_player = state.players[state.current_player_idx]
-      current_player.location = 'Chicago'  # Move away from Wuhan
+      current_player.location = 'Chicago' # Move away from Wuhan
       require_relative '../app/game_state/card'
 
       # Give player the Chicago card to build research station
