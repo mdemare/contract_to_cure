@@ -105,7 +105,7 @@ async function checkGameOverAfterEvents() {
     // Check if the game is over and show dialog
     if (currentGameState && currentGameState.gameStatus && currentGameState.gameStatus.gameOver === true) {
       // Brief pause before showing dialog
-      await delay(500);
+      await delay(300);
       gameOverModule.checkGameOver(currentGameState);
     }
   } catch (error) {
@@ -122,9 +122,9 @@ async function checkGameOverAfterEvents() {
 async function animateCardStack(animContainer, eventStack) {
   if (eventStack.length == 0) {
     // All cards have been animated - replace nested setTimeout with await
-    await delay(1200);
+    await delay(800);
     animContainer.style.opacity = '0';
-    await delay(600);
+    await delay(400);
     animContainer.style.display = 'none';
     animContainer.style.opacity = '1'; // Reset for next time
     return;
@@ -174,7 +174,7 @@ async function animateCardStack(animContainer, eventStack) {
         const selectCardsModule = await import('./select_cards.js');
 
         // Replace setTimeout with await delay
-        await delay(1200);
+        await delay(800);
 
         // Convert callback to Promise
         await new Promise(resolve => {
@@ -215,7 +215,7 @@ async function handleHeaderAnimation(animContainer, cardElement, eventStack) {
   cardElement.classList.add('drawn');
 
   // Replace the recursive setTimeout with await delay
-  await delay(1000);
+  await delay(600);
 
   // Return to original behavior for now (will be updated in next phase)
   return animateCardStack(animContainer, eventStack);
@@ -274,7 +274,7 @@ async function handleCardAnimation(animContainer, cardElement, eventStack, conti
 
   // Replace setTimeout with await delay, but keep original behavior for now
   if (continueAnimation) {
-    await delay(1000);
+    await delay(600);
     return animateCardStack(animContainer, eventStack);
   }
 }
