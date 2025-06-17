@@ -89,10 +89,6 @@ export function updateGameUI(gameState) {
       document.getElementById('player-cards').textContent = gameState.decks.playerDeck;
     }
 
-    // Update infection cards count
-    if (gameState.decks && gameState.decks.infectionDeck) {
-      document.getElementById('infection-cards').textContent = gameState.decks.infectionDeck;
-    }
 
     updateCureStatus(gameState);
     updatePlayerPanel(gameState);
@@ -110,6 +106,7 @@ export function updateCureStatus(gameState) {
   // Update cure status for each disease color
   COLOR_KEYS.forEach(color => {
     const cureElement = document.getElementById(`${color}-cure`);
+    const cubesElement = document.getElementById(`${color}-cubes`);
 
     // Check if the color exists in the game state
     if (gameState.diseaseCubes && gameState.diseaseCubes[color]) {
@@ -123,6 +120,12 @@ export function updateCureStatus(gameState) {
           cureElement.textContent = 'Not Cured';
           cureElement.classList.remove('cured');
         }
+      }
+
+      // Update cube count display
+      if (cubesElement) {
+        const cubeCount = diseaseInfo.inSupply || 0;
+        cubesElement.textContent = `${cubeCount} cubes`;
       }
     }
   });
