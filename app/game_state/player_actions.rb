@@ -219,7 +219,7 @@ module PlayerActions
     if current_player.hand.size > 7
       exceeded_limit = {
         player_index: current_player_idx,
-        excess_cards: current_player.hand.map(&:name).last(current_player.hand.size - 7)
+        discard_count: current_player.hand.size - 7
       }
       response = after_action(true, "Successfully retrieved '#{action_card_name}' action card")
       response[:exceeded_hand_limit] = exceeded_limit
