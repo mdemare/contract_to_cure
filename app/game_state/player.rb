@@ -4,8 +4,8 @@ class Player
   attr_accessor :location, :hand
 
   # Alias for compatibility with tests
-  alias_method :cards, :hand
-  alias_method :cards=, :hand=
+  alias cards hand
+  alias cards= hand=
 
   ROLE_NAMES = {
     medic: "Medic",

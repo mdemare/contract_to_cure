@@ -6,7 +6,7 @@ class TestErrorHandling < TestHelper
 
     post '/move', 'invalid json', { 'CONTENT_TYPE' => 'application/json' }
 
-    assert_equal 500, last_response.status
+    assert_equal 400, last_response.status
   end
 
   def test_missing_content_type
@@ -28,7 +28,6 @@ class TestErrorHandling < TestHelper
       player_index: 0,
       destination: 'NonExistentCity'
     }.to_json, { 'CONTENT_TYPE' => 'application/json' }
-
     # Should return an error response
     refute last_response.successful?
     assert_json_response(last_response)
@@ -122,6 +121,9 @@ class TestErrorHandling < TestHelper
       require_relative '../app/game_state/card'
       current_player.hand.clear
       current_player.hand << Card.new(:city, 'Chicago', :blue) # Has Chicago card, not London
+
+      # Ensure player is NOT Operations Expert (who can build without city card)
+      current_player.instance_variable_set(:@role, :medic)
     end
 
     post '/build_research_station'
@@ -153,7 +155,7 @@ class TestErrorHandling < TestHelper
       city_name = current_player.location
 
       # Ensure city has no disease cubes
-      %i[red blue yellow black].each do |color|
+      %i[red blue yellow black].each do |_color|
         # Reset disease cubes for the city by setting city's disease cubes to 0
         city = state.cities[city_name]
         city.disease_cubes = 0 if city
@@ -215,7 +217,7 @@ class TestErrorHandling < TestHelper
   def test_actions_when_no_actions_remaining
     create_game_with_custom_state do |state|
       state.instance_variable_set(:@actions_remaining, 0)
-      state.instance_variable_set(:@phase, 'draw_cards')  # Set phase to not be 'player_actions'
+      state.instance_variable_set(:@phase, 'draw_cards') # Set phase to not be 'player_actions'
     end
 
     post '/move', {

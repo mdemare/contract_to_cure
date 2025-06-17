@@ -67,7 +67,6 @@ class GameState
         return nil
       end
     else
-      puts "No saved game state found in Redis key: #{redis_key}"
       return nil
     end
   rescue Redis::BaseError => e

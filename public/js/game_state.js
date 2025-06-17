@@ -2,6 +2,7 @@
 import { updateGameUI } from './ui.js';
 import { showPlayerSelectionPanel, hidePlayerSelectionPanel } from './player_selection.js';
 import { setSelectedPlayerIndex } from './player_actions.js';
+import { updateAuthUI } from './auth.js';
 
 // Global variable to store the current game state
 let currentGameState = null;
@@ -133,6 +134,13 @@ export async function loadGameState(providedGameState = null) {
     }
 
     currentGameState = gameState;
+    
+    // Update authentication UI
+    if (gameState.current_user) {
+      updateAuthUI(gameState.current_user);
+    } else {
+      updateAuthUI(null);
+    }
 
     // Update the UI with the new game state
     updateGameUI(gameState);
