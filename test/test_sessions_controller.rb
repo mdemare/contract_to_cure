@@ -93,6 +93,27 @@ class TestSessionsController < TestHelper
     assert last_response.ok?
   end
 
+  def test_oauth_endpoint_accepts_post_requests
+    # Test that OAuth endpoint accepts POST requests (not GET)
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new(@auth_hash)
+    
+    # POST to OAuth endpoint should work
+    post '/auth/google_oauth2'
+    
+    # Should redirect to callback
+    assert last_response.redirect?
+    assert_includes last_response.location, '/auth/google_oauth2/callback'
+  end
+
+  def test_oauth_endpoint_rejects_get_requests
+    # Test that OAuth endpoint rejects GET requests for security
+    get '/auth/google_oauth2'
+    
+    # Should return 404 (method not allowed by OmniAuth)
+    assert_equal 404, last_response.status
+  end
+
   def teardown
     super
     OmniAuth.config.test_mode = false
