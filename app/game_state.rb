@@ -42,31 +42,29 @@ class GameState
     redis = Redis.new(url: redis_url)
     saved_data = redis.get(redis_key)
 
-    if saved_data
-      begin
-        # Try to load as Marshal first (for tests), then fall back to YAML
-        saved_state = begin
-          Marshal.load(saved_data)
-        rescue TypeError, ArgumentError
-          YAML.load(saved_data, permitted_classes: [GameState, Player, Card, City, Symbol])
-        end
+    return nil unless saved_data
 
-        # If we got a GameState object directly (from Marshal), return it
-        return saved_state if saved_state.is_a?(GameState)
-
-        # Otherwise, create a new instance without initialization
-        game = allocate
-
-        # Set up instance variables from the saved state
-        game.send(:load_state_from_hash, saved_state)
-
-        return game
-      rescue => e
-        puts "Error loading game state from Redis: #{e.message}"
-        puts e.backtrace
-        return nil
+    begin
+      # Try to load as Marshal first (for tests), then fall back to YAML
+      saved_state = begin
+        Marshal.load(saved_data)
+      rescue TypeError, ArgumentError
+        YAML.load(saved_data, permitted_classes: [GameState, Player, Card, City, Symbol])
       end
-    else
+
+      # If we got a GameState object directly (from Marshal), return it
+      return saved_state if saved_state.is_a?(GameState)
+
+      # Otherwise, create a new instance without initialization
+      game = allocate
+
+      # Set up instance variables from the saved state
+      game.send(:load_state_from_hash, saved_state)
+
+      return game
+    rescue => e
+      puts "Error loading game state from Redis: #{e.message}"
+      puts e.backtrace
       return nil
     end
   rescue Redis::BaseError => e
