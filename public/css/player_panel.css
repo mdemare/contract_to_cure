@@ -2,7 +2,7 @@
 .player-panel {
   position: fixed;
   right: 0;
-  top: 80px; /* Below header */
+  top: 87px; /* Align with top of map-wrapper */
   bottom: 170px; /* Above action buttons, with enough clearance */
   width: 240px;
   background-color: var(--panel-bg);
