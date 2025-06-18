@@ -352,7 +352,8 @@ class TestApiEndpoints < TestHelper
       # No card_name specified
     }.to_json, { 'CONTENT_TYPE' => 'application/json' }
 
-    assert_equal 422, last_response.status
+    # Should return 200 for card_required responses (not 422)
+    assert_equal 200, last_response.status
     assert_json_response(last_response)
 
     data = parse_json_response(last_response)
