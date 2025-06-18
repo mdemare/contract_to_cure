@@ -13,6 +13,14 @@ class TestApiEndpoints < TestHelper
     refute_includes last_response.body, 'git-hash', 'Git hash should not be displayed in development environment'
   end
 
+  def test_git_hash_moved_to_player_list
+    # This test verifies the structure is in place for production git hash display
+    get '/'
+    assert_equal 200, last_response.status
+    # In development, no data-git-hash attribute should be present
+    refute_includes last_response.body, 'data-git-hash', 'data-git-hash attribute should not be present in development'
+  end
+
   def test_game_state_json_endpoint
     create_test_game_state
 

@@ -65,6 +65,13 @@ function createPlayerPanel() {
 
   // Create player list container
   const listContainer = createSimpleElement('div', 'player-list');
+  
+  // Add git commit hash to top-left of player list (production only)
+  const gitHashData = document.body.getAttribute('data-git-hash');
+  if (gitHashData && gitHashData.trim()) {
+    const gitHash = createSimpleElement('div', 'git-hash-display', gitHashData);
+    listContainer.appendChild(gitHash);
+  }
 
   // Assemble the panel
   panel.appendChild(header);
