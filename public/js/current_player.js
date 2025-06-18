@@ -28,7 +28,7 @@ export function updateCurrentPlayer(gameState) {
   pawnElement.className = 'current-player-pawn';
 
   // Add the current role class
-  pawnElement.classList.add(roleName.replace(' ', '-'));
+  pawnElement.classList.add(roleName.replaceAll('_', '-'));
 
   // Update the label text
   labelElement.textContent = roleText;

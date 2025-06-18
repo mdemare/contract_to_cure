@@ -126,7 +126,7 @@ function createPlayerItem(player, isCurrent) {
   const roleText = formatRoleText(player.role);
 
   // Create pawn indicator
-  const pawnElement = createSimpleElement('div', ['player-pawn', roleName.replace(' ', '-')]);
+  const pawnElement = createSimpleElement('div', ['player-pawn', roleName.replaceAll('_', '-')]);
 
   // Create player name/role text
   const nameElement = createSimpleElement('div', 'player-name', roleText);
