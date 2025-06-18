@@ -22,6 +22,32 @@ export function updateAuthUI(currentUser) {
     // User is not logged in
     authInfo.style.display = 'none';
     loginBtn.style.display = 'inline-block';
+    
+    // Add login handler
+    loginBtn.addEventListener('click', handleLogin);
+  }
+}
+
+async function handleLogin() {
+  try {
+    // Create a form and submit it as POST to /auth/google_oauth2
+    const form = document.createElement('form');
+    form.method = 'POST';
+    form.action = '/auth/google_oauth2';
+    
+    // Add CSRF token
+    const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+    const csrfInput = document.createElement('input');
+    csrfInput.type = 'hidden';
+    csrfInput.name = 'authenticity_token';
+    csrfInput.value = csrfToken;
+    form.appendChild(csrfInput);
+    
+    // Add form to body and submit
+    document.body.appendChild(form);
+    form.submit();
+  } catch (error) {
+    console.error('Error during login:', error);
   }
 }
 
