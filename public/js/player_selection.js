@@ -63,10 +63,10 @@ function createPlayerButton(player, playerIndex) {
 
   // Add role class for styling
   const roleName = String(player.role).toLowerCase();
-  playerButton.classList.add(roleName.replace(' ', '-'));
+  playerButton.classList.add(roleName.replaceAll('_', '-'));
 
   // Add player pawn
-  const playerPawn = createSimpleElement('div', ['player-pawn', roleName.replace(' ', '-')]);
+  const playerPawn = createSimpleElement('div', ['player-pawn', roleName.replaceAll('_', '-')]);
   playerButton.appendChild(playerPawn);
 
   // Add player role text
