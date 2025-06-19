@@ -199,7 +199,12 @@ class GameController < ApplicationController
 
   def render_game_result(result)
     if result[:success] == false
-      render json: result, status: 422
+      # Handle card_required responses with 200 status instead of 422
+      if result[:status] == 'card_required'
+        render json: result
+      else
+        render json: result, status: 422
+      end
     else
       render json: result
     end
