@@ -75,10 +75,17 @@ export function updateButtonStates() {
   // Check for no actions remaining, show draw cards button and hide action buttons
   const drawCardsBtn = document.getElementById('draw-cards-btn');
   const infectCitiesBtn = document.getElementById('infect-cities-btn');
-  const actionButtonsList = document.querySelectorAll('.action-btn');
-
+  
   // Get action cards button separately as it should be available in all phases
   const actionCardsBtn = document.getElementById('action-cards-btn');
+  
+  // Check if any player has event cards before handling phase visibility
+  const hasEventCards = gameState.players.some(player => 
+    player.hand.some(card => card.type === 'action')
+  );
+  
+  // Get all action buttons but properly exclude special ones
+  const actionButtonsList = document.querySelectorAll('.action-btn');
   
   if (phase === 'player_actions') {
     // Show all other action buttons
@@ -100,14 +107,12 @@ export function updateButtonStates() {
     } else {
       infectCitiesBtn.style.display = 'flex';
     }
-  }
-  
-  // Always show action cards button if any player has event cards
-  if (actionCardsBtn) {
-    const hasEventCards = gameState.players.some(player => 
-      player.hand.some(card => card.type === 'action')
-    );
-    actionCardsBtn.style.display = hasEventCards ? 'flex' : 'none';
+    
+    // Ensure action cards button is visible if players have event cards
+    // This must happen after the general hiding to override it
+    if (actionCardsBtn && hasEventCards) {
+      actionCardsBtn.style.display = 'flex';
+    }
   }
 
   // Check for build station action availability
