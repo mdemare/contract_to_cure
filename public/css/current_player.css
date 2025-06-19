@@ -3,7 +3,7 @@
 .current-player {
   position: fixed;
   left: 20px;
-  bottom: 30px;
+  bottom: 36px;
   display: flex;
   align-items: center;
   gap: 15px;

@@ -6,7 +6,6 @@
   bottom: 170px; /* Above action buttons, with enough clearance */
   width: 240px;
   background-color: var(--panel-bg);
-  border-left: 1px solid var(--border-color);
   border-bottom: 1px solid var(--border-color);
   border-bottom-left-radius: 8px;
   box-shadow: -2px 0 10px rgba(0, 0, 0, 0.1);
