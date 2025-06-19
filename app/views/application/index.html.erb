@@ -34,15 +34,12 @@
   <script type="module" src="/js/scrolling.js"></script>
   <script type="module" src="/js/retrieve_card.js"></script>
 </head>
-<body>
+<body<%= Rails.env.production? ? " data-git-hash=\"#{File.read('.git/refs/heads/trunk').strip[0..5] rescue ''}\"".html_safe : '' %>>
   <div class="game-header">
     <div class="logo-container">
       <h1>PANDEMIC</h1>
       <h2>Global Disease Control</h2>
     </div>
-    <% if Rails.env.production? %>
-      <span class="git-hash"><%= File.read('.git/refs/heads/trunk').strip[0..5] rescue nil %></span>
-    <% end %>
     <div class="auth-container">
       <div id="auth-info" style="display: none;">
         <span class="user-name"></span>
