@@ -72,7 +72,7 @@ button {
   }
 
   .status-panel, .cure-status, .legend {
-    min-width: 200px;
+    min-width: unset;
   }
 }
 
