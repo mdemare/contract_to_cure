@@ -35,91 +35,91 @@
   <script type="module" src="/js/retrieve_card.js"></script>
 </head>
 <body<%= Rails.env.production? ? " data-git-hash=\"#{File.read('.git/refs/heads/trunk').strip[0..5] rescue ''}\"".html_safe : '' %>>
-  <div class="game-header">
-    <div class="logo-container">
-      <h1>PANDEMIC</h1>
-      <h2>Global Disease Control</h2>
-    </div>
-    <div class="auth-container">
-      <div id="auth-info" style="display: none;">
-        <span class="user-name"></span>
-        <button id="logout-btn" class="logout-button">Logout</button>
+  <div class="top-view">
+    <div class="left-view">
+      <div class="logo-container">
+        <img src="/logo.jpg" alt="Contract To Cure">
       </div>
-      <button id="login-btn" class="login-button" style="display: none;">Login with Google</button>
-    </div>
-  </div>
+      <div class="game-status">
+        <div class="status-panel">
+          <h3>Game Status</h3>
+          <div class="status-item">
+            <span>Actions:</span>
+            <span id="action-counter">0</span>
+          </div>
+          <div class="status-item">
+            <span>Turn:</span>
+            <span id="turn-counter">1</span>
+          </div>
+          <div class="status-item">
+            <span>Outbreaks:</span>
+            <span id="outbreak-counter">0</span>
+          </div>
+          <div class="status-item">
+            <span>Player Cards:</span>
+            <span id="player-cards">35</span>
+          </div>
+        </div>
 
-  <div class="game-interface">
-    <div class="game-status">
-      <div class="status-panel">
-        <h3>Game Status</h3>
-        <div class="status-item">
-          <span>Actions:</span>
-          <span id="action-counter">0</span>
-        </div>
-        <div class="status-item">
-          <span>Turn:</span>
-          <span id="turn-counter">1</span>
-        </div>
-        <div class="status-item">
-          <span>Outbreaks:</span>
-          <span id="outbreak-counter">0</span>
-        </div>
-        <div class="status-item">
-          <span>Player Cards:</span>
-          <span id="player-cards">35</span>
-        </div>
-      </div>
-
-      <div class="cure-status">
-        <h3>Disease Status</h3>
-        <div class="cure-grid">
-          <div class="cure-item blue">
-            <div class="cure-info">
-              <div class="cure-color"></div>
-              <div id="blue-cure" class="cure-label">Not Cured</div>
+        <div class="cure-status">
+          <h3>Disease Status</h3>
+          <div class="cure-grid">
+            <div class="cure-item blue">
+              <div class="cure-info">
+                <div class="cure-color"></div>
+                <div id="blue-cure" class="cure-label">Not Cured</div>
+              </div>
+              <div id="blue-cubes" class="cube-count">24 cubes</div>
             </div>
-            <div id="blue-cubes" class="cube-count">24 cubes</div>
-          </div>
-          <div class="cure-item yellow">
-            <div class="cure-info">
-              <div class="cure-color"></div>
-              <div id="yellow-cure" class="cure-label">Not Cured</div>
+            <div class="cure-item yellow">
+              <div class="cure-info">
+                <div class="cure-color"></div>
+                <div id="yellow-cure" class="cure-label">Not Cured</div>
+              </div>
+              <div id="yellow-cubes" class="cube-count">24 cubes</div>
             </div>
-            <div id="yellow-cubes" class="cube-count">24 cubes</div>
-          </div>
-          <div class="cure-item black">
-            <div class="cure-info">
-              <div class="cure-color"></div>
-              <div id="black-cure" class="cure-label">Not Cured</div>
+            <div class="cure-item black">
+              <div class="cure-info">
+                <div class="cure-color"></div>
+                <div id="black-cure" class="cure-label">Not Cured</div>
+              </div>
+              <div id="black-cubes" class="cube-count">24 cubes</div>
             </div>
-            <div id="black-cubes" class="cube-count">24 cubes</div>
-          </div>
-          <div class="cure-item red">
-            <div class="cure-info">
-              <div class="cure-color"></div>
-              <div id="red-cure" class="cure-label">Not Cured</div>
+            <div class="cure-item red">
+              <div class="cure-info">
+                <div class="cure-color"></div>
+                <div id="red-cure" class="cure-label">Not Cured</div>
+              </div>
+              <div id="red-cubes" class="cube-count">24 cubes</div>
             </div>
-            <div id="red-cubes" class="cube-count">24 cubes</div>
           </div>
         </div>
       </div>
     </div>
-
-    <div class="map-wrapper">
-      <div class="map-container">
-        <svg class="connections-layer" width="100%" height="100%"></svg>
+    <div class="right-view">
+      <div class="game-header">
+        <div class="auth-container">
+          <div id="auth-info" style="display: none;">
+            <span class="user-name"></span>
+            <button id="logout-btn" class="logout-button">Logout</button>
+          </div>
+          <button id="login-btn" class="login-button" style="display: none;">Login with Google</button>
+        </div>
+      </div>
+      <div class="map-wrapper">
+        <div class="map-container">
+          <svg class="connections-layer" width="100%" height="100%"></svg>
+        </div>
       </div>
     </div>
-  </div>
-
-  <div class="current-player">
-    <div class="current-player-pawn" id="current-player-pawn"></div>
-    <div class="current-player-label" id="current-player-label">Current Player</div>
   </div>
 
   <!-- Touch-Friendly Action Buttons -->
   <div class="action-buttons">
+    <div class="current-player">
+      <div class="current-player-pawn" id="current-player-pawn"></div>
+      <div class="current-player-label" id="current-player-label">Current Player</div>
+    </div>
     <button id="move-btn" class="action-btn move">
       <i></i>
       <span>Move</span>
