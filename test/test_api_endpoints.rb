@@ -4,7 +4,7 @@ class TestApiEndpoints < TestHelper
   def test_root_renders_index
     get '/'
     assert_equal 200, last_response.status
-    assert_includes last_response.body, 'PANDEMIC'
+    assert_includes last_response.body, 'Contract To Cure'
   end
 
   def test_git_hash_not_displayed_in_development

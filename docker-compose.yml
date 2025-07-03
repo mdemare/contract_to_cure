@@ -1,11 +1,9 @@
+name: contracttocure_production
 services:
-  rails:
+  app:
     build:
       context: .
       dockerfile: Dockerfile
-    image:
-      contracttocure-production
-    container_name: contracttocure
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
