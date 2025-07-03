@@ -27,7 +27,7 @@ class TestSessionsController < TestHelper
     follow_redirect!
 
     assert last_response.ok?
-    assert_includes last_response.body, 'PANDEMIC'
+    assert_includes last_response.body, 'Contract To Cure'
 
     # Verify user data was stored in Redis
     user_key = "google_user:123456"
