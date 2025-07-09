@@ -84,6 +84,15 @@ async function handleCityClick(event) {
   const cityName = event.currentTarget.dataset.cityName;
   if (!cityName) { return; }
 
+  // Check if clicks should be ignored based on game state
+  const gameState = getCurrentGameState();
+  if (gameState.gameStatus.actions_remaining === 0 && 
+      (gameState.gameStatus.phase === 'draw_cards' || 
+       gameState.gameStatus.phase === 'infect_cities')) {
+    // No-op - ignore the click when no actions remain in draw/infect phases
+    return;
+  }
+
   // Get the current player
   const currentPlayer = getCurrentPlayer();
 
