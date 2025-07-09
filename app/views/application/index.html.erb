@@ -17,6 +17,7 @@
   <link rel="stylesheet" href="/css/player_panel.css">
   <link rel="stylesheet" href="/css/share_knowledge.css">
   <link rel="stylesheet" href="/css/player_selection.css">
+  <link rel="stylesheet" href="/css/menu.css">
   <link rel="stylesheet" href="/css/style.css">  <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;700&family=Roboto+Slab:wght@400;700&display=swap" rel="stylesheet">
@@ -33,6 +34,7 @@
   <script type="module" src="/js/player_panel.js"></script>
   <script type="module" src="/js/scrolling.js"></script>
   <script type="module" src="/js/retrieve_card.js"></script>
+  <script type="module" src="/js/menu.js"></script>
 </head>
 <body<%= Rails.env.production? ? " data-git-hash=\"#{File.read('.git/refs/heads/trunk').strip[0..5] rescue ''}\"".html_safe : '' %>>
   <div class="top-view">
@@ -98,12 +100,31 @@
     </div>
     <div class="right-view">
       <div class="game-header">
-        <div class="auth-container">
-          <div id="auth-info" style="display: none;">
-            <span class="user-name"></span>
-            <button id="logout-btn" class="logout-button">Logout</button>
+        <div class="menu-container">
+          <button id="menu-toggle" class="menu-toggle" aria-label="Menu" aria-expanded="false">
+            <div class="menu-icon">
+              <span></span>
+              <span></span>
+              <span></span>
+            </div>
+            <span>Menu</span>
+          </button>
+          <div id="dropdown-menu" class="dropdown-menu" role="menu">
+            <div id="auth-info-menu" class="user-info" style="display: none;">
+              <span class="user-name-menu"></span>
+              <span class="user-email"></span>
+            </div>
+            <button id="new-game-btn" class="menu-item" role="menuitem">
+              <span>New Game</span>
+            </button>
+            <div class="menu-divider"></div>
+            <button id="login-menu-btn" class="menu-item" role="menuitem" style="display: none;">
+              <span>Login</span>
+            </button>
+            <button id="logout-menu-btn" class="menu-item" role="menuitem" style="display: none;">
+              <span>Logout</span>
+            </button>
           </div>
-          <button id="login-btn" class="login-button" style="display: none;">Login</button>
         </div>
       </div>
       <div class="map-wrapper">
