@@ -36,6 +36,4 @@ RUN chown -R rails:rails /app
 # Switch to non-root user
 USER rails
 
-EXPOSE 4567
-
-CMD ["bundle", "exec", "puma", "-C", "config/puma.rb"]
+EXPOSE 3000
