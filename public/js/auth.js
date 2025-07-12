@@ -5,26 +5,12 @@ export function initializeAuth() {
 }
 
 export function updateAuthUI(currentUser) {
-  const authInfo = document.getElementById('auth-info');
-  const loginBtn = document.getElementById('login-btn');
-  const logoutBtn = document.getElementById('logout-btn');
-  const userName = document.querySelector('.user-name');
+  // Store current user globally for menu access
+  window.currentUser = currentUser;
   
-  if (currentUser) {
-    // User is logged in
-    authInfo.style.display = 'flex';
-    loginBtn.style.display = 'none';
-    userName.textContent = currentUser.name || currentUser.email;
-    
-    // Add logout handler
-    logoutBtn.addEventListener('click', handleLogout);
-  } else {
-    // User is not logged in
-    authInfo.style.display = 'none';
-    loginBtn.style.display = 'inline-block';
-    
-    // Add login handler
-    loginBtn.addEventListener('click', handleLogin);
+  // Update menu auth UI if the function exists
+  if (window.updateMenuAuthUI) {
+    window.updateMenuAuthUI();
   }
 }
 
