@@ -1,5 +1,5 @@
 # Single-stage production build
-FROM ruby:3.4-slim
+FROM ruby:3.4-slim-bookworm
 
 # Install dependencies
 RUN apt-get update -qq && apt-get install -y \
@@ -36,4 +36,4 @@ RUN chown -R rails:rails /app
 # Switch to non-root user
 USER rails
 
-EXPOSE 3000
+EXPOSE 2583

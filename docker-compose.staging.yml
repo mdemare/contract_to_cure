@@ -10,13 +10,13 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
-      - "1${EXPOSED_PORT:-3000}:${PORT:-3000}"
+      - "1${EXPOSED_PORT:-3100}:2583"
     env_file:
       - .env
     restart: unless-stopped
     command: ["bundle", "exec", "puma", "-C", "config/puma.rb"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:${PORT:-3000}/up"]
+      test: ["CMD", "curl", "-f", "http://localhost:2583/up"]
       interval: 30s
       timeout: 10s
       retries: 3
