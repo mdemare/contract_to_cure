@@ -192,7 +192,7 @@ class GameState
     save_game_state
 
     # Return success response
-    { status: 'success', message: 'Game restarted successfully' }
+    { success: true, status: 'success', message: 'Game restarted successfully' }
   end
 
   def has_quarantine_specialist_protection?(city_name)

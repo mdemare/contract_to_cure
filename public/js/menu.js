@@ -88,9 +88,21 @@ function handleNewGame() {
       }
       return response.json();
     })
-    .then(data => {
+    .then(async data => {
       if (data.success) {
-        window.location.reload();
+        // Import and call loadGameState to reload the game
+        const { loadGameState } = await import('./game_state.js');
+        await loadGameState();
+        
+        // Close any open dialogs or overlays
+        const gameOverDialog = document.querySelector('.game-over-dialog');
+        if (gameOverDialog) {
+          gameOverDialog.style.display = 'none';
+        }
+        
+        // Update the UI to reflect the new game state
+        const { updateUI } = await import('./ui.js');
+        updateUI();
       } else {
         alert('Failed to start new game. Please try again.');
       }
