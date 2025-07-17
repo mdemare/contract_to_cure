@@ -16,9 +16,7 @@ gem 'redis', '~> 5.0'
 gem 'puma', '~> 6.6'
 
 # Authentication gems
-gem 'omniauth', '~> 2.1'
-gem 'omniauth-google-oauth2', '~> 1.1'
-gem 'omniauth-rails_csrf_protection', '~> 1.0'
+gem 'jwt'
 
 # Development gems
 group :development do

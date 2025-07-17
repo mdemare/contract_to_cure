@@ -20,18 +20,30 @@ class ApplicationController < ActionController::Base
   private
 
   def current_user
-    @current_user ||= if !Rails.env.production? && ENV['SKIP_AUTH'] == 'true'
-      {
-        uid: 'dev_user',
-        email: 'dev@example.com',
-        name: 'Development User'
-      }
-    elsif session[:user_id]
-      {
-        uid: session[:user_id],
-        email: session[:user_email],
-        name: session[:user_name]
-      }
+    @current_user ||= begin
+      # Check for JWT token first
+      token = request.cookies['auth_token']
+      if token.present?
+        decoded_token = JWT.decode(token, jwt_secret, true, algorithm: 'HS256')
+        user_data = decoded_token[0]['user']
+        {
+          uid: user_data['id'].to_s,
+          email: user_data['email'],
+          name: user_data['name']
+        }
+      elsif Rails.env.development?
+        {
+          uid: 'dev_user',
+          email: 'merloen@gmail.com',
+          name: 'Development User'
+        }
+      elsif session[:user_id]
+        {
+          uid: session[:user_id],
+          email: session[:user_email],
+          name: session[:user_name]
+        }
+      end
     end
   end
 
@@ -39,12 +51,9 @@ class ApplicationController < ActionController::Base
     !!current_user
   end
 
-  def require_authentication
-    return if logged_in?
-
-    respond_to do |format|
-      format.html { redirect_to login_path, alert: 'Please log in to continue' }
-      format.json { render json: { error: 'Authentication required' }, status: :unauthorized }
+  def jwt_secret
+    ENV.fetch('JWT_SECRET') do
+      Rails.application.credentials.jwt_secret
     end
   end
 

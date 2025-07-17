@@ -84,15 +84,6 @@ class TestSessionsController < TestHelper
     assert_nil json_response['current_user']
   end
 
-  def test_require_authentication_redirects_to_login
-    # Create a test game state first
-    create_test_game_state
-
-    # For now, we'll test that unauthenticated requests can still access game endpoints
-    get '/game_state.json'
-    assert last_response.ok?
-  end
-
   def test_oauth_endpoint_accepts_post_requests
     # Test that OAuth endpoint accepts POST requests (not GET)
     OmniAuth.config.test_mode = true

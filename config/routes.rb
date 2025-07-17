@@ -5,8 +5,7 @@ Rails.application.routes.draw do
   root 'application#index'
 
   # Authentication routes
-  get '/auth/:provider/callback', to: 'sessions#create'
-  get '/auth/failure', to: 'sessions#failure'
+  get '/login', to: 'sessions#new', as: :login
   delete '/logout', to: 'sessions#destroy', as: :logout
 
   # Game state endpoint
