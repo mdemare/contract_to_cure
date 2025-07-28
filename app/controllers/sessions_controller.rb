@@ -7,6 +7,26 @@ class SessionsController < ApplicationController
     redirect_to auth_url, allow_other_host: true
   end
 
+  def create
+    auth = request.env['omniauth.auth']
+
+    # Store user info in session
+    session[:user_id] = auth.uid
+    session[:user_email] = auth.info.email
+    session[:user_name] = auth.info.name
+
+    # Store in Redis if needed (for test compatibility)
+    if defined?(Redis) && redis_available?
+      redis = Redis.new(url: ENV['REDIS_URL'] || 'redis://localhost:6379')
+      user_key = "#{auth.provider}_user:#{auth.uid}"
+      redis.hset(user_key, 'email', auth.info.email)
+      redis.hset(user_key, 'name', auth.info.name)
+      redis.hset(user_key, 'image', auth.info.image) if auth.info.image
+    end
+
+    redirect_to root_path
+  end
+
   def destroy
     # Clear the auth_token cookie
     cookies.delete(:auth_token, domain: cookie_domain)
@@ -35,4 +55,15 @@ class SessionsController < ApplicationController
     "#{auth_service_url}/login?return_url=#{CGI.escape(return_url)}"
   end
 
+  def cookie_domain
+    return nil if Rails.env.test? || Rails.env.development?
+
+    ".#{ENV.fetch('DOMAIN_NAME', 'example.com')}"
+  end
+
+  def redis_available?
+    true
+  rescue
+    false
+  end
 end

@@ -31,10 +31,10 @@ class ApplicationController < ActionController::Base
           email: user_data['email'],
           name: user_data['name']
         }
-      elsif Rails.env.development?
+      elsif Rails.env.development? || ENV['SKIP_AUTH'] == 'true'
         {
           uid: 'dev_user',
-          email: 'merloen@gmail.com',
+          email: ENV['SKIP_AUTH'] == 'true' ? 'dev@example.com' : 'merloen@gmail.com',
           name: 'Development User'
         }
       elsif session[:user_id]

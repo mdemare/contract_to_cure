@@ -8,6 +8,10 @@ Rails.application.routes.draw do
   get '/login', to: 'sessions#new', as: :login
   delete '/logout', to: 'sessions#destroy', as: :logout
 
+  # OAuth routes
+  get '/auth/failure', to: 'sessions#failure'
+  match '/auth/:provider/callback', to: 'sessions#create', via: [:get, :post]
+
   # Game state endpoint
   get 'game_state.json', to: 'game#state'
 

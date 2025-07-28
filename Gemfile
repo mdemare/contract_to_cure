@@ -17,6 +17,9 @@ gem 'puma', '~> 6.6'
 
 # Authentication gems
 gem 'jwt'
+gem 'omniauth'
+gem 'omniauth-google-oauth2'
+gem 'omniauth-rails_csrf_protection'
 
 # Development gems
 group :development do

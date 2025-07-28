@@ -15,6 +15,28 @@ class TestSessionsController < TestHelper
     }
   end
 
+  def test_create_session_with_valid_oauth_data
+    # Mock the OmniAuth callback
+    OmniAuth.config.test_mode = true
+    OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new(@auth_hash)
+
+    # Simulate OAuth callback
+    post '/auth/google_oauth2'
+    follow_redirect!
+    get '/auth/google_oauth2/callback'
+    follow_redirect!
+
+    assert last_response.ok?
+    assert_includes last_response.body, 'Contract To Cure'
+
+    # Verify user data was stored in Redis
+    user_key = "google_oauth2_user:123456"
+    assert @redis.exists?(user_key)
+
+    stored_email = @redis.hget(user_key, 'email')
+    assert_equal 'test@example.com', stored_email
+  end
+
   def test_destroy_session
     # Test logout endpoint responds correctly
     delete '/logout'
@@ -66,5 +88,6 @@ class TestSessionsController < TestHelper
     super
     # Clean up test data from Redis
     @redis.del("google_user:123456")
+    @redis.del("google_oauth2_user:123456")
   end
 end
