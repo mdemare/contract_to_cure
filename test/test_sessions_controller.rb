@@ -15,28 +15,6 @@ class TestSessionsController < TestHelper
     }
   end
 
-  def test_create_session_with_valid_oauth_data
-    # Mock the OmniAuth callback
-    OmniAuth.config.test_mode = true
-    OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new(@auth_hash)
-
-    # Simulate OAuth callback
-    post '/auth/google_oauth2'
-    follow_redirect!
-    get '/auth/google_oauth2/callback'
-    follow_redirect!
-
-    assert last_response.ok?
-    assert_includes last_response.body, 'Contract To Cure'
-
-    # Verify user data was stored in Redis
-    user_key = "google_user:123456"
-    assert @redis.exists?(user_key)
-
-    stored_email = @redis.hget(user_key, 'email')
-    assert_equal 'test@example.com', stored_email
-  end
-
   def test_destroy_session
     # Test logout endpoint responds correctly
     delete '/logout'
@@ -84,31 +62,8 @@ class TestSessionsController < TestHelper
     assert_nil json_response['current_user']
   end
 
-  def test_oauth_endpoint_accepts_post_requests
-    # Test that OAuth endpoint accepts POST requests (not GET)
-    OmniAuth.config.test_mode = true
-    OmniAuth.config.mock_auth[:google_oauth2] = OmniAuth::AuthHash.new(@auth_hash)
-
-    # POST to OAuth endpoint should work
-    post '/auth/google_oauth2'
-
-    # Should redirect to callback
-    assert last_response.redirect?
-    assert_includes last_response.location, '/auth/google_oauth2/callback'
-  end
-
-  def test_oauth_endpoint_rejects_get_requests
-    # Test that OAuth endpoint rejects GET requests for security
-    get '/auth/google_oauth2'
-
-    # Should return 404 (method not allowed by OmniAuth)
-    assert_equal 404, last_response.status
-  end
-
   def teardown
     super
-    OmniAuth.config.test_mode = false
-    OmniAuth.config.mock_auth[:google_oauth2] = nil
     # Clean up test data from Redis
     @redis.del("google_user:123456")
   end

@@ -39,7 +39,7 @@ module ContractToCure
     # Session configuration for authentication
     config.session_store :cookie_store, key: '_contract_to_cure_session'
 
-    # Add session middleware back (needed for OmniAuth)
+    # Add session middleware back
     config.middleware.use ActionDispatch::Cookies
     config.middleware.use ActionDispatch::Session::CookieStore
 
