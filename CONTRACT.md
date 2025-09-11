@@ -1,10 +1,11 @@
+
 # Pandemic Bridge: Competitive Cooperative Rules
 
 ## Overview
 Pandemic Bridge is a competitive variant of Pandemic where teams of 2 players bid on contracts and compete against other teams playing identical game setups. Like duplicate bridge, all teams play the same "hands" with scoring based on relative performance.
 
 ## Setup
-- 2-8 teams of 2 players each
+- 2 teams of 2 players each
 - Each team plays on their own identical board setup
 - All teams receive identical:
   - Initial infection card draws
@@ -102,7 +103,7 @@ Teams that didn't win the contract:
 - A match consists of 4-8 rounds
 - Each round uses a different preset board configuration
 - Teams rotate who deals/opens bidding
-- All teams must bid and play each configuration
+
 
 ### Winning
 - Teams accumulate points across all rounds
