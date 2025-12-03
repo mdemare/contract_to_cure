@@ -7,8 +7,10 @@ module EndTurnEvents
     end_turn = EndTurn.new(self)
     2.times do |i|
       end_turn.draw_player_card(i)
-      return if game_over
+      break if game_over
     end
+
+    return { game_over: true, reason: game_over_reason, events: end_turn.events } if game_over
 
     end_turn.events << { type: :wait_infect_cities }
     @phase = 'infect_cities'
@@ -95,17 +97,11 @@ module EndTurnEvents
     city = @cities[city_name]
     color = city.color
     city.connections.each do |connected_city_name|
-      # Skip if connected city has quarantine specialist protection
-      next if has_quarantine_specialist_protection?(connected_city_name)
-
       connected_city = @cities[connected_city_name]
 
-      # Don't add if disease is eradicated
-      next if @cures[color] && @disease_cubes[color] == MAX_DISEASE_CUBES_PER_COLOR
-
-      # Early returns for protection cases
-      next if connected_city.color != color
+      # Skip if protected or wrong color or eradicated
       next if has_quarantine_specialist_protection?(connected_city_name)
+      next if connected_city.color != color
       next if @cures[color] && @disease_cubes[color] == MAX_DISEASE_CUBES_PER_COLOR
 
       # Check if adding cubes would cause game over

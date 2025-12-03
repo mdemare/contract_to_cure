@@ -10,17 +10,17 @@ module PlayerActions
       move_type = 'drive / ferry'
     elsif @research_stations.include?(current_location) && @research_stations.include?(destination)
       move_type = 'shuttle flight'
-    elsif current_player.role == :operations_expert && @research_stations.include?(current_location) && !current_player.city_cards.empty?
+    elsif player.role == :operations_expert && @research_stations.include?(current_location) && !player.city_cards.empty?
       # Check if Operations Expert has already used special move this turn
-      if @operations_expert_move_used
+      if @operations_expert_move_used && player_index == @current_player_idx
         return { success: false, status: 'error', message: "Operations Expert can only use special move once per turn" }
       end
 
-      if card_name and find_city_card_in_player_hand(@current_player_idx, card_name)[0]
+      if card_name and find_city_card_in_player_hand(player_index, card_name)[0]
         # The operation expert can go anywhere from a research station by discarding a city card
         move_type = 'operation researcher special move'
-        discard_player_card_by_name(@current_player_idx, card_name)
-        @operations_expert_move_used = true
+        discard_player_card_by_name(player_index, card_name)
+        @operations_expert_move_used = true if player_index == @current_player_idx
       else
         # Request card selection for operations expert move
         return {
@@ -33,16 +33,16 @@ module PlayerActions
     elsif current_player.role == :dispatcher && @players.any? { |p| p.location == destination && p.index != player_index }
       # The dispatcher can bring players together
       move_type = 'dispatcher special move'
-    elsif has_city_card?(@current_player_idx, destination)
-      if has_city_card?(@current_player_idx, current_location)
+    elsif has_city_card?(player_index, destination)
+      if has_city_card?(player_index, current_location)
         if card_name
           # Check if the card name matches either destination or current location
           if card_name == destination
             move_type = 'direct flight'
-            discard_player_card_by_name(@current_player_idx, card_name)
+            discard_player_card_by_name(player_index, card_name)
           elsif card_name == current_location
             move_type = 'charter flight'
-            discard_player_card_by_name(@current_player_idx, card_name)
+            discard_player_card_by_name(player_index, card_name)
           else
             return {
               success: false,

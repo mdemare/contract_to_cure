@@ -34,5 +34,4 @@ class SessionsController < ApplicationController
 
     "#{auth_service_url}/login?return_url=#{CGI.escape(return_url)}"
   end
-
 end

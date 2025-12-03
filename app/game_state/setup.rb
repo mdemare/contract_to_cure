@@ -6,14 +6,14 @@ module Setup
   def initialize_game(players_count)
     # Initialize cities
     @cities = init_cities
-    raise unless @cities.size == 48
+    raise "Expected 48 cities, but got #{@cities.size}" unless @cities.size == 48
 
     # Initialize players
     @players = init_players(players_count)
     @current_player = @players.first
 
     # Initialize decks
-    raise unless @cities.size == 48
+    raise "Expected 48 cities before creating decks, but got #{@cities.size}" unless @cities.size == 48
 
     @infection_deck, @infection_discard = init_infection_deck
     @player_deck, @player_discard = init_player_deck(players_count)
@@ -31,7 +31,7 @@ module Setup
     app_dir = File.dirname(__FILE__, 2)
     cities_json = File.read(File.join(app_dir, '..', 'public', 'cities.json'))
     cities_data = JSON.parse(cities_json)
-    raise cities_data unless cities_data.size == 48
+    raise "Expected 48 cities in cities.json, but got #{cities_data.size}" unless cities_data.size == 48
 
     # Convert the JSON data to City objects
     cities = {}
@@ -44,12 +44,12 @@ module Setup
       cities[name] = City.new(name, color, connections)
       connections.each do |connected_city|
         if (cc = cities[connected_city]) && !cc.connections.include?(name)
-          raise "asymmetric error city #{name}"
+          raise "Asymmetric connection: #{name} connects to #{connected_city}, but not vice versa"
         end
       end
       cities.each do |cn, city|
         if city.connections.include?(name) and !connections.include?(cn)
-          raise "asymmetric error city #{name}"
+          raise "Asymmetric connection: #{cn} connects to #{name}, but not vice versa"
         end
       end
     end
@@ -73,7 +73,7 @@ module Setup
   end
 
   def init_infection_deck
-    raise unless @cities.size == 48
+    raise "Expected 48 cities for infection deck, but got #{@cities.size}" unless @cities.size == 48
 
     # Create infection cards for each city
     infection_cards = @cities.map do |name, city|

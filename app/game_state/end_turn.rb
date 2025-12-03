@@ -6,7 +6,7 @@ class EndTurn
     @events = []
   end
 
-  def draw_player_card(i)
+  def draw_player_card(card_num)
     if @game_state.player_deck.empty?
       return @game_state.game_over!(:no_player_cards)
     end
@@ -20,13 +20,12 @@ class EndTurn
       current_player.hand = current_player.sorted_hand
     end
 
-    # Check hand limit (7 cards)
-    if i == 1 and current_player.hand.size > 7
+    # Check hand limit (7 cards) after drawing second card
+    if card_num == 1 and current_player.hand.size > 7
       event[:exceeded_hand_limit] = {
         discard_count: current_player.hand.size - 7,
         player_index: @game_state.current_player_idx
       }
-      puts event.inspect
     end
 
     @events << event

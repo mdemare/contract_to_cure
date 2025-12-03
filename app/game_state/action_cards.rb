@@ -107,8 +107,6 @@ module ActionCards
       # If card not found, return error message
       if card_index.nil?
         { success: false, status: 'error', message: "City '#{city_name}' not found in infection discard pile" }
-      else
-        nil # Continue with the action
       end
     end
 
@@ -201,8 +199,6 @@ module ActionCards
       # Check if city exists
       elsif !@cities[city_name]
         { success: false, status: 'error', message: "City '#{city_name}' does not exist" }
-      else
-        nil # Continue with the action
       end
     end
 
