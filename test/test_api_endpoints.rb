@@ -287,8 +287,8 @@ class TestApiEndpoints < TestHelper
 
     # Debug: Check that forecast is actually active in Redis
     redis_data = @redis.get(@test_redis_key)
-    loaded_state = Marshal.load(redis_data)
-    assert loaded_state.instance_variable_get(:@forecast_active), "Forecast should be active in Redis"
+    loaded_state = YAML.load(redis_data, permitted_classes: [GameState, Player, Card, City, Symbol])
+    assert loaded_state[:game_status][:forecast_active], "Forecast should be active in Redis"
 
     post '/move', {
       player_index: 0,

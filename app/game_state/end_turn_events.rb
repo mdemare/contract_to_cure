@@ -7,8 +7,10 @@ module EndTurnEvents
     end_turn = EndTurn.new(self)
     2.times do |i|
       end_turn.draw_player_card(i)
-      return if game_over
+      break if game_over
     end
+
+    return { game_over: true, reason: game_over_reason, events: end_turn.events } if game_over
 
     end_turn.events << { type: :wait_infect_cities }
     @phase = 'infect_cities'

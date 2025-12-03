@@ -69,8 +69,8 @@ class TestGameState < TestHelper
 
     # Verify current state is modified
     current_data = @redis.get(@test_redis_key)
-    current_state = Marshal.load(current_data)
-    assert_equal 5, current_state.outbreak_count
+    current_state = YAML.load(current_data, permitted_classes: [GameState, Player, Card, City, Symbol])
+    assert_equal 5, current_state[:game_status][:outbreaks]
   end
 
   def test_multiple_test_instances_isolated
@@ -109,12 +109,11 @@ class TestGameState < TestHelper
     assert serialized_data, "Serialized data should exist in Redis"
 
     # Deserialize and verify
-    deserialized_game = Marshal.load(serialized_data)
+    deserialized_game = YAML.load(serialized_data, permitted_classes: [GameState, Player, Card, City, Symbol])
 
-    assert_equal original_game.players.length, deserialized_game.players.length
-    assert_equal original_game.difficulty_level, deserialized_game.difficulty_level
-    assert_equal original_game.actions_remaining, deserialized_game.actions_remaining
-    assert_equal original_game.current_player_idx, deserialized_game.current_player_idx
+    assert_equal original_game.players.length, deserialized_game[:players].length
+    assert_equal original_game.actions_remaining, deserialized_game[:game_status][:actions_remaining]
+    assert_equal original_game.current_player_idx, deserialized_game[:game_status][:current_player_idx]
   end
 
   def test_cleanup_removes_test_keys

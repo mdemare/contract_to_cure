@@ -6,7 +6,7 @@ class EndTurn
     @events = []
   end
 
-  def draw_player_card(i)
+  def draw_player_card(card_index)
     if @game_state.player_deck.empty?
       return @game_state.game_over!(:no_player_cards)
     end
@@ -20,8 +20,8 @@ class EndTurn
       current_player.hand = current_player.sorted_hand
     end
 
-    # Check hand limit (7 cards)
-    if i == 1 and current_player.hand.size > 7
+    # Check hand limit (7 cards) after drawing the second card
+    if card_index == 1 and current_player.hand.size > 7
       event[:exceeded_hand_limit] = {
         discard_count: current_player.hand.size - 7,
         player_index: @game_state.current_player_idx
@@ -75,7 +75,7 @@ class EndTurn
     @events << infection_event if infection_event
 
     # Add card to discard pile
-    @game_state.infection_discard << bottom_card # TODO
+    @game_state.infection_discard << bottom_card
     @events << { type: :infect_new_city, city: city.name, color: city.color, count: 3, epidemic: true }
 
     # Intensify: shuffle the infection discard pile and put it on top of infection deck

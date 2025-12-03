@@ -1,8 +1,8 @@
 class ApplicationController < ActionController::Base
   require_relative '../game_state'
 
-  # Skip CSRF protection for API endpoints
-  protect_from_forgery with: :exception, unless: -> { true }
+  # Skip CSRF protection for JSON API requests only
+  protect_from_forgery with: :exception, unless: -> { request.format.json? }
 
   before_action :load_game_state
   before_action :check_forecast_active, except: [:index, :state, :action_card]

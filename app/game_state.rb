@@ -45,14 +45,10 @@ class GameState
     return nil unless saved_data
 
     begin
-      # Try to load as Marshal first (for tests), then fall back to YAML
-      saved_state = begin
-        Marshal.load(saved_data)
-      rescue TypeError, ArgumentError
-        YAML.load(saved_data, permitted_classes: [GameState, Player, Card, City, Symbol])
-      end
+      # Load game state from YAML
+      saved_state = YAML.load(saved_data, permitted_classes: [GameState, Player, Card, City, Symbol])
 
-      # If we got a GameState object directly (from Marshal), return it
+      # If we got a GameState object directly, return it
       return saved_state if saved_state.is_a?(GameState)
 
       # Otherwise, create a new instance without initialization
@@ -80,9 +76,9 @@ class GameState
   end
 
   def check_action
-    return unless @phase != 'player_actions'
+    return nil if @phase == 'player_actions'
 
-    return [422, { status: 'error', message: 'No more actions allowed' }.to_json]
+    { status: 'error', message: 'No more actions allowed' }
   end
 
   # Public method to save game state to Redis
@@ -106,6 +102,8 @@ class GameState
           infection_rate_position: @infection_rate_marker,
           current_player_idx: @current_player_idx,
           quiet_night: @quiet_night,
+          forecast_active: @forecast_active,
+          forecast_cards: @forecast_cards,
           operations_expert_move_used: @operations_expert_move_used
         },
         disease_cubes: COLORS.each_with_object({}) do |color, hash|
@@ -239,7 +237,7 @@ class GameState
   end
 
   # Discard a card by name from a player's hand
-  def discard_player_card_by_name(player_index, card_name, retrieved = false)
+  def discard_player_card_by_name(player_index, card_name, retrieved: false)
     _, card_index = find_card_in_player_hand(player_index, card_name)
 
     return false if card_index.nil?

@@ -107,8 +107,6 @@ module ActionCards
       # If card not found, return error message
       if card_index.nil?
         { success: false, status: 'error', message: "City '#{city_name}' not found in infection discard pile" }
-      else
-        nil # Continue with the action
       end
     end
 
@@ -157,9 +155,7 @@ module ActionCards
     # Try to use the Airlift card with validation
     result = use_action_card('Airlift') do |_|
       # Check if city exists
-      if @cities[city_name]
-        nil # Continue with the action
-      else
+      unless @cities[city_name]
         { success: false, status: 'error', message: "City '#{city_name}' does not exist" }
       end
     end
@@ -201,8 +197,6 @@ module ActionCards
       # Check if city exists
       elsif !@cities[city_name]
         { success: false, status: 'error', message: "City '#{city_name}' does not exist" }
-      else
-        nil # Continue with the action
       end
     end
 
