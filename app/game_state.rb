@@ -45,14 +45,10 @@ class GameState
     return nil unless saved_data
 
     begin
-      # Try to load as Marshal first (for tests), then fall back to YAML
-      saved_state = begin
-        Marshal.load(saved_data)
-      rescue TypeError, ArgumentError
-        YAML.load(saved_data, permitted_classes: [GameState, Player, Card, City, Symbol])
-      end
+      # Load as YAML with permitted classes for security
+      saved_state = YAML.load(saved_data, permitted_classes: [GameState, Player, Card, City, Symbol])
 
-      # If we got a GameState object directly (from Marshal), return it
+      # If we got a GameState object directly, return it
       return saved_state if saved_state.is_a?(GameState)
 
       # Otherwise, create a new instance without initialization
@@ -80,9 +76,9 @@ class GameState
   end
 
   def check_action
-    return unless @phase != 'player_actions'
+    return nil if @phase == 'player_actions'
 
-    return [422, { status: 'error', message: 'No more actions allowed' }.to_json]
+    { status: 'error', message: 'No more actions allowed' }
   end
 
   # Public method to save game state to Redis

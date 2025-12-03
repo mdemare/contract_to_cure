@@ -47,9 +47,12 @@ class TestHelper < ActiveSupport::TestCase
     # Ensure we have actions remaining for testing
     game_state.instance_variable_set(:@actions_remaining, 4)
 
-    # Save to test Redis key with 5-minute expiry
-    game_data = Marshal.dump(game_state)
-    @redis.setex(@test_redis_key, 300, game_data) # 300 seconds = 5 minutes
+    # Let the game state save itself using its own save_game_state method
+    # which will use YAML format
+    game_state.save_game_state(@test_redis_key)
+
+    # Set expiry for test keys (5 minutes)
+    @redis.expire(@test_redis_key, 300)
 
     game_state
   end
@@ -58,9 +61,8 @@ class TestHelper < ActiveSupport::TestCase
     game_state = create_test_game_state
     yield(game_state) if block_given?
 
-    # Save the modified state
-    game_data = Marshal.dump(game_state)
-    @redis.setex(@test_redis_key, 300, game_data)
+    # Save the modified state using the game state's own save method
+    game_state.save_game_state(@test_redis_key)
 
     game_state
   end
