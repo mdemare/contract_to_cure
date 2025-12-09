@@ -83,7 +83,7 @@ module ActionCards
       next unless color
 
       # Create a new card and add it to the top of the infection deck
-      new_card = Card.new(:infection, card_name, color)
+      new_card = Card.new(:city, card_name, color)
       @infection_deck.unshift(new_card)
     end
 
