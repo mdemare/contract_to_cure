@@ -344,7 +344,7 @@ class GameState
 
   # Helper method for medic ability
   def medic_ability(requested_player, destination)
-    raise unless requested_player.is_a?(Player)
+    raise "requested_player must be a Player instance, got #{requested_player.class}" unless requested_player.is_a?(Player)
 
     # Automatic medic ability: remove cubes of cured diseases
     return unless requested_player.role == :medic
