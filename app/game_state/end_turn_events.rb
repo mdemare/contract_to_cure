@@ -105,8 +105,6 @@ module EndTurnEvents
 
       # Early returns for protection cases
       next if connected_city.color != color
-      next if has_quarantine_specialist_protection?(connected_city_name)
-      next if @cures[color] && @disease_cubes[color] == MAX_DISEASE_CUBES_PER_COLOR
 
       # Check if adding cubes would cause game over
       if @disease_cubes[color] == 1
