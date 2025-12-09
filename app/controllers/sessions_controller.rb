@@ -35,4 +35,11 @@ class SessionsController < ApplicationController
     "#{auth_service_url}/login?return_url=#{CGI.escape(return_url)}"
   end
 
+  def cookie_domain
+    # Return the domain for cookies, allowing them to work across subdomains
+    # Use .domain_name format to share cookies across subdomains
+    domain_name = ENV.fetch('DOMAIN_NAME', nil)
+    domain_name ? ".#{domain_name}" : nil
+  end
+
 end
