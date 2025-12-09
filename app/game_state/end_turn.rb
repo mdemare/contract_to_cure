@@ -26,7 +26,7 @@ class EndTurn
         discard_count: current_player.hand.size - 7,
         player_index: @game_state.current_player_idx
       }
-      puts event.inspect
+      Rails.logger.debug event.inspect
     end
 
     @events << event

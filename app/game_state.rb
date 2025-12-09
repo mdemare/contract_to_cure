@@ -44,12 +44,21 @@ class GameState
 
     return nil unless saved_data
 
-    begin
-      # Try to load as Marshal first (for tests), then fall back to YAML
-      saved_state = begin
-        Marshal.load(saved_data)
-      rescue TypeError, ArgumentError
-        YAML.load(saved_data, permitted_classes: [GameState, Player, Card, City, Symbol])
+      begin
+        # Load as YAML with permitted classes for security
+        saved_state = YAML.load(saved_data, permitted_classes: [GameState, Player, Card, City, Symbol])
+
+        # Create a new instance without initialization
+        game = allocate
+
+        # Set up instance variables from the saved state
+        game.send(:load_state_from_hash, saved_state)
+
+        game
+      rescue => e
+        Rails.logger.error "Error loading game state from Redis: #{e.message}"
+        Rails.logger.error e.backtrace.join("\n")
+        nil
       end
 
       # If we got a GameState object directly (from Marshal), return it
@@ -68,7 +77,7 @@ class GameState
       return nil
     end
   rescue Redis::BaseError => e
-    puts "Redis connection error: #{e.message}"
+    Rails.logger.error "Redis connection error: #{e.message}"
     return nil
   end
 
@@ -149,9 +158,9 @@ class GameState
       redis = Redis.new(url: redis_url)
       redis.set(redis_key, game_state.to_yaml)
     rescue Redis::BaseError => e
-      puts "Redis connection error while saving: #{e.message}"
+      Rails.logger.error "Redis connection error while saving: #{e.message}"
     rescue => e
-      puts "Error saving game state to Redis: #{e.message}"
+      Rails.logger.error "Error saving game state to Redis: #{e.message}"
     end
   end
 
