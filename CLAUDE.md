@@ -18,8 +18,8 @@ bd ready --json
 
 **Create new issues:**
 ```bash
-bd create "Issue title" -t bug|feature|task -p 0-4 --json
-bd create "Issue title" -p 1 --deps discovered-from:bd-123 --json
+bd create "Issue title" --type bug|feature|task --priority 0-4 --json
+bd create "Issue title" --priority 1 --deps discovered-from:bd-123 --json
 bd create "Subtask" --parent <epic-id> --json  # Hierarchical subtask (gets ID like epic-id.1)
 ```
 
@@ -56,7 +56,7 @@ bd close bd-42 --reason "Completed" --json
 2. **Claim your task**: `bd update <id> --status in_progress`
 3. **Work on it**: Implement, test, document
 4. **Discover new work?** Create linked issue:
-   - `bd create "Found bug" -p 1 --deps discovered-from:<parent-id>`
+   - `bd create "Found bug" --priority 1 --deps discovered-from:<parent-id>`
 5. **Complete**: `bd close <id> --reason "Done"`
 6. **Commit together**: Always commit the `.beads/issues.jsonl` file together with the code changes so issue state stays in sync with code state
 
