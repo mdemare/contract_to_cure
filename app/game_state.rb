@@ -80,7 +80,7 @@ class GameState
   end
 
   def check_action
-    return unless @phase != 'player_actions'
+    return if @phase == 'player_actions'
 
     return [422, { status: 'error', message: 'No more actions allowed' }.to_json]
   end
