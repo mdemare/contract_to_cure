@@ -66,6 +66,16 @@ class TestApiEndpoints < TestHelper
     assert_error_response(last_response, 422, 'Missing required parameters')
   end
 
+  def test_move_endpoint_missing_player_index
+    create_test_game_state
+
+    post '/move', {
+      destination: 'London'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_error_response(last_response, 422, 'Missing required parameters')
+  end
+
   def test_treat_disease_endpoint
     create_game_with_custom_state do |state|
       # Ensure current player is in a city with disease cubes
@@ -134,6 +144,16 @@ class TestApiEndpoints < TestHelper
     assert_json_response(last_response)
   end
 
+  def test_share_knowledge_endpoint_missing_indices
+    create_test_game_state
+
+    post '/share_knowledge', {
+      city_name: 'Chicago'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_error_response(last_response, 422, 'Missing required parameters')
+  end
+
   def test_build_research_station_endpoint
     create_game_with_custom_state do |state|
       # Move player to a city without a research station
@@ -185,6 +205,17 @@ class TestApiEndpoints < TestHelper
     data = parse_json_response(last_response)
     assert_equal 'success', data['status']
     assert_includes data['message'], 'Successfully discarded'
+  end
+
+  def test_discard_cards_endpoint_invalid_card_names_type
+    create_test_game_state
+
+    post '/discard_cards', {
+      player_index: 0,
+      card_names: 'Chicago'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_error_response(last_response, 422, 'Invalid parameters')
   end
 
   def test_action_card_airlift
