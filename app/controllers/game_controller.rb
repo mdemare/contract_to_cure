@@ -1,4 +1,6 @@
 class GameController < ApplicationController
+  require_relative '../validators/game_params_validator'
+
   # Get game state as JSON
   def state
     state_data = game_state.to_json_state
@@ -10,17 +12,11 @@ class GameController < ApplicationController
   def move
     return render(json: game_state.check_action, status: 422) if game_state.check_action
 
-    player_index = params[:player_index].to_i
-    destination = params[:destination]
-    card_name = params[:card_name]
-
-    # Validate required parameters
-    unless player_index && destination
-      return render json: { status: 'error', message: 'Missing required parameters' }, status: 422
-    end
+    validated = validate_request(GameParamsValidator.validate_move(params.to_unsafe_h))
+    return if performed?
 
     # Perform the move and get result
-    result = game_state.move(player_index, destination, card_name)
+    result = game_state.move(validated[:player_index], validated[:destination], validated[:card_name])
     render_game_result(result)
   end
 
@@ -36,10 +32,10 @@ class GameController < ApplicationController
   def cure_disease
     return render(json: game_state.check_action, status: 422) if game_state.check_action
 
-    color = params[:color].to_sym
-    card_names = params[:card_names]
+    validated = validate_request(GameParamsValidator.validate_cure_disease(params.to_unsafe_h))
+    return if performed?
 
-    result = game_state.cure_disease(color, card_names)
+    result = game_state.cure_disease(validated[:color].to_sym, validated[:card_names])
     render_game_result(result)
   end
 
@@ -47,15 +43,11 @@ class GameController < ApplicationController
   def retrieve
     return render(json: game_state.check_action, status: 422) if game_state.check_action
 
-    action_card_name = params[:action_card_name]
-
-    # Validate required parameters
-    unless action_card_name
-      return render json: { status: 'error', message: 'Missing required parameters' }, status: 422
-    end
+    validated = validate_request(GameParamsValidator.validate_retrieve(params.to_unsafe_h))
+    return if performed?
 
     # Perform the action and get result
-    result = game_state.retrieve(action_card_name)
+    result = game_state.retrieve(validated[:action_card_name])
     render_game_result(result)
   end
 
@@ -63,17 +55,15 @@ class GameController < ApplicationController
   def share_knowledge
     return render(json: game_state.check_action, status: 422) if game_state.check_action
 
-    giving_player_index = params[:giving_player_index].to_i
-    receiving_player_index = params[:receiving_player_index].to_i
-    city_name = params[:city_name]
-
-    # Validate required parameters
-    unless giving_player_index && receiving_player_index && city_name
-      return render json: { status: 'error', message: 'Missing required parameters' }, status: 422
-    end
+    validated = validate_request(GameParamsValidator.validate_share_knowledge(params.to_unsafe_h))
+    return if performed?
 
     # Perform the action and get result
-    result = game_state.share_knowledge(giving_player_index, receiving_player_index, city_name)
+    result = game_state.share_knowledge(
+      validated[:giving_player_index],
+      validated[:receiving_player_index],
+      validated[:city_name]
+    )
     render_game_result(result)
   end
 
@@ -117,18 +107,13 @@ class GameController < ApplicationController
 
   # Discard card endpoint for hand limit
   def discard_cards
-    player_index = params[:player_index].to_i
-    card_names = params[:card_names]
-
-    # Validate required parameters
-    unless player_index.is_a?(Integer) && card_names.is_a?(Array)
-      return render json: { status: 'error', message: 'Missing required parameters' }, status: 422
-    end
+    validated = validate_request(GameParamsValidator.validate_discard_cards(params.to_unsafe_h))
+    return if performed?
 
     # Discard each card by name
     discarded_count = 0
-    card_names.each do |card_name|
-      if game_state.discard_player_card_by_name(player_index, card_name)
+    validated[:card_names].each do |card_name|
+      if game_state.discard_player_card_by_name(validated[:player_index], card_name)
         discarded_count += 1
       end
     end
@@ -141,17 +126,16 @@ class GameController < ApplicationController
 
   # Action card endpoint
   def action_card
-    card_name = params[:card]
-    city_name = params[:city]
-
-    # Validate required parameters
-    return render json: { status: 'error', message: 'Missing required parameters' } unless card_name
+    validated = validate_request(GameParamsValidator.validate_action_card(params.to_unsafe_h))
+    return if performed?
+    card_name = validated[:card]
+    city_name = validated[:city]
 
     # Special handling for Forecast
     if game_state.forecast_active
       # Only allow Forecast with card_order when forecast is active
-      if card_name == 'Forecast' && params[:card_order]
-        result = game_state.apply_forecast(params[:card_order])
+      if card_name == 'Forecast' && validated[:card_order]
+        result = game_state.apply_forecast(validated[:card_order])
         return render json: result
       end
 
@@ -164,7 +148,7 @@ class GameController < ApplicationController
     # Normal action card processing when forecast is not active
     result = case card_name
              when 'Airlift'
-               game_state.use_airlift(params[:player_index].to_i, city_name)
+               game_state.use_airlift(validated[:player_index], city_name)
              when 'One Quiet Night'
                game_state.quiet_night!
              when 'Resilient Population'
@@ -187,7 +171,9 @@ class GameController < ApplicationController
   # Restart game endpoint
   def restart_game
     # Extract difficulty level from request if provided, otherwise use current difficulty
-    difficulty_level = params[:difficulty_level]&.to_sym
+    validated = validate_request(GameParamsValidator.validate_restart_game(params.to_unsafe_h))
+    return if performed?
+    difficulty_level = validated[:difficulty_level]&.to_sym
 
     # Restart the game and return result
     result = game_state.reset_game(difficulty_level)
@@ -196,6 +182,18 @@ class GameController < ApplicationController
   end
 
   private
+
+  def validate_request(result)
+    if result.success?
+      result.to_h
+    else
+      render json: {
+        status: 'error',
+        message: 'Missing required parameters',
+        errors: result.errors.to_h
+      }, status: 422
+    end
+  end
 
   def render_game_result(result)
     if result[:success] == false

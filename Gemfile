@@ -11,6 +11,7 @@ gem 'awesome_print'
 gem 'json', '~> 2.7.0'
 gem 'like_1999'
 gem 'redis', '~> 5.0'
+gem 'dry-schema', '~> 1.13'
 
 # Server gems
 gem 'puma', '~> 6.6'
