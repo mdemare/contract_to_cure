@@ -28,4 +28,5 @@ group :test do
   gem 'minitest'
   gem 'rack-test'
   gem 'rake'
+  gem 'mock_redis', '~> 0.53.0'
 end

@@ -32,7 +32,7 @@ class GameState
 
   # Load game state from Redis if it exists
   def self.load_from_redis(redis_key = nil)
-    require 'redis'
+    require 'redis' unless defined?(Redis)
     require 'yaml'
 
     # Use thread-local key if set (for testing), otherwise use default
@@ -87,7 +87,7 @@ class GameState
 
   # Public method to save game state to Redis
   def save_game_state(redis_key = nil)
-    require 'redis'
+    require 'redis' unless defined?(Redis)
 
     # Use thread-local key if set (for testing), otherwise use default
     redis_key ||= Thread.current[:game_redis_key] || 'contract-to-cure/current-game'

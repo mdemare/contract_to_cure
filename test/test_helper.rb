@@ -5,6 +5,19 @@ require "rails/test_help"
 require 'rack/test'
 require 'json'
 require 'redis'
+
+if ENV['USE_REAL_REDIS'] != 'true'
+  require 'mock_redis'
+  SHARED_MOCK_REDIS = MockRedis.new
+
+  class << Redis
+    alias_method :__original_new, :new unless method_defined?(:__original_new)
+
+    def new(*)
+      SHARED_MOCK_REDIS
+    end
+  end
+end
 require 'yaml'
 require 'securerandom'
 
