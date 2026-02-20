@@ -17,6 +17,7 @@ gem 'puma', '~> 6.6'
 
 # Authentication gems
 gem 'jwt'
+gem 'dry-schema', '~> 1.14'
 
 # Development gems
 group :development do
