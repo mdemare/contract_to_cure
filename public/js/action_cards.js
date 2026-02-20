@@ -1,7 +1,7 @@
 // action_cards.js
 // Handles all action card related functionality, including button creation,
 // displaying cards in a modal, and handling specific action card behaviors.
-import { toggleMode, resetMode, getCurrentGameState } from './game_state.js';
+import { toggleMode, resetMode, getCurrentGameState, loadGameState } from './game_state.js';
 import { showGeneralCardSelectionModal, showForecastModal } from './select_cards.js';
 import { useAirlift, useQuietNight, useResilientPopulation } from './player_actions.js';
 import { createSimpleElement } from './dom.js';
@@ -10,6 +10,48 @@ import { showErrorMessage } from './player_action_utils.js'
 
 // Store the current action card source for Government Grant and Airlift
 let currentActionCardSource = null;
+
+function closeCardSelectionModal() {
+  const modalBackdrop = document.querySelector('.modal-backdrop');
+  if (modalBackdrop) {
+    document.body.removeChild(modalBackdrop);
+  }
+}
+
+function setCurrentActionCardSource(cardSource) {
+  closeCardSelectionModal();
+  currentActionCardSource = cardSource;
+}
+
+function showActionNotification(message) {
+  const existingNotification = document.getElementById('action-notification');
+  if (existingNotification) {
+    existingNotification.textContent = message;
+    return;
+  }
+
+  const notification = createSimpleElement('div', 'action-notification', message);
+  notification.id = 'action-notification';
+  document.body.insertBefore(notification, document.body.firstChild);
+}
+
+async function actionCardRequest(payload, fallbackErrorMessage) {
+  const response = await fetch('/action_card', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await response.json();
+  if (!response.ok || data.status === 'error') {
+    throw new Error(data.message || fallbackErrorMessage);
+  }
+
+  return data;
+}
 
 /**
  * Create and add the Action Cards button to the action buttons panel
@@ -110,9 +152,6 @@ function handleActionCardsClick() {
         console.log('Government Grant card selected');
         handleGovernmentGrant(cardSource);
         break;
-      case 'Forecast':
-        console.log('Forecast card selected');
-        break;
       case 'One Quiet Night':
         console.log('One Quiet Night card selected');
         useQuietNight(); // Maybe rename to handleQuietNight for consistency
@@ -130,27 +169,10 @@ function handleActionCardsClick() {
  * @param {Object} cardSource - The source of the card (player index and card index)
  */
 function handleForecast(cardSource) {
-  // Close the card selection modal
-  if (document.querySelector('.modal-backdrop')) {
-    document.body.removeChild(document.querySelector('.modal-backdrop'));
-  }
+  setCurrentActionCardSource(cardSource);
 
-  // Store the card source for later use
-  currentActionCardSource = cardSource;
-
-  // Call the backend to get the top 6 cards of the infection deck
-  fetch('/action_card', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-    },
-    body: JSON.stringify({
-      card: 'Forecast'
-    })
-  })
-  .then(response => response.json())
-  .then(data => {
+  actionCardRequest({ card: 'Forecast' }, 'Failed to use Forecast card')
+    .then(data => {
     if (data.status === 'success' && data.type === 'forecast_view') {
       // Show the cards in a reorderable modal
       showForecastModal(data.cards);
@@ -161,7 +183,7 @@ function handleForecast(cardSource) {
   })
   .catch(error => {
     console.error('Error using Forecast card:', error);
-    showErrorMessage("Error using Forecast card. Please try again.");
+    showErrorMessage(error.message || "Error using Forecast card. Please try again.");
   });
 }
 
@@ -170,20 +192,14 @@ function handleForecast(cardSource) {
  * @param {Array} cardOrder - Array of city names in the desired order
  */
 export function completeForecast(cardOrder) {
-  // Call the backend to apply the new card order
-  fetch('/action_card', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-    },
-    body: JSON.stringify({
+  actionCardRequest(
+    {
       card: 'Forecast',
       card_order: cardOrder
-    })
-  })
-  .then(response => response.json())
-  .then(data => {
+    },
+    'Failed to apply Forecast card order'
+  )
+    .then(data => {
     if (data.status === 'success' || data.players) {
       // The forecast was successful, reload the game state
       loadGameState();
@@ -194,7 +210,7 @@ export function completeForecast(cardOrder) {
   })
   .catch(error => {
     console.error('Error applying Forecast card order:', error);
-    showErrorMessage("Error applying Forecast card order. Please try again.");
+    showErrorMessage(error.message || "Error applying Forecast card order. Please try again.");
   });
 
   // Reset the action card source
@@ -236,13 +252,7 @@ export function getActionCardSource() {
  * @param {Object} cardSource - The source of the card (player index and card index)
  */
 function handleResilientPopulation(cardSource) {
-  // Close the card selection modal
-  if (document.querySelector('.modal-backdrop')) {
-    document.body.removeChild(document.querySelector('.modal-backdrop'));
-  }
-
-  // Store the card source for later use
-  currentActionCardSource = cardSource;
+  setCurrentActionCardSource(cardSource);
 
   const gameState = getCurrentGameState();
 
@@ -279,18 +289,8 @@ function completeResilientPopulation(cityName) {
  * @param {Object} cardSource - The source of the card (player index and card index)
  */
 function handleGovernmentGrant(cardSource) {
-  // Close the card selection modal
-  if (document.querySelector('.modal-backdrop')) {
-    document.body.removeChild(document.querySelector('.modal-backdrop'));
-  }
-
-  // Store the card source for later use
-  currentActionCardSource = cardSource;
-
-  // Add notification at the top of the page
-  const notification = createSimpleElement('div', 'action-notification', 'Choose a city to build a research station');
-  notification.id = 'action-notification';
-  document.body.insertBefore(notification, document.body.firstChild);
+  setCurrentActionCardSource(cardSource);
+  showActionNotification('Choose a city to build a research station');
 
   // Set the mode to government grant
   toggleMode('governmentGrant');
@@ -302,18 +302,8 @@ function handleGovernmentGrant(cardSource) {
  * @param {Object} cardSource - The source of the card (player index and card index)
  */
 function handleAirlift(cardSource) {
-  // Close the card selection modal
-  if (document.querySelector('.modal-backdrop')) {
-    document.body.removeChild(document.querySelector('.modal-backdrop'));
-  }
-
-  // Store the card source for later use
-  currentActionCardSource = cardSource;
-
-  // Add notification at the top of the page
-  const notification = createSimpleElement('div', 'action-notification', 'Select a player to airlift');
-  notification.id = 'action-notification';
-  document.body.insertBefore(notification, document.body.firstChild);
+  setCurrentActionCardSource(cardSource);
+  showActionNotification('Select a player to airlift');
 
   // Set the mode to airlift
   toggleMode('airlift');
