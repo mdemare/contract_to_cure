@@ -5,6 +5,10 @@ module PlayerActions
     player = @players[player_index]
     current_location = player.location
 
+    unless @cities.key?(destination)
+      return { success: false, status: 'error', message: "Cannot move player to destination #{destination} from #{current_location}" }
+    end
+
     # Check if move is valid
     if @cities[current_location].connections.include?(destination)
       move_type = 'drive / ferry'
