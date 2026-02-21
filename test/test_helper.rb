@@ -33,6 +33,7 @@ class TestHelper < ActiveSupport::TestCase
   end
 
   def setup
+    GameRedisPool.reset_pool!
     @redis = Redis.new(url: ENV['REDIS_URL'] || 'redis://localhost:6379')
     @test_redis_key = generate_test_redis_key
     # Set thread-local variable for game state to use
@@ -45,6 +46,7 @@ class TestHelper < ActiveSupport::TestCase
 
     # Clear thread-local variable
     Thread.current[:game_redis_key] = nil
+    GameRedisPool.reset_pool!
   end
 
   private

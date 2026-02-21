@@ -278,6 +278,7 @@ PLATFORMS
 DEPENDENCIES
   awesome_print
   bootsnap
+  connection_pool (~> 2.5)
   dry-schema (~> 1.14)
   json (~> 2.7.0)
   jwt
