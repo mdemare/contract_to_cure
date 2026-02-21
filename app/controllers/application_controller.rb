@@ -37,6 +37,12 @@ class ApplicationController < ActionController::Base
           email: 'merloen@gmail.com',
           name: 'Development User'
         }
+      elsif Rails.env.test? && ENV['SKIP_AUTH'] == 'true'
+        {
+          uid: 'dev_user',
+          email: 'dev@example.com',
+          name: 'Development User'
+        }
       elsif session[:user_id]
         {
           uid: session[:user_id],

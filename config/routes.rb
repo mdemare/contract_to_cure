@@ -6,6 +6,7 @@ Rails.application.routes.draw do
 
   # Authentication routes
   get '/login', to: 'sessions#new', as: :login
+  get '/auth/failure', to: 'sessions#failure'
   delete '/logout', to: 'sessions#destroy', as: :logout
 
   # Game state endpoint

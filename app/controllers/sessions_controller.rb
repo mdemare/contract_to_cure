@@ -9,7 +9,8 @@ class SessionsController < ApplicationController
 
   def destroy
     # Clear the auth_token cookie
-    cookies.delete(:auth_token, domain: cookie_domain)
+    delete_options = cookie_domain ? { domain: cookie_domain } : {}
+    cookies.delete(:auth_token, **delete_options)
 
     # Clear session for non-JWT auth
     session[:user_id] = nil
@@ -35,4 +36,10 @@ class SessionsController < ApplicationController
     "#{auth_service_url}/login?return_url=#{CGI.escape(return_url)}"
   end
 
+  def cookie_domain
+    domain_name = ENV['DOMAIN_NAME']
+    return nil if domain_name.blank?
+
+    ".#{domain_name}"
+  end
 end
