@@ -9,6 +9,7 @@ require_relative 'game_state/setup'
 require_relative 'game_state/city'
 require_relative 'game_state/player'
 require_relative 'game_state/card'
+require_relative 'services/game_redis_pool'
 
 class GameState
   include ActionCards
@@ -32,15 +33,12 @@ class GameState
 
   # Load game state from Redis if it exists
   def self.load_from_redis(redis_key = nil)
-    require 'redis' unless defined?(Redis)
     require 'yaml'
 
     # Use thread-local key if set (for testing), otherwise use default
     redis_key ||= Thread.current[:game_redis_key] || 'contract-to-cure/current-game'
 
-    redis_url = ENV['REDIS_URL'] || 'redis://localhost:6379'
-    redis = Redis.new(url: redis_url)
-    saved_data = redis.get(redis_key)
+    saved_data = GameRedisPool.with { |redis| redis.get(redis_key) }
 
     return nil unless saved_data
 
@@ -87,8 +85,6 @@ class GameState
 
   # Public method to save game state to Redis
   def save_game_state(redis_key = nil)
-    require 'redis' unless defined?(Redis)
-
     # Use thread-local key if set (for testing), otherwise use default
     redis_key ||= Thread.current[:game_redis_key] || 'contract-to-cure/current-game'
 
@@ -145,9 +141,7 @@ class GameState
       }
 
       # Save to Redis
-      redis_url = ENV['REDIS_URL'] || 'redis://localhost:6379'
-      redis = Redis.new(url: redis_url)
-      redis.set(redis_key, game_state.to_yaml)
+      GameRedisPool.with { |redis| redis.set(redis_key, game_state.to_yaml) }
     rescue Redis::BaseError => e
       puts "Redis connection error while saving: #{e.message}"
     rescue => e
