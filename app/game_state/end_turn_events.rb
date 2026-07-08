@@ -158,23 +158,21 @@ module EndTurnEvents
     city = cities[city_name]
     return if city.color != color
 
-    # Check if adding cubes would cause game over
-    if count >= disease_cubes[color] and city.disease_cubes < 3
-      # Adding all remaining cubes then game over
-      city.disease_cubes = [3, city.disease_cubes + count].min
+    cubes_to_place = [count, 3 - city.disease_cubes].min
 
+    if cubes_to_place > disease_cubes[color]
+      city.disease_cubes += disease_cubes[color]
       out_of_cubes(color)
       return { type: :game_over, reason: :no_cubes, color: color }
     end
 
+    disease_cubes[color] -= cubes_to_place
     if city.disease_cubes + count > 3
       city.disease_cubes = 3
-      disease_cubes[color] -= 3 - city.disease_cubes
       trigger_outbreak(city_name, events)
     else
       # Normal case - add cubes
       city.disease_cubes += count
-      disease_cubes[color] -= count
       nil
     end
   end
