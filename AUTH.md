@@ -43,6 +43,7 @@
 - Verify signature using `JWT_SECRET`
 - Check token expiration
 - Optionally validate user role (implementation-specific)
+- Game JSON endpoints reject missing, invalid, or expired tokens unless an explicit local bypass is enabled
 - Return appropriate HTTP status:
   - 401 - No token or invalid token
   - 403 - Valid token but insufficient permissions
@@ -64,10 +65,21 @@
 5. Redirects back to application
 
 ### 5. API Protection
-- Apply auth middleware to all `/api/*` routes
+- Apply auth middleware to all game/API routes
 - Check every request for valid JWT
 - Enforce role-based access control as needed
 - No API calls without authentication
+
+Development and test environments keep an explicit authentication bypass so local
+gameplay and controller tests do not require a real auth service. Set
+`REQUIRE_AUTH=true` to disable that bypass in tests, or `SKIP_AUTH=true` to force
+the development user fallback.
+
+Rails CSRF verification is intentionally skipped for the game JSON endpoints
+after JWT authentication. The auth token is stored in an HTTP-only,
+`SameSite=Lax` cookie, and the application is a shared web game surface rather
+than a store of private user data. A cross-site form post cannot read responses,
+and modern browsers do not send Lax cookies on cross-site POST requests.
 
 ## Role-Based Access Control (Optional)
 Some implementations may require specific roles:

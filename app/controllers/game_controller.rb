@@ -1,4 +1,10 @@
 class GameController < ApplicationController
+  # Game endpoints are JSON calls authenticated by an HTTP-only JWT cookie.
+  # CSRF is skipped here because SameSite=Lax token cookies are sufficient for
+  # this web game boundary, and no private user data is exposed by these actions.
+  skip_before_action :verify_authenticity_token
+  prepend_before_action :authenticate_request!
+
   # Get game state as JSON
   def state
     state_data = game_state.to_json_state
