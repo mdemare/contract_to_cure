@@ -47,9 +47,37 @@ class TestHelper < ActiveSupport::TestCase
     # Clear thread-local variable
     Thread.current[:game_redis_key] = nil
     GameRedisPool.reset_pool!
+    clear_cookies
   end
 
   private
+
+  def with_required_auth
+    previous_require_auth = ENV['REQUIRE_AUTH']
+    previous_jwt_secret = ENV['JWT_SECRET']
+    ENV['REQUIRE_AUTH'] = 'true'
+    ENV['JWT_SECRET'] = 'test-jwt-secret'
+    yield
+  ensure
+    restore_env_value('REQUIRE_AUTH', previous_require_auth)
+    restore_env_value('JWT_SECRET', previous_jwt_secret)
+  end
+
+  def auth_token(user: { id: 123, email: 'test@example.com', name: 'Test User' }, exp: 1.hour.from_now.to_i)
+    JWT.encode({ user: user, exp: exp, iat: Time.now.to_i }, ENV.fetch('JWT_SECRET'), 'HS256')
+  end
+
+  def set_auth_cookie(token = auth_token)
+    set_cookie "auth_token=#{token}"
+  end
+
+  def restore_env_value(name, value)
+    if value.nil?
+      ENV.delete(name)
+    else
+      ENV[name] = value
+    end
+  end
 
   def generate_test_redis_key
     "contract-to-cure/test-#{SecureRandom.hex(8)}-#{Time.now.to_i}"
