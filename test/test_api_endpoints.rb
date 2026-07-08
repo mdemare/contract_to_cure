@@ -266,6 +266,38 @@ class TestApiEndpoints < TestHelper
     assert_json_response(last_response)
   end
 
+  def test_contingency_planner_retrieved_event_is_removed_after_play
+    create_game_with_custom_state do |state|
+      current_player = state.players[state.current_player_idx]
+      current_player.instance_variable_set(:@role, :contingency_planner)
+      current_player.hand.clear
+      state.player_discard.clear
+      state.player_discard << Card.new(:action, 'Airlift')
+    end
+
+    post '/retrieve', {
+      action_card_name: 'Airlift'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_successful_response(last_response)
+    retrieve_data = parse_json_response(last_response)
+    current_player_state = retrieve_data['game_state']['players'][0]
+    assert_includes current_player_state['hand'].map { |card| card['name'] }, 'Airlift'
+    refute_includes retrieve_data['game_state']['decks']['discardPile'].map { |card| card['name'] }, 'Airlift'
+
+    post '/action_card', {
+      card: 'Airlift',
+      player_index: 0,
+      city: 'London'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_successful_response(last_response)
+    play_data = parse_json_response(last_response)
+    current_player_state = play_data['game_state']['players'][0]
+    refute_includes current_player_state['hand'].map { |card| card['name'] }, 'Airlift'
+    refute_includes play_data['game_state']['decks']['discardPile'].map { |card| card['name'] }, 'Airlift'
+  end
+
   def test_restart_game_endpoint
     create_test_game_state
 

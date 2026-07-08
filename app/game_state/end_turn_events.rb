@@ -48,11 +48,13 @@ module EndTurnEvents
 
   # Helper method to convert a card to a hash
   def card_to_hash(card)
-    {
+    card_hash = {
       type: card.type,
       name: card.name,
       color: card.respond_to?(:color) ? card.color : nil
     }
+    card_hash[:retrieved] = true if card.retrieved?
+    card_hash
   end
 
   def out_of_cubes(color)

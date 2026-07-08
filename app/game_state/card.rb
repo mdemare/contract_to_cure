@@ -6,6 +6,7 @@ class Card
     @type = type # :city, :action, :epidemic, :action
     @name = name
     @color = color # Only for city cards
+    @retrieved = false
   end
 
   def description
@@ -14,7 +15,7 @@ class Card
     desc
   end
 
-  def retrieved? = @retrieved
+  def retrieved? = @retrieved == true
 
   attr_writer :retrieved
 end

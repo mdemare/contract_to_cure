@@ -7,8 +7,11 @@ module ActionCards
     # Find which player has the card
     player_index = nil
 
+    action_card = nil
+
     @players.each_with_index do |_player, idx|
-      if has_action_card?(idx, card_name)
+      action_card, = find_action_card_in_player_hand(idx, card_name)
+      if action_card
         player_index = idx
         break
       end
@@ -25,7 +28,7 @@ module ActionCards
     end
 
     # Discard the action card
-    discard_player_card_by_name(player_index, card_name)
+    discard_player_card_by_name(player_index, card_name, action_card.retrieved?)
 
     # Return nil to indicate success
     nil
