@@ -329,7 +329,7 @@ class GameState
   # Helper method for medic ability
   def card_from_hash(card_data)
     card = Card.new(card_data[:type], card_data[:name], card_data[:color])
-    card.retrieved = card_data[:retrieved] == true
+    card.retrieved = card_data.fetch(:retrieved, false)
     card
   end
 

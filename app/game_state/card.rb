@@ -15,7 +15,11 @@ class Card
     desc
   end
 
-  def retrieved? = @retrieved == true
+  def retrieved? = @retrieved
 
-  attr_writer :retrieved
+  def retrieved=(value)
+    raise ArgumentError, "retrieved must be true or false" unless [true, false].include?(value)
+
+    @retrieved = value
+  end
 end
