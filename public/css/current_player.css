@@ -1,9 +1,9 @@
 /* current-player.css */
 
 .current-player {
-  position: fixed;
-  left: 20px;
-  bottom: 36px;
+  position: static;
+  flex: 0 0 auto;
+  align-self: center;
   display: flex;
   align-items: center;
   gap: 15px;
@@ -87,6 +87,7 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .current-player {
+    position: fixed;
     left: 10px;
     bottom: 80px;
     padding: 10px 15px;
