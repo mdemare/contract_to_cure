@@ -304,9 +304,7 @@ class GameState
     state[:players].each do |player_data|
       player = Player.new(player_data[:role], player_data[:index])
       player.location = player_data[:location]
-      player.hand = player_data[:hand].map do |card_data|
-        Card.new(card_data[:type], card_data[:name], card_data[:color])
-      end
+      player.hand = player_data[:hand].map { |card_data| card_from_hash(card_data) }
       @players << player
     end
 
@@ -314,21 +312,13 @@ class GameState
     @current_player = @players[@current_player_idx]
 
     # Decks
-    @player_deck = state[:decks][:player_deck].map do |card_data|
-      Card.new(card_data[:type], card_data[:name], card_data[:color])
-    end
+    @player_deck = state[:decks][:player_deck].map { |card_data| card_from_hash(card_data) }
 
-    @player_discard = state[:decks][:player_discard].map do |card_data|
-      Card.new(card_data[:type], card_data[:name], card_data[:color])
-    end
+    @player_discard = state[:decks][:player_discard].map { |card_data| card_from_hash(card_data) }
 
-    @infection_deck = state[:decks][:infection_deck].map do |card_data|
-      Card.new(card_data[:type], card_data[:name], card_data[:color])
-    end
+    @infection_deck = state[:decks][:infection_deck].map { |card_data| card_from_hash(card_data) }
 
-    @infection_discard = state[:decks][:infection_discard].map do |card_data|
-      Card.new(card_data[:type], card_data[:name], card_data[:color])
-    end
+    @infection_discard = state[:decks][:infection_discard].map { |card_data| card_from_hash(card_data) }
 
     # Determine player count and difficulty level
     @players_count = @players.size
@@ -337,6 +327,12 @@ class GameState
   end
 
   # Helper method for medic ability
+  def card_from_hash(card_data)
+    card = Card.new(card_data[:type], card_data[:name], card_data[:color])
+    card.retrieved = card_data.fetch(:retrieved, false)
+    card
+  end
+
   def medic_ability(requested_player, destination)
     raise unless requested_player.is_a?(Player)
 

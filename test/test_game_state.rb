@@ -33,6 +33,18 @@ class TestGameState < TestHelper
     assert_equal 0, game_state.current_player_idx
   end
 
+  def test_card_retrieved_flag_only_accepts_booleans
+    card = Card.new(:action, 'Airlift')
+
+    refute card.retrieved?
+    card.retrieved = true
+    assert card.retrieved?
+    card.retrieved = false
+    refute card.retrieved?
+    assert_raises(ArgumentError) { card.retrieved = nil }
+    assert_raises(ArgumentError) { card.retrieved = 'true' }
+  end
+
   def test_custom_game_state_modification
     game_state = create_game_with_custom_state do |state|
       state.instance_variable_set(:@current_player_idx, 2)

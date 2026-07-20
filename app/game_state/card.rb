@@ -6,6 +6,7 @@ class Card
     @type = type # :city, :action, :epidemic, :action
     @name = name
     @color = color # Only for city cards
+    @retrieved = false
   end
 
   def description
@@ -16,5 +17,9 @@ class Card
 
   def retrieved? = @retrieved
 
-  attr_writer :retrieved
+  def retrieved=(value)
+    raise ArgumentError, "retrieved must be true or false" unless [true, false].include?(value)
+
+    @retrieved = value
+  end
 end

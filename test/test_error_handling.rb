@@ -172,7 +172,7 @@ class TestErrorHandling < TestHelper
     create_game_with_custom_state do |state|
       current_player = state.players[state.current_player_idx]
       require_relative '../app/game_state/card'
-      current_player.hand.clear
+      state.players.each { |player| player.hand.clear }
       current_player.hand << Card.new(:city, 'Chicago', :blue) # Doesn't have Airlift
     end
 
