@@ -316,6 +316,7 @@ class TestApiEndpoints < TestHelper
     create_game_with_custom_state do |state|
       # Set actions remaining to 0 to trigger end turn
       state.instance_variable_set(:@actions_remaining, 0)
+      state.instance_variable_set(:@phase, 'draw_cards')
     end
 
     post '/draw_cards'
@@ -331,6 +332,7 @@ class TestApiEndpoints < TestHelper
     create_game_with_custom_state do |state|
       # Set actions remaining to 0 to trigger end turn
       state.instance_variable_set(:@actions_remaining, 0)
+      state.instance_variable_set(:@phase, 'infect_cities')
     end
 
     post '/infect_cities'
@@ -340,6 +342,43 @@ class TestApiEndpoints < TestHelper
     data = parse_json_response(last_response)
     assert data.is_a?(Hash), "Response should be valid JSON"
     assert data.key?('status') || data.key?('end_turn_events'), "Response should contain expected keys"
+  end
+
+  def test_infect_cities_rejects_skipping_draw_cards_phase
+    create_game_with_custom_state do |state|
+      state.instance_variable_set(:@actions_remaining, 0)
+      state.instance_variable_set(:@phase, 'draw_cards')
+    end
+
+    post '/infect_cities'
+
+    assert_error_response(last_response, 422, 'game phase is infect_cities')
+    saved_state = GameState.load_from_redis(@test_redis_key)
+    assert_equal 'draw_cards', saved_state.phase
+    assert_equal 0, saved_state.actions_remaining
+  end
+
+  def test_draw_cards_rejects_replay_after_draw_phase
+    create_game_with_custom_state do |state|
+      state.instance_variable_set(:@actions_remaining, 0)
+      state.instance_variable_set(:@phase, 'draw_cards')
+    end
+
+    post '/draw_cards'
+    assert_successful_response(last_response)
+    after_first_draw = GameState.load_from_redis(@test_redis_key)
+    assert_equal 'infect_cities', after_first_draw.phase
+    hand_size_after_first_draw = after_first_draw.players[after_first_draw.current_player_idx].hand.size
+    deck_size_after_first_draw = after_first_draw.player_deck.size
+
+    post '/draw_cards'
+
+    assert_error_response(last_response, 422, 'game phase is draw_cards')
+    after_replay_attempt = GameState.load_from_redis(@test_redis_key)
+    assert_equal 'infect_cities', after_replay_attempt.phase
+    assert_equal hand_size_after_first_draw,
+                 after_replay_attempt.players[after_replay_attempt.current_player_idx].hand.size
+    assert_equal deck_size_after_first_draw, after_replay_attempt.player_deck.size
   end
 
   def test_forecast_blocking_other_actions
