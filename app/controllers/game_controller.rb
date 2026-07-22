@@ -82,6 +82,8 @@ class GameController < ApplicationController
 
   # Draw cards endpoint
   def draw_cards
+    return render_out_of_phase('draw_cards') unless game_state.phase == 'draw_cards'
+
     if game_state.actions_remaining.zero?
       response = game_state.after_action_response(nil, {})
       response[:end_turn_events] = game_state.draw_cards
@@ -94,6 +96,8 @@ class GameController < ApplicationController
 
   # Infect cities endpoint
   def infect_cities
+    return render_out_of_phase('infect_cities') unless game_state.phase == 'infect_cities'
+
     if game_state.actions_remaining.zero?
       response = game_state.after_action_response(nil, {})
       response[:end_turn_events] = game_state.infect_cities
@@ -227,5 +231,12 @@ class GameController < ApplicationController
     else
       render json: result
     end
+  end
+
+  def render_out_of_phase(expected_phase)
+    render json: {
+      status: 'error',
+      message: "Cannot perform this action unless game phase is #{expected_phase}"
+    }, status: 422
   end
 end
