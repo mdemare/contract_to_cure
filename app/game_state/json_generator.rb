@@ -8,6 +8,7 @@ module JsonGenerator
       gameStatus: {
         actions_remaining: @actions_remaining,
         phase: @phase,
+        pending_hand_limit: @pending_hand_limit,
         turn: @turn,
         gameOver: @game_over,
         outbreaks: @outbreak_count,

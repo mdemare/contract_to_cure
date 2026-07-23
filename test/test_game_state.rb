@@ -228,5 +228,7 @@ class TestGameState < TestHelper
     assert exceeded_limit_data.is_a?(Hash), "exceeded_hand_limit should be a Hash"
     assert_equal 1, exceeded_limit_data[:discard_count]
     assert_equal game_state.current_player_idx, exceeded_limit_data[:player_index]
+    assert_equal 'pending_discard', game_state.phase
+    assert_equal 'infect_cities', exceeded_limit_data[:return_phase]
   end
 end

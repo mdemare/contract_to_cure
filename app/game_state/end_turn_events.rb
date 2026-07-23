@@ -11,7 +11,7 @@ module EndTurnEvents
     end
 
     end_turn.events << { type: :wait_infect_cities }
-    @phase = 'infect_cities'
+    @phase = 'infect_cities' unless @pending_hand_limit
     # Save game state after turn is complete
     save_game_state
 

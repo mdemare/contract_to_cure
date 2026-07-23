@@ -147,15 +147,14 @@ module PlayerActions
     receiving_player.hand << card
     receiving_player.hand = receiving_player.sorted_hand
 
-    # Check hand limit (7 cards)
-    exceeded_limit = nil
-    if receiving_player.hand.size > 7
-      exceeded_limit = { player_index: receiving_player_index, discard_count: receiving_player.hand.size - 7 }
-    end
-
     # Return success with hand limit info if applicable
     response = after_action(true, "Successfully shared #{card.name} card from #{giving_player.role} to #{receiving_player.role}")
-    response[:exceeded_hand_limit] = exceeded_limit if exceeded_limit
+    if receiving_player.hand.size > 7
+      exceeded_limit = set_pending_hand_limit(receiving_player_index, @phase)
+      save_game_state
+      response[:exceeded_hand_limit] = exceeded_limit
+      response[:game_state] = to_json_state
+    end
     response
   end
 
