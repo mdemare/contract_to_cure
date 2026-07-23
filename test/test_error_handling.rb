@@ -33,6 +33,23 @@ class TestErrorHandling < TestHelper
     assert_json_response(last_response)
   end
 
+  def test_move_with_invalid_destination_for_operations_expert_at_research_station
+    create_game_with_custom_state do |state|
+      player = state.players[state.current_player_idx]
+      player.instance_variable_set(:@role, :operations_expert)
+      player.location = 'Wuhan'
+      player.hand.clear
+      player.hand << Card.new(:city, 'London', :blue)
+    end
+
+    post '/move', {
+      player_index: 0,
+      destination: 'NonExistentCity'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_error_response(last_response, 422, 'Unknown destination NonExistentCity')
+  end
+
   def test_cure_disease_without_research_station
     create_game_with_custom_state do |state|
       # Give player cards but ensure they're not at a research station
