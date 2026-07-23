@@ -2,7 +2,24 @@ module PlayerActions
   include GameStateConfig
 
   def move(player_index, destination, card_name = nil)
+    unless player_index.between?(0, @players.size - 1)
+      return { success: false, status: 'error', message: "Unknown player #{player_index}" }
+    end
+
     player = @players[player_index]
+
+    acting_player = current_player
+    acting_player_index = @current_player_idx
+    dispatcher_move = acting_player.role == :dispatcher && player_index != acting_player_index
+
+    unless player_index == acting_player_index || acting_player.role == :dispatcher
+      return {
+        success: false,
+        status: 'error',
+        message: "Current player cannot move another player's pawn unless they are the Dispatcher"
+      }
+    end
+
     current_location = player.location
     return { success: false, status: 'error', message: "Unknown destination #{destination}" } unless @cities.key?(destination)
 
@@ -11,16 +28,16 @@ module PlayerActions
       move_type = 'drive / ferry'
     elsif @research_stations.include?(current_location) && @research_stations.include?(destination)
       move_type = 'shuttle flight'
-    elsif player.role == :operations_expert && @research_stations.include?(current_location) && !player.city_cards.empty?
+    elsif !dispatcher_move && acting_player.role == :operations_expert && @research_stations.include?(current_location) && !acting_player.city_cards.empty?
       # Check if Operations Expert has already used special move this turn
       if @operations_expert_move_used
         return { success: false, status: 'error', message: "Operations Expert can only use special move once per turn" }
       end
 
-      if card_name and find_city_card_in_player_hand(player_index, card_name)[0]
+      if card_name and find_city_card_in_player_hand(acting_player_index, card_name)[0]
         # The operation expert can go anywhere from a research station by discarding a city card
         move_type = 'operation researcher special move'
-        discard_player_card_by_name(player_index, card_name)
+        discard_player_card_by_name(acting_player_index, card_name)
         @operations_expert_move_used = true
       else
         # Request card selection for operations expert move
@@ -31,19 +48,19 @@ module PlayerActions
           movement_type: 'operations_expert_special'
         }
       end
-    elsif current_player.role == :dispatcher && @players.any? { |p| p.location == destination && p.index != player_index }
+    elsif acting_player.role == :dispatcher && @players.any? { |p| p.location == destination && p.index != player_index }
       # The dispatcher can bring players together
       move_type = 'dispatcher special move'
-    elsif has_city_card?(@current_player_idx, destination)
-      if has_city_card?(@current_player_idx, current_location)
+    elsif has_city_card?(acting_player_index, destination)
+      if has_city_card?(acting_player_index, current_location)
         if card_name
           # Check if the card name matches either destination or current location
           if card_name == destination
             move_type = 'direct flight'
-            discard_player_card_by_name(@current_player_idx, card_name)
+            discard_player_card_by_name(acting_player_index, card_name)
           elsif card_name == current_location
             move_type = 'charter flight'
-            discard_player_card_by_name(@current_player_idx, card_name)
+            discard_player_card_by_name(acting_player_index, card_name)
           else
             return {
               success: false,
@@ -63,11 +80,11 @@ module PlayerActions
         end
       else
         move_type = 'direct flight'
-        discard_player_card_by_name(player_index, destination)
+        discard_player_card_by_name(acting_player_index, destination)
       end
-    elsif has_city_card?(player_index, current_location)
+    elsif has_city_card?(acting_player_index, current_location)
       move_type = 'charter flight'
-      discard_player_card_by_name(player_index, current_location)
+      discard_player_card_by_name(acting_player_index, current_location)
     else
       return { success: false, status: 'error', message: "Cannot move player to destination #{destination} from #{current_location}" }
     end

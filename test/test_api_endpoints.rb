@@ -63,6 +63,102 @@ class TestApiEndpoints < TestHelper
     assert_equal 'success', data['status']
   end
 
+  def test_move_endpoint_rejects_moving_another_pawn_without_dispatcher
+    create_game_with_custom_state do |state|
+      state.players[0].instance_variable_set(:@role, :medic)
+      state.players[0].location = 'London'
+      state.players[1].instance_variable_set(:@role, :scientist)
+      state.players[1].location = 'London'
+    end
+
+    post '/move', {
+      player_index: 1,
+      destination: 'Paris'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_equal 422, last_response.status
+    assert_json_response(last_response)
+
+    data = parse_json_response(last_response)
+    assert_equal 'error', data['status']
+    assert_includes data['message'], 'Dispatcher'
+
+    saved_state = GameState.load_from_redis(@test_redis_key)
+    assert_equal 'London', saved_state.players[1].location
+  end
+
+  def test_dispatcher_can_move_another_pawn_by_drive_or_ferry
+    create_game_with_custom_state do |state|
+      state.players[0].instance_variable_set(:@role, :dispatcher)
+      state.players[0].location = 'Wuhan'
+      state.players[1].instance_variable_set(:@role, :medic)
+      state.players[1].location = 'London'
+    end
+
+    post '/move', {
+      player_index: 1,
+      destination: 'Paris'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_successful_response(last_response)
+    assert_json_response(last_response)
+
+    data = parse_json_response(last_response)
+    assert_equal 'success', data['status']
+    assert_equal 'Paris', data['game_state']['players'][1]['location']
+    assert_equal 'Wuhan', data['game_state']['players'][0]['location']
+  end
+
+  def test_dispatcher_can_move_any_pawn_to_city_with_another_pawn
+    create_game_with_custom_state do |state|
+      state.players[0].instance_variable_set(:@role, :dispatcher)
+      state.players[0].location = 'Wuhan'
+      state.players[1].instance_variable_set(:@role, :medic)
+      state.players[1].location = 'London'
+      state.players[2].instance_variable_set(:@role, :scientist)
+      state.players[2].location = 'Tokyo'
+    end
+
+    post '/move', {
+      player_index: 1,
+      destination: 'Tokyo'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_successful_response(last_response)
+    assert_json_response(last_response)
+
+    data = parse_json_response(last_response)
+    assert_equal 'success', data['status']
+    assert_equal 'Tokyo', data['game_state']['players'][1]['location']
+  end
+
+  def test_dispatcher_pays_card_cost_when_moving_another_pawn_by_flight
+    create_game_with_custom_state do |state|
+      state.players[0].instance_variable_set(:@role, :dispatcher)
+      state.players[0].location = 'Wuhan'
+      state.players[0].hand.clear
+      state.players[0].hand << Card.new(:city, 'Tokyo', :red)
+
+      state.players[1].instance_variable_set(:@role, :medic)
+      state.players[1].location = 'London'
+      state.players[1].hand.clear
+    end
+
+    post '/move', {
+      player_index: 1,
+      destination: 'Tokyo'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_successful_response(last_response)
+    assert_json_response(last_response)
+
+    data = parse_json_response(last_response)
+    assert_equal 'success', data['status']
+    assert_equal 'Tokyo', data['game_state']['players'][1]['location']
+    assert_empty data['game_state']['players'][0]['hand']
+    assert_empty data['game_state']['players'][1]['hand']
+  end
+
   def test_move_endpoint_missing_parameters
     create_test_game_state
 
