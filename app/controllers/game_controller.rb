@@ -14,7 +14,7 @@ class GameController < ApplicationController
 
   # Move action endpoint
   def move
-    return render(json: game_state.check_action, status: 422) if game_state.check_action
+    return if render_player_action_phase_error
 
     validated = validate_request(GameRequestSchemas::MOVE, %i[player_index destination card_name])
     return if performed?
@@ -26,7 +26,7 @@ class GameController < ApplicationController
 
   # Treat disease endpoint
   def treat
-    return render(json: game_state.check_action, status: 422) if game_state.check_action
+    return if render_player_action_phase_error
 
     result = game_state.treat_disease
     render_game_result(result)
@@ -34,7 +34,7 @@ class GameController < ApplicationController
 
   # Cure disease endpoint
   def cure_disease
-    return render(json: game_state.check_action, status: 422) if game_state.check_action
+    return if render_player_action_phase_error
 
     validated = validate_request(GameRequestSchemas::CURE_DISEASE, %i[color card_names])
     return if performed?
@@ -45,7 +45,7 @@ class GameController < ApplicationController
 
   # Retrieve action card endpoint for contingency planner
   def retrieve
-    return render(json: game_state.check_action, status: 422) if game_state.check_action
+    return if render_player_action_phase_error
 
     validated = validate_request(GameRequestSchemas::RETRIEVE, [:action_card_name])
     return if performed?
@@ -57,7 +57,7 @@ class GameController < ApplicationController
 
   # Share knowledge endpoint
   def share_knowledge
-    return render(json: game_state.check_action, status: 422) if game_state.check_action
+    return if render_player_action_phase_error
 
     validated = validate_request(
       GameRequestSchemas::SHARE_KNOWLEDGE,
@@ -110,7 +110,7 @@ class GameController < ApplicationController
 
   # Build research station endpoint
   def build_research_station
-    return render(json: game_state.check_action, status: 422) if game_state.check_action
+    return if render_player_action_phase_error
 
     result = game_state.build_research_station
     render_game_result(result)
@@ -192,6 +192,14 @@ class GameController < ApplicationController
   end
 
   private
+
+  def render_player_action_phase_error
+    action_error = game_state.check_action
+    return false unless action_error
+
+    render json: action_error, status: 422
+    true
+  end
 
   def validate_request(schema, keys)
     raw_params = params.to_unsafe_h.slice(*keys.map(&:to_s))

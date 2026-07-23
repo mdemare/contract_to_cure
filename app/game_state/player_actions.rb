@@ -4,6 +4,7 @@ module PlayerActions
   def move(player_index, destination, card_name = nil)
     player = @players[player_index]
     current_location = player.location
+    return { success: false, status: 'error', message: "Unknown destination #{destination}" } unless @cities.key?(destination)
 
     # Check if move is valid
     if @cities[current_location].connections.include?(destination)
