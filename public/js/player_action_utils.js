@@ -12,12 +12,21 @@ export async function initializeModules() {
   selectCardsModule = await import('./select_cards.js');
 }
 
+function resultIncludesHandLimitPrompt(result) {
+  return Boolean(
+    result.exceeded_hand_limit ||
+    result.end_turn_events?.some(event => event.exceeded_hand_limit)
+  );
+}
+
 async function handleSuccessfulAPIRequest(result, successMessage, eventData) {
+  const promptPendingHandLimit = !resultIncludesHandLimitPrompt(result);
+
   // Update game state FIRST
   if (result.game_state) {
-    await loadGameState(result.game_state);
+    await loadGameState(result.game_state, { promptPendingHandLimit });
   } else {
-    await loadGameState();
+    await loadGameState(null, { promptPendingHandLimit });
   }
 
   // THEN handle hand limit with updated state
@@ -83,7 +92,7 @@ export async function processAPIRequest(endpoint, requestData, successMessage, f
       const result = await response.json();
       if(!result) { throw new Error("no result")}
       if (result.status === 'success') {
-        handleSuccessfulAPIRequest(result, successMessage, eventData)
+        await handleSuccessfulAPIRequest(result, successMessage, eventData)
       } else if (result.status === 'action_unavailable') {
         // Action was not available, reload game state to ensure UI is in sync
         if (result.game_state) {

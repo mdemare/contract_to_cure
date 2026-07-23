@@ -9,6 +9,8 @@ let currentGameState = null;
 // Game mode state to track which action is currently selected
 let currentMode = null;
 export let CITIES = null;
+let pendingHandLimitPromptKey = null;
+let pendingHandLimitPromptActive = false;
 
 // Get the current action mode
 export function getCurrentMode() {
@@ -114,8 +116,48 @@ export async function loadCities() {
   }
 }
 
+function pendingHandLimitKey(gameState, pendingHandLimit) {
+  const player = gameState.players?.[pendingHandLimit.player_index];
+  const handSize = player?.hand?.length ?? 'unknown';
+  return [
+    pendingHandLimit.player_index,
+    pendingHandLimit.discard_count,
+    pendingHandLimit.return_phase,
+    handSize
+  ].join(':');
+}
+
+export async function promptPendingHandLimitIfNeeded(gameState = currentGameState) {
+  const pendingHandLimit = gameState?.gameStatus?.pending_hand_limit;
+  if (!pendingHandLimit || gameState.gameStatus.phase !== 'pending_discard') {
+    pendingHandLimitPromptKey = null;
+    return;
+  }
+
+  const promptKey = pendingHandLimitKey(gameState, pendingHandLimit);
+  if (pendingHandLimitPromptActive || pendingHandLimitPromptKey === promptKey) {
+    return;
+  }
+
+  pendingHandLimitPromptKey = promptKey;
+  pendingHandLimitPromptActive = true;
+
+  try {
+    const selectCardsModule = await import('./select_cards.js');
+    await new Promise(resolve => {
+      selectCardsModule.handleHandLimitCheck(
+        pendingHandLimit.player_index,
+        pendingHandLimit.discard_count,
+        resolve
+      );
+    });
+  } finally {
+    pendingHandLimitPromptActive = false;
+  }
+}
+
 // Then update the loadGameState function to add game over check
-export async function loadGameState(providedGameState = null) {
+export async function loadGameState(providedGameState = null, { promptPendingHandLimit = true } = {}) {
   try {
     let gameState;
 
@@ -144,6 +186,12 @@ export async function loadGameState(providedGameState = null) {
 
     // Update the UI with the new game state
     updateGameUI(gameState);
+
+    if (promptPendingHandLimit) {
+      promptPendingHandLimitIfNeeded(gameState).catch(error => {
+        console.error('Error prompting pending hand-limit discard:', error);
+      });
+    }
 
     return gameState;
   } catch (error) {
