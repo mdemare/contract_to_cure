@@ -13,6 +13,8 @@ services:
       - "${EXPOSED_PORT:-3100}:2583"
     env_file:
       - .env
+    environment:
+      PORT: "2583"
     restart: unless-stopped
     command: ["bundle", "exec", "puma", "-C", "config/puma.rb"]
     healthcheck:

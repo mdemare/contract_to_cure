@@ -7,6 +7,14 @@ class TestApiEndpoints < TestHelper
     assert_includes last_response.body, 'Contract To Cure'
   end
 
+  def test_deployment_healthcheck_routes
+    get '/up'
+    assert_equal 200, last_response.status
+
+    get '/health'
+    assert_equal 200, last_response.status
+  end
+
   def test_git_hash_not_displayed_in_development
     get '/'
     assert_equal 200, last_response.status

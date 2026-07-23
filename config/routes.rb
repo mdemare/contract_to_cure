@@ -4,6 +4,10 @@ Rails.application.routes.draw do
   # Redirect root to index.html
   root 'application#index'
 
+  # Deployment health checks
+  get '/up', to: 'rails/health#show', as: :rails_health_check
+  get '/health', to: 'rails/health#show'
+
   # Authentication routes
   get '/login', to: 'sessions#new', as: :login
   delete '/logout', to: 'sessions#destroy', as: :logout
