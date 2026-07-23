@@ -84,6 +84,32 @@ class TestApiEndpoints < TestHelper
     assert_error_response(last_response, 422, 'Missing required parameters')
   end
 
+  def test_protected_player_action_endpoints_return_error_object_outside_player_actions_phase
+    protected_endpoints = [
+      ['/move', { player_index: 0, destination: 'London' }],
+      ['/treat', {}],
+      ['/cure_disease', { color: 'blue', card_names: [] }],
+      ['/retrieve', { action_card_name: 'Airlift' }],
+      ['/share_knowledge', { giving_player_index: 0, receiving_player_index: 1, city_name: 'Chicago' }],
+      ['/build_research_station', {}]
+    ]
+
+    protected_endpoints.each do |path, payload|
+      create_game_with_custom_state do |state|
+        state.instance_variable_set(:@actions_remaining, 0)
+        state.instance_variable_set(:@phase, 'draw_cards')
+      end
+
+      post path, payload.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+      assert_equal 422, last_response.status, "#{path} should reject outside player_actions"
+      assert_json_response(last_response)
+      data = parse_json_response(last_response)
+      assert_instance_of Hash, data, "#{path} should return a JSON object"
+      assert_equal({ 'status' => 'error', 'message' => 'No more actions allowed' }, data)
+    end
+  end
+
   def test_treat_disease_endpoint
     create_game_with_custom_state do |state|
       # Ensure current player is in a city with disease cubes

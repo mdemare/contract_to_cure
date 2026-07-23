@@ -80,7 +80,7 @@ class GameState
   def check_action
     return unless @phase != 'player_actions'
 
-    return [422, { status: 'error', message: 'No more actions allowed' }.to_json]
+    { status: 'error', message: 'No more actions allowed' }
   end
 
   # Public method to save game state to Redis
