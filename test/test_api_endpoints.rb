@@ -218,7 +218,7 @@ class TestApiEndpoints < TestHelper
 
   def test_discard_cards_endpoint
     create_game_with_custom_state do |state|
-      # Give player more than 7 cards to force discard
+      # Put player in the required hand-limit discard state.
       player = state.players[0]
       require_relative '../app/game_state/card'
 
@@ -226,11 +226,12 @@ class TestApiEndpoints < TestHelper
       ['Chicago', 'Montreal', 'Washington', 'New York', 'London', 'Paris', 'Barcelona', 'Stockholm', 'Rome'].each do |city|
         player.hand << Card.new(:city, city, :blue)
       end
+      state.set_pending_hand_limit(0, 'infect_cities')
     end
 
     post '/discard_cards', {
       player_index: 0,
-      card_names: %w[Madrid Paris]
+      card_names: %w[Paris Rome]
     }.to_json, { 'CONTENT_TYPE' => 'application/json' }
 
     assert_successful_response(last_response)
@@ -239,6 +240,43 @@ class TestApiEndpoints < TestHelper
     data = parse_json_response(last_response)
     assert_equal 'success', data['status']
     assert_includes data['message'], 'Successfully discarded'
+
+    saved_state = GameState.load_from_redis(@test_redis_key)
+    assert_equal 'infect_cities', saved_state.phase
+    assert_nil saved_state.pending_hand_limit
+    assert_equal 7, saved_state.players[0].hand.size
+  end
+
+  def test_discard_cards_rejects_unsolicited_discard
+    create_test_game_state
+
+    post '/discard_cards', {
+      player_index: 0,
+      card_names: ['Chicago']
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_error_response(last_response, 422, 'No hand-limit discard is pending')
+  end
+
+  def test_discard_cards_requires_exact_pending_count
+    create_game_with_custom_state do |state|
+      player = state.players[0]
+      player.hand.clear
+      ['Chicago', 'Montreal', 'Washington', 'New York', 'London', 'Paris', 'Barcelona', 'Stockholm', 'Rome'].each do |city|
+        player.hand << Card.new(:city, city, :blue)
+      end
+      state.set_pending_hand_limit(0, 'infect_cities')
+    end
+
+    post '/discard_cards', {
+      player_index: 0,
+      card_names: ['Paris']
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_error_response(last_response, 422, 'Must discard exactly 2')
+    saved_state = GameState.load_from_redis(@test_redis_key)
+    assert_equal 9, saved_state.players[0].hand.size
+    assert_equal 'pending_discard', saved_state.phase
   end
 
   def test_discard_cards_endpoint_invalid_card_names_type
@@ -360,6 +398,110 @@ class TestApiEndpoints < TestHelper
     data = parse_json_response(last_response)
     assert data.is_a?(Hash), "Response should be valid JSON"
     assert data.key?('status') || data.key?('end_turn_events'), "Response should contain expected keys"
+  end
+
+  def test_draw_cards_sets_pending_discard_before_infection_when_hand_limit_exceeded
+    create_game_with_custom_state do |state|
+      state.instance_variable_set(:@actions_remaining, 0)
+      state.instance_variable_set(:@phase, 'draw_cards')
+
+      current_player = state.current_player
+      current_player.hand.clear
+      ['Chicago', 'Montreal', 'Washington', 'New York', 'London', 'Paris'].each do |city|
+        current_player.hand << Card.new(:city, city, :blue)
+      end
+
+      state.player_deck.clear
+      state.player_deck << Card.new(:city, 'Barcelona', :yellow)
+      state.player_deck << Card.new(:city, 'Madrid', :yellow)
+    end
+
+    post '/draw_cards'
+    assert_successful_response(last_response)
+
+    saved_state = GameState.load_from_redis(@test_redis_key)
+    assert_equal 'pending_discard', saved_state.phase
+    assert_equal({
+                   player_index: saved_state.current_player_idx,
+                   discard_count: 1,
+                   return_phase: 'infect_cities'
+                 }, saved_state.pending_hand_limit)
+
+    post '/infect_cities'
+    assert_error_response(last_response, 422, 'pending hand-limit discard')
+
+    post '/discard_cards', {
+      player_index: saved_state.current_player_idx,
+      card_names: ['Paris']
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+    assert_successful_response(last_response)
+
+    resolved_state = GameState.load_from_redis(@test_redis_key)
+    assert_equal 'infect_cities', resolved_state.phase
+    assert_nil resolved_state.pending_hand_limit
+  end
+
+  def test_share_knowledge_sets_pending_discard_for_receiving_player
+    create_game_with_custom_state do |state|
+      state.players[0].location = 'Chicago'
+      state.players[1].location = 'Chicago'
+      state.players[0].hand.clear
+      state.players[0].hand << Card.new(:city, 'Chicago', :blue)
+      state.players[1].hand.clear
+      ['Montreal', 'Washington', 'New York', 'London', 'Paris', 'Barcelona', 'Stockholm'].each do |city|
+        state.players[1].hand << Card.new(:city, city, :blue)
+      end
+    end
+
+    post '/share_knowledge', {
+      giving_player_index: 0,
+      receiving_player_index: 1,
+      city_name: 'Chicago'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+    assert_successful_response(last_response)
+
+    saved_state = GameState.load_from_redis(@test_redis_key)
+    assert_equal 'pending_discard', saved_state.phase
+    assert_equal({ player_index: 1, discard_count: 1, return_phase: 'player_actions' }, saved_state.pending_hand_limit)
+
+    post '/discard_cards', {
+      player_index: 0,
+      card_names: ['Chicago']
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+    assert_error_response(last_response, 422, 'Only the player over the hand limit may discard')
+
+    post '/discard_cards', {
+      player_index: 1,
+      card_names: ['Chicago']
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+    assert_successful_response(last_response)
+
+    resolved_state = GameState.load_from_redis(@test_redis_key)
+    assert_equal 'player_actions', resolved_state.phase
+    assert_nil resolved_state.pending_hand_limit
+    assert_equal 7, resolved_state.players[1].hand.size
+  end
+
+  def test_action_card_can_resolve_pending_hand_limit
+    create_game_with_custom_state do |state|
+      player = state.players[0]
+      player.hand.clear
+      ['Chicago', 'Montreal', 'Washington', 'New York', 'London', 'Paris', 'Barcelona'].each do |city|
+        player.hand << Card.new(:city, city, :blue)
+      end
+      player.hand << Card.new(:action, 'One Quiet Night')
+      state.set_pending_hand_limit(0, 'infect_cities')
+    end
+
+    post '/action_card', {
+      card: 'One Quiet Night'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_successful_response(last_response)
+    saved_state = GameState.load_from_redis(@test_redis_key)
+    assert_equal 'infect_cities', saved_state.phase
+    assert_nil saved_state.pending_hand_limit
+    assert_equal 7, saved_state.players[0].hand.size
   end
 
   def test_infect_cities_endpoint

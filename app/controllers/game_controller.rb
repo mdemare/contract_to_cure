@@ -76,12 +76,15 @@ class GameController < ApplicationController
 
   # Pass action endpoint
   def pass
+    return render(json: game_state.check_action, status: 422) if game_state.check_action
+
     result = game_state.pass
     render_game_result(result)
   end
 
   # Draw cards endpoint
   def draw_cards
+    return render_pending_discard_error if game_state.pending_hand_limit
     return render_out_of_phase('draw_cards') unless game_state.phase == 'draw_cards'
 
     if game_state.actions_remaining.zero?
@@ -96,6 +99,7 @@ class GameController < ApplicationController
 
   # Infect cities endpoint
   def infect_cities
+    return render_pending_discard_error if game_state.pending_hand_limit
     return render_out_of_phase('infect_cities') unless game_state.phase == 'infect_cities'
 
     if game_state.actions_remaining.zero?
@@ -121,18 +125,8 @@ class GameController < ApplicationController
     validated = validate_request(GameRequestSchemas::DISCARD_CARDS, %i[player_index card_names])
     return if performed?
 
-    # Discard each card by name
-    discarded_count = 0
-    validated[:card_names].each do |card_name|
-      if game_state.discard_player_card_by_name(validated[:player_index], card_name)
-        discarded_count += 1
-      end
-    end
-
-    game_state.save_game_state
-
-    # Return success response
-    render json: { status: 'success', message: "Successfully discarded #{discarded_count} card(s)" }
+    result = game_state.discard_cards_for_hand_limit(validated[:player_index], validated[:card_names])
+    render_game_result(result)
   end
 
   # Action card endpoint
@@ -175,6 +169,11 @@ class GameController < ApplicationController
              # Add cases for other action cards as they are implemented
              else
                return render json: { status: 'error', message: "Unknown action card: #{card_name}" }, status: 500
+    end
+
+    if result[:success] != false && game_state.pending_hand_limit
+      game_state.resolve_pending_hand_limit_if_satisfied
+      result[:game_state] = game_state.to_json_state
     end
 
     render_game_result(result)
@@ -245,6 +244,13 @@ class GameController < ApplicationController
     render json: {
       status: 'error',
       message: "Cannot perform this action unless game phase is #{expected_phase}"
+    }, status: 422
+  end
+
+  def render_pending_discard_error
+    render json: {
+      status: 'error',
+      message: 'Must resolve pending hand-limit discard before continuing'
     }, status: 422
   end
 end

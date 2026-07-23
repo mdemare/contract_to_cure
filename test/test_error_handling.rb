@@ -201,17 +201,18 @@ class TestErrorHandling < TestHelper
       player = state.players[0]
       require_relative '../app/game_state/card'
       player.hand.clear
-      player.hand << Card.new(:city, 'Chicago', :blue) # Only has Chicago
+      ['Chicago', 'Montreal', 'Washington', 'New York', 'London', 'Paris', 'Barcelona', 'Stockholm'].each do |city|
+        player.hand << Card.new(:city, city, :blue)
+      end
+      state.set_pending_hand_limit(0, 'infect_cities')
     end
 
     post '/discard_cards', {
       player_index: 0,
-      card_names: ['London'] # Trying to discard London (player doesn't have it)
+      card_names: ['Madrid']
     }.to_json, { 'CONTENT_TYPE' => 'application/json' }
 
-    assert_successful_response(last_response) # Should succeed but discard 0 cards
-    data = parse_json_response(last_response)
-    assert_includes data['message'], 'Successfully discarded 0'
+    assert_error_response(last_response, 422, 'Player does not have the Madrid card')
   end
 
   def test_actions_when_no_actions_remaining

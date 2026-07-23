@@ -23,7 +23,7 @@ class GameState
               :player_deck, :player_discard, :research_stations, :disease_cubes, :cures,
               :outbreak_count, :infection_rate, :infection_rate_marker, :game_over,
               :game_over_reason, :difficulty_level, :current_player, :forecast_active,
-              :actions_remaining, :operations_expert_move_used, :phase
+              :actions_remaining, :operations_expert_move_used, :phase, :pending_hand_limit
 
   # Initialize a new game state
   def initialize(players_count, difficulty_level = :heroic)
@@ -94,6 +94,7 @@ class GameState
         game_status: {
           actions_remaining: @actions_remaining,
           phase: @phase,
+          pending_hand_limit: @pending_hand_limit,
           turn: @turn,
           game_over: @game_over,
           game_over_reason: @game_over_reason,
@@ -169,6 +170,7 @@ class GameState
     @game_over_reason = nil
     @actions_remaining = 4
     @phase = 'player_actions'
+    @pending_hand_limit = nil
     @operations_expert_move_used = false
 
     # Initialize diseases
@@ -245,6 +247,74 @@ class GameState
     return true
   end
 
+  def set_pending_hand_limit(player_index, return_phase)
+    discard_count = hand_limit_excess(player_index)
+    return nil unless discard_count.positive?
+
+    @pending_hand_limit = {
+      player_index: player_index,
+      discard_count: discard_count,
+      return_phase: return_phase
+    }
+    @phase = 'pending_discard'
+    @pending_hand_limit
+  end
+
+  def resolve_pending_hand_limit_if_satisfied
+    return false unless @pending_hand_limit
+
+    player_index = @pending_hand_limit[:player_index]
+    discard_count = hand_limit_excess(player_index)
+    if discard_count.positive?
+      @pending_hand_limit[:discard_count] = discard_count
+      save_game_state
+      return false
+    end
+
+    @phase = @pending_hand_limit[:return_phase]
+    @pending_hand_limit = nil
+    save_game_state
+    true
+  end
+
+  def discard_cards_for_hand_limit(player_index, card_names)
+    return { success: false, status: 'error', message: 'No hand-limit discard is pending' } unless @pending_hand_limit
+
+    pending_player_index = @pending_hand_limit[:player_index]
+    unless player_index == pending_player_index
+      return { success: false, status: 'error', message: 'Only the player over the hand limit may discard' }
+    end
+
+    required_count = hand_limit_excess(player_index)
+    if required_count <= 0
+      resolve_pending_hand_limit_if_satisfied
+      return { success: true, status: 'success', message: 'Hand limit already resolved', game_state: to_json_state }
+    end
+
+    unless card_names.size == required_count
+      return {
+        success: false,
+        status: 'error',
+        message: "Must discard exactly #{required_count} card(s) to resolve hand limit"
+      }
+    end
+
+    missing_card_name = first_missing_card_name(player_index, card_names)
+    if missing_card_name
+      return { success: false, status: 'error', message: "Player does not have the #{missing_card_name} card" }
+    end
+
+    card_names.each { |card_name| discard_player_card_by_name(player_index, card_name) }
+    resolve_pending_hand_limit_if_satisfied
+
+    {
+      success: true,
+      status: 'success',
+      message: "Successfully discarded #{card_names.size} card(s)",
+      game_state: to_json_state
+    }
+  end
+
   # New version of has_city_card that doesn't depend on an existing method
   def has_city_card?(player_index, city_name)
     player = @players[player_index]
@@ -265,6 +335,7 @@ class GameState
     @actions_remaining = state[:game_status][:actions_remaining]
     @turn = state[:game_status][:turn]
     @phase = state[:game_status][:phase]
+    @pending_hand_limit = state[:game_status][:pending_hand_limit]
     @game_over = state[:game_status][:game_over]
     @game_over_reason = state[:game_status][:game_over_reason]
     @outbreak_count = state[:game_status][:outbreaks]
@@ -331,6 +402,21 @@ class GameState
     card = Card.new(card_data[:type], card_data[:name], card_data[:color])
     card.retrieved = card_data.fetch(:retrieved, false)
     card
+  end
+
+  def hand_limit_excess(player_index)
+    [@players[player_index].hand.size - 7, 0].max
+  end
+
+  def first_missing_card_name(player_index, card_names)
+    available_counts = @players[player_index].hand.each_with_object(Hash.new(0)) do |card, counts|
+      counts[card.name] += 1
+    end
+
+    card_names.find do |card_name|
+      available_counts[card_name] -= 1
+      available_counts[card_name].negative?
+    end
   end
 
   def medic_ability(requested_player, destination)
