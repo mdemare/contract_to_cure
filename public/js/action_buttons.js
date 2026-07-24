@@ -79,6 +79,21 @@ export function updateButtonStates() {
 
   // Get action cards button separately as it should be available in all phases
   const actionCardsBtn = document.getElementById('action-cards-btn');
+
+  if (phase === 'pending_discard') {
+    actionButtonsList.forEach(button => {
+      if (button.id !== 'action-cards-btn') {
+        button.style.display = 'none';
+        button.classList.add('disabled');
+        button.disabled = true;
+      }
+    });
+    drawCardsBtn.style.display = 'none';
+    infectCitiesBtn.style.display = 'none';
+    updateActionCardsButtonState(gameState);
+    updateRetrieveButtonState();
+    return;
+  }
   
   if (phase === 'player_actions') {
     // Show all other action buttons

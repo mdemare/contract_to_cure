@@ -95,8 +95,15 @@ async function handleCityClick(event) {
 
   // Get the current player
   const currentPlayer = getCurrentPlayer();
+  const mode = getCurrentMode();
 
-  switch (getCurrentMode()) {
+  if (gameState.gameStatus.phase === 'pending_discard' &&
+      mode !== 'governmentGrant' &&
+      mode !== 'airlift') {
+    return;
+  }
+
+  switch (mode) {
     case 'governmentGrant':
       // Reset the mode after handling the action
       resetMode();
