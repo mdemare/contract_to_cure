@@ -1,5 +1,5 @@
 // player_actions.js
-import { getCurrentGameState, getCurrentLocation, getCurrentPlayer, resetMode, getCurrentMode } from './game_state.js';
+import { getCurrentGameState, getCurrentLocation, getCurrentPlayer, isDispatcher, resetMode, getCurrentMode } from './game_state.js';
 import { getActionCardSource, completeAirlift } from './action_cards.js';
 import { showHandSelectionModal, showGeneralCardSelectionModal } from './select_cards.js';
 import { processAPIRequest, getCityColor, showSuccessMessage, showErrorMessage, showInvalidActionMessage } from './player_action_utils.js'
@@ -124,6 +124,12 @@ async function handleCityClick(event) {
       return;
 
     case 'moveSelectedPlayer':
+      if (!isDispatcher()) {
+        resetMode();
+        showInvalidActionMessage("Only the Dispatcher can move another player's pawn.");
+        return;
+      }
+
       // Get the selected player index
       if (selectedPlayerIndex !== null) {
         // Reset the mode after handling the action
