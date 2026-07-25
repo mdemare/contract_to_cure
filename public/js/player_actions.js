@@ -61,6 +61,11 @@ async function handleBuildStationClick() {
                     gameState.researchStations.locations &&
                     gameState.researchStations.locations.includes(currentLocation);
 
+  if (gameState.researchStations?.available <= 0) {
+    showInvalidActionMessage('Maximum number of research stations reached.');
+    return;
+  }
+
   if (hasStation) {
     showInvalidActionMessage(`${currentLocation} already has a research station.`);
     return;
