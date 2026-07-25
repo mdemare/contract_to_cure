@@ -125,27 +125,7 @@ export function updateButtonStates() {
     actionCardsBtn.style.display = hasEventCards ? 'flex' : 'none';
   }
 
-  // Check for build station action availability
-  const buildBtn = document.getElementById('build-btn');
-  if (buildBtn) {
-    // Check if player has the city card matching their location
-    const currentLocation = currentPlayer.location;
-    const hasCityCard = currentPlayer.hand.includes(currentLocation);
-
-    // Check if there's already a research station at this location
-    const hasStation = gameState.researchStations &&
-                      gameState.researchStations.locations &&
-                      gameState.researchStations.locations.includes(currentLocation);
-
-    // Enable/disable the build button based on conditions
-    if (hasCityCard && !hasStation) {
-      buildBtn.classList.remove('disabled');
-      buildBtn.disabled = false;
-    } else {
-      buildBtn.classList.add('disabled');
-      buildBtn.disabled = true;
-    }
-  }
+  updateBuildButtonState(gameState, currentPlayer);
 
   // Update share knowledge button state
   updateShareKnowledgeButtonState();
@@ -235,6 +215,10 @@ export function disableAllButtons() {
 export function enableAllButtons() {
   const buttons = document.querySelectorAll('.action-btn:not(#draw-cards-btn):not(#infect-cities-btn)');
   buttons.forEach(button => {
+    if (button.dataset.disabledReason) {
+      return;
+    }
+
     button.classList.remove('disabled');
     button.disabled = false;
   });
@@ -252,4 +236,48 @@ export function enableSpecificButtons(buttonIds) {
       button.disabled = false;
     }
   });
+}
+
+function updateBuildButtonState(gameState, currentPlayer) {
+  const buildBtn = document.getElementById('build-btn');
+  if (!buildBtn) {
+    return;
+  }
+
+  const currentLocation = currentPlayer.location;
+  const hasCityCard = currentPlayer.hand.some(card => {
+    if (typeof card === 'string') {
+      return card === currentLocation;
+    }
+
+    return card.type === 'city' && card.name === currentLocation;
+  });
+  const isOperationsExpert = currentPlayer.role === 'operations_expert';
+  const researchStations = gameState.researchStations;
+  const hasStation = researchStations?.locations?.includes(currentLocation);
+  const stationsAvailable = researchStations?.available;
+
+  if (stationsAvailable <= 0) {
+    disableButtonWithReason(buildBtn, 'Maximum number of research stations reached.');
+  } else if (hasStation) {
+    disableButtonWithReason(buildBtn, `${currentLocation} already has a research station.`);
+  } else if (!hasCityCard && !isOperationsExpert) {
+    disableButtonWithReason(buildBtn, `You need the ${currentLocation} city card to build a research station here.`);
+  } else {
+    enableButton(buildBtn);
+  }
+}
+
+function disableButtonWithReason(button, reason) {
+  button.classList.add('disabled');
+  button.disabled = true;
+  button.title = reason;
+  button.dataset.disabledReason = reason;
+}
+
+function enableButton(button) {
+  button.classList.remove('disabled');
+  button.disabled = false;
+  button.removeAttribute('title');
+  delete button.dataset.disabledReason;
 }
