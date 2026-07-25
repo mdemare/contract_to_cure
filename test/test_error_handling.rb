@@ -50,6 +50,91 @@ class TestErrorHandling < TestHelper
     assert_error_response(last_response, 422, 'Unknown destination NonExistentCity')
   end
 
+  def test_move_with_invalid_destination_does_not_discard_direct_flight_card
+    create_game_with_custom_state do |state|
+      player = state.players[state.current_player_idx]
+      player.location = 'London'
+      player.hand.clear
+      player.hand << Card.new(:city, 'NonExistentCity', :blue)
+    end
+
+    post '/move', {
+      player_index: 0,
+      destination: 'NonExistentCity'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_error_response(last_response, 422, 'Unknown destination NonExistentCity')
+
+    saved_state = GameState.load_from_redis(@test_redis_key)
+    player = saved_state.players[saved_state.current_player_idx]
+    assert_equal 'London', player.location
+    assert_equal ['NonExistentCity'], player.hand.map(&:name)
+    assert_equal 4, saved_state.actions_remaining
+  end
+
+  def test_move_with_invalid_destination_does_not_discard_charter_flight_card
+    create_game_with_custom_state do |state|
+      player = state.players[state.current_player_idx]
+      player.location = 'London'
+      player.hand.clear
+      player.hand << Card.new(:city, 'London', :blue)
+    end
+
+    post '/move', {
+      player_index: 0,
+      destination: 'NonExistentCity',
+      card_name: 'London'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_error_response(last_response, 422, 'Unknown destination NonExistentCity')
+
+    saved_state = GameState.load_from_redis(@test_redis_key)
+    player = saved_state.players[saved_state.current_player_idx]
+    assert_equal 'London', player.location
+    assert_equal ['London'], player.hand.map(&:name)
+    assert_equal 4, saved_state.actions_remaining
+  end
+
+  def test_move_with_invalid_destination_rejects_before_shuttle_flight
+    create_game_with_custom_state do |state|
+      player = state.players[state.current_player_idx]
+      player.location = 'Wuhan'
+      state.research_stations << 'NonExistentCity'
+    end
+
+    post '/move', {
+      player_index: 0,
+      destination: 'NonExistentCity'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_error_response(last_response, 422, 'Unknown destination NonExistentCity')
+
+    saved_state = GameState.load_from_redis(@test_redis_key)
+    player = saved_state.players[saved_state.current_player_idx]
+    assert_equal 'Wuhan', player.location
+    assert_equal 4, saved_state.actions_remaining
+  end
+
+  def test_move_with_invalid_destination_rejects_dispatcher_gather_move
+    create_game_with_custom_state do |state|
+      state.players[0].instance_variable_set(:@role, :dispatcher)
+      state.players[0].location = 'Wuhan'
+      state.players[1].location = 'London'
+      state.players[2].location = 'NonExistentCity'
+    end
+
+    post '/move', {
+      player_index: 1,
+      destination: 'NonExistentCity'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_error_response(last_response, 422, 'Unknown destination NonExistentCity')
+
+    saved_state = GameState.load_from_redis(@test_redis_key)
+    assert_equal 'London', saved_state.players[1].location
+    assert_equal 4, saved_state.actions_remaining
+  end
+
   def test_cure_disease_without_research_station
     create_game_with_custom_state do |state|
       # Give player cards but ensure they're not at a research station
