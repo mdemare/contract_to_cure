@@ -496,6 +496,20 @@ class TestApiEndpoints < TestHelper
     assert data.key?('status') || data.key?('end_turn_events'), "Response should contain expected keys"
   end
 
+  def test_draw_cards_rejects_before_draw_phase
+    create_game_with_custom_state do |state|
+      state.instance_variable_set(:@actions_remaining, 0)
+      state.instance_variable_set(:@phase, 'player_actions')
+    end
+
+    post '/draw_cards'
+
+    assert_error_response(last_response, 422, 'game phase is draw_cards')
+    saved_state = GameState.load_from_redis(@test_redis_key)
+    assert_equal 'player_actions', saved_state.phase
+    assert_equal 0, saved_state.actions_remaining
+  end
+
   def test_draw_cards_sets_pending_discard_before_infection_when_hand_limit_exceeded
     create_game_with_custom_state do |state|
       state.instance_variable_set(:@actions_remaining, 0)
