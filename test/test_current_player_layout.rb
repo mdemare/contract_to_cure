@@ -16,11 +16,12 @@ class TestCurrentPlayerLayout < Minitest::Test
                  'Fixed desktop positioning can overlap the move button')
   end
 
-  def test_mobile_current_player_keeps_compact_fixed_position
+  def test_mobile_current_player_participates_in_scrollable_action_tray
     mobile_rule = @css_file.match(/@media\s*\(max-width:\s*768px\)\s*\{.*?\.current-player\s*\{(?<body>[^}]*)\}/m)[:body]
 
-    assert_match(/position:\s*fixed/, mobile_rule,
-                 'Mobile current player can remain detached from the wrapped action buttons')
-    assert_match(/bottom:\s*80px/, mobile_rule)
+    assert_match(/position:\s*static/, mobile_rule,
+                 'Mobile current player should not obscure the map or action tray')
+    assert_match(/flex:\s*0\s+0\s+94px/, mobile_rule,
+                 'Mobile current player should keep a compact, stable tray width')
   end
 end

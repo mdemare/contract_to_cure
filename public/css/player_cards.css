@@ -424,6 +424,8 @@
 
   .player-hand {
     gap: 3px;
+    justify-content: flex-start;
+    padding: 0 10px;
   }
 
   .hand-card {
