@@ -32,6 +32,12 @@
   cursor: not-allowed;
 }
 
+.action-btn:disabled,
+.action-btn[aria-disabled="true"] {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .action-btn i {
   font-size: 32px;
   line-height: 1;
@@ -137,19 +143,43 @@
 
 /* Responsive adjustments */
 @media (max-width: 768px) {
-  .action-buttons {
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
   .action-btn {
-    width: 90px;
-    height: 90px;
-    font-size: 14px;
+    flex: 0 0 72px;
+    width: 72px;
+    height: 72px;
+    gap: 5px;
+    padding: 6px;
+    border-radius: 12px;
+    font-size: 11px;
+    scroll-snap-align: start;
   }
 
   .action-btn i {
-    font-size: 28px;
+    margin-bottom: 0;
+    font-size: 25px;
+  }
+
+  .action-btn.special-action {
+    position: static;
+    flex-basis: 72px;
+    width: 72px;
+    height: 72px;
+    padding: 6px;
+    border-width: 1px;
+    border-radius: 12px;
+  }
+
+  .action-btn.special-action .card-header {
+    display: none;
+  }
+
+  .action-btn.special-action i {
+    margin: 0;
+    font-size: 25px;
+  }
+
+  .action-btn.special-action span {
+    font-size: 10px;
   }
 }
 
@@ -198,4 +228,13 @@
 .action-btn.draw-cards:active, .action-btn.infect-cities:active {
   transform: translateY(1px);
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+}
+
+@media (hover: none) {
+  .action-btn:hover,
+  .action-btn.special-action:hover,
+  .action-btn.draw-cards:hover,
+  .action-btn.infect-cities:hover {
+    transform: none;
+  }
 }

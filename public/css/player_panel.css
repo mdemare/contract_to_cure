@@ -215,11 +215,25 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .player-panel {
-    width: 200px;
-    bottom: 170px; /* More space for action buttons */
+    top: var(--mobile-status-height);
+    bottom: var(--mobile-action-height);
+    width: min(82vw, 300px);
+    border-bottom-left-radius: 14px;
+    box-shadow: -8px 0 24px rgba(0, 0, 0, 0.28);
   }
 
   .player-panel.hidden {
-    transform: translateX(190px);
+    transform: translateX(100%);
+  }
+
+  .player-panel-toggle {
+    right: min(82vw, 300px);
+    width: 44px;
+    height: 92px;
+  }
+
+  .player-panel.hidden + .player-panel-toggle,
+  .player-panel.hidden ~ .player-panel-toggle {
+    right: 0;
   }
 }

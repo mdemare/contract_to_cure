@@ -36,3 +36,14 @@
 .game-notification.fade-out {
   opacity: 0;
 }
+
+@media (max-width: 768px) {
+  .game-notification {
+    top: calc(var(--mobile-status-height) + 8px);
+    width: calc(100% - 72px);
+    max-width: none;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 0.82rem;
+  }
+}

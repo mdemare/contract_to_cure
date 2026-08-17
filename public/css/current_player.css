@@ -87,18 +87,36 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .current-player {
-    position: fixed;
-    left: 10px;
-    bottom: 80px;
-    padding: 10px 15px;
+    position: static;
+    flex: 0 0 94px;
+    align-self: center;
+    gap: 7px;
+    height: 72px;
+    padding: 8px;
+    border: 1px solid rgba(255, 255, 255, 0.16);
+    border-radius: 12px;
+    box-shadow: none;
+    scroll-snap-align: start;
   }
 
   .current-player-pawn {
-    width: 50px;
-    height: 50px;
+    flex: 0 0 30px;
+    width: 30px;
+    height: 38px;
+    border-width: 2px;
+  }
+
+  .current-player-pawn::before {
+    top: 6px;
+    width: 8px;
+    height: 8px;
   }
 
   .current-player-label {
-    font-size: 16px;
+    min-width: 0;
+    font-size: 10px;
+    line-height: 1.25;
+    overflow-wrap: anywhere;
+    text-shadow: none;
   }
 }
