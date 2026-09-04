@@ -11,16 +11,12 @@ rackup 'config.ru'
 port_number = ENV['PORT'] || '4567'
 bind "tcp://0.0.0.0:#{port_number}"
 
-# Number of worker processes
-# Use single mode (0 workers) for development
-workers ENV.fetch("WEB_CONCURRENCY", 0)
+# Run in single mode to avoid the memory overhead of a cluster master process.
+workers 0
 
 # Minimum and maximum number of threads per worker
 threads_count = Integer(ENV['PUMA_THREADS'] || 5)
 threads threads_count, threads_count
-
-# Preload the application for better memory usage
-preload_app!
 
 # Restart command
 restart_command 'bundle exec puma -C config/puma.rb'
