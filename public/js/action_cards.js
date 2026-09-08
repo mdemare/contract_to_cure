@@ -88,9 +88,9 @@ export function initActionCardsButton() {
   actionCardsBtn.style.display = 'none';
 
   // Add to the far right of the action buttons panel
-  const actionButtons = document.querySelector('.action-buttons');
-  if (actionButtons) {
-    actionButtons.appendChild(actionCardsBtn);
+  const phaseActions = document.querySelector('.phase-actions');
+  if (phaseActions) {
+    phaseActions.appendChild(actionCardsBtn);
   }
 }
 

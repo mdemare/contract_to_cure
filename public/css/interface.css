@@ -1,7 +1,8 @@
 .top-view {
   display: flex;
   flex-direction: row;
-  height: 80vh;
+  flex: 1 1 auto;
+  min-height: 0;
 }
 
 .left-view {
@@ -19,14 +20,39 @@
 
 /* Action Buttons Styles - Touch Friendly Version */
 .action-buttons {
-  display: flex;
-  justify-content: center;
-  height: 20vh;
-  gap: 15px;
-  padding: 20px;
+  display: grid;
+  grid-template-areas:
+    "current actions"
+    "hand hand";
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: center;
+  flex: 0 0 auto;
+  min-height: 0;
+  gap: 8px 16px;
+  padding: 10px 16px 8px;
   background-color: var(--header-bg);
   border-top: 1px solid rgba(255, 255, 255, 0.2);
   position: relative;
+}
+
+.phase-actions {
+  grid-area: actions;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  justify-content: safe center;
+  gap: 10px;
+  padding: 2px 4px;
+  overflow-x: auto;
+  overscroll-behavior-inline: contain;
+  scrollbar-width: thin;
+}
+
+@media (max-width: 768px) {
+  .phase-actions {
+    justify-content: flex-start;
+  }
 }
 
 /* Header Styles */
@@ -165,8 +191,9 @@ status-panel {
 
 /* Player hand container */
 .player-hand-container {
-  position: absolute;
-  top: -45px;
+  position: static;
+  grid-area: hand;
+  min-width: 0;
   width: 100%;
-  padding: 10px 0;
+  padding: 0;
 }

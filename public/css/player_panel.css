@@ -3,7 +3,7 @@
   position: fixed;
   right: 0;
   top: 80px;
-  bottom: 170px;
+  bottom: var(--action-bar-height, 128px);
   width: 280px;
   background-color: var(--panel-bg);
   border-bottom: 1px solid var(--border-color);
@@ -334,7 +334,7 @@
 @media (max-width: 768px) {
   .player-panel {
     width: min(280px, calc(100vw - 44px));
-    bottom: 170px;
+    bottom: var(--action-bar-height, 116px);
   }
 
   .player-panel-toggle {
