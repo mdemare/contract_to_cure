@@ -6,6 +6,26 @@ const typeToClassMap = {
 };
 
 /**
+ * Create the scrollable player-list shell and its independently rendered
+ * roster. Production metadata belongs to the shell so roster updates cannot
+ * remove it.
+ */
+export function createPlayerRosterContainer(gitHashData) {
+  const listContainer = createSimpleElement('div', 'player-list');
+
+  if (gitHashData && gitHashData.trim()) {
+    listContainer.appendChild(createSimpleElement('div', 'git-hash-display', gitHashData));
+  }
+
+  const rosterContainer = createSimpleElement('div', 'player-roster');
+  rosterContainer.setAttribute('role', 'list');
+  rosterContainer.setAttribute('aria-label', 'Players in turn order');
+  listContainer.appendChild(rosterContainer);
+
+  return { listContainer, rosterContainer };
+}
+
+/**
  * Render the compact roster while keeping hand details available on demand.
  *
  * @param {HTMLElement} container
