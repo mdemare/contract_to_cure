@@ -1,11 +1,15 @@
 // player_panel.js
 import { getCurrentGameState } from './game_state.js';
 import { createSimpleElement } from './dom.js';
+import { renderPlayerRoster } from './player_roster.js';
 
 // DOM elements
 let playerPanel;
 let playerList;
 let panelToggleBtn;
+let scrollHint;
+let lastCurrentPlayerIndex;
+const expandedPlayers = new Set();
 
 // Initialize the player panel
 export function initializePlayerPanel(gameState) {
@@ -21,9 +25,12 @@ export function initializePlayerPanel(gameState) {
   playerList = document.querySelector('.player-list');
   if (!playerList) { throw new Error("don't call initializePlayerPanel until the DOM is loaded") }
   panelToggleBtn = document.querySelector('.player-panel-toggle');
+  scrollHint = document.querySelector('.player-panel-scroll-hint');
 
   // Add event listener to toggle button
   panelToggleBtn.addEventListener('click', togglePlayerPanel);
+  playerList.addEventListener('scroll', updateScrollAffordance);
+  window.addEventListener('resize', scheduleScrollAffordanceUpdate);
 
   // Load initial player data with the provided game state
   updatePlayerPanel(gameState);
@@ -50,21 +57,29 @@ export function initializePlayerPanel(gameState) {
 function createPlayerPanel() {
   // Create panel container
   const panel = createSimpleElement('div', 'player-panel');
+  panel.id = 'player-panel';
+  panel.setAttribute('aria-labelledby', 'player-panel-title');
 
   // Create toggle button as a separate element (not inside the panel)
   const toggleBtn = createSimpleElement('button', 'player-panel-toggle');
   toggleBtn.setAttribute('aria-label', 'Toggle player panel');
   toggleBtn.setAttribute('aria-expanded', 'true'); // Initially expanded
+  toggleBtn.setAttribute('aria-controls', 'player-panel');
 
   // Add text to the toggle button
   const toggleText = createSimpleElement('span', null, 'Players');
   toggleBtn.appendChild(toggleText);
 
   // Create header
-  const header = createSimpleElement('div', 'player-panel-header', 'Players');
+  const header = createSimpleElement('div', 'player-panel-header');
+  const title = createSimpleElement('h2', null, 'Players');
+  title.id = 'player-panel-title';
+  header.appendChild(title);
 
   // Create player list container
   const listContainer = createSimpleElement('div', 'player-list');
+  listContainer.setAttribute('role', 'list');
+  listContainer.setAttribute('aria-label', 'Players in turn order');
   
   // Add git commit hash to top-left of player list (production only)
   const gitHashData = document.body.getAttribute('data-git-hash');
@@ -73,9 +88,14 @@ function createPlayerPanel() {
     listContainer.appendChild(gitHash);
   }
 
+  const hint = createSimpleElement('div', 'player-panel-scroll-hint', 'Scroll for more ↓');
+  hint.setAttribute('aria-hidden', 'true');
+  hint.hidden = true;
+
   // Assemble the panel
   panel.appendChild(header);
   panel.appendChild(listContainer);
+  panel.appendChild(hint);
 
   // Add both elements to the document (toggle button is outside the panel)
   document.body.appendChild(panel);
@@ -93,6 +113,8 @@ function togglePlayerPanel() {
 
   // Save preference in localStorage
   localStorage.setItem('playerPanelHidden', isHidden);
+
+  if (!isHidden) scheduleScrollAffordanceUpdate();
 }
 
 // Update the player panel with current game state
@@ -105,90 +127,27 @@ export function updatePlayerPanel(providedGameState) {
     return;
   }
 
-  // Clear current list
-  if (playerList) {
-    playerList.innerHTML = '';
+  const currentPlayerIndex = gameState.gameStatus?.currentPlayerIndex ?? 0;
+  const currentPlayerChanged = currentPlayerIndex !== lastCurrentPlayerIndex;
+
+  renderPlayerRoster(playerList, gameState, expandedPlayers, scheduleScrollAffordanceUpdate);
+  scheduleScrollAffordanceUpdate();
+
+  if (currentPlayerChanged) {
+    const currentPlayer = playerList.querySelector('.player-item.current');
+    currentPlayer?.scrollIntoView({ block: 'nearest' });
+    lastCurrentPlayerIndex = currentPlayerIndex;
   }
-
-  // Get current player index
-  const currentPlayerIndex = gameState.gameStatus?.currentPlayerIndex || 0;
-
-  // Create player items
-  gameState.players.forEach((player, index) => {
-    if (!player || !player.role) return;
-
-    const playerItem = createPlayerItem(player, index === currentPlayerIndex);
-    playerList.appendChild(playerItem);
-  });
 }
 
-// Create a player item element
-function createPlayerItem(player, isCurrent) {
-  const playerItem = createSimpleElement('div', ['player-item', isCurrent && 'current'].filter(Boolean));
-
-  // Create player header with role and name
-  const playerHeader = createSimpleElement('div', 'player-header');
-
-  const roleName = String(player.role).toLowerCase();
-  const roleText = formatRoleText(player.role);
-
-  // Create pawn indicator
-  const pawnElement = createSimpleElement('div', ['player-pawn', roleName.replaceAll('_', '-')]);
-
-  // Create player name/role text
-  const nameElement = createSimpleElement('div', 'player-name', roleText);
-  const roleElement = createSimpleElement('div', 'player-role', `Player ${player.index + 1}`);
-
-  // Create current player indicator
-  const currentIndicator = createSimpleElement('div', 'current-player-indicator');
-
-  // Assemble header
-  playerHeader.appendChild(pawnElement);
-  playerHeader.appendChild(nameElement);
-  playerHeader.appendChild(currentIndicator);
-
-  // Create hand preview
-  const handPreview = createSimpleElement('div', 'player-hand-preview');
-
-  // Add cards to hand preview
-  if (player.hand && Array.isArray(player.hand)) {
-    player.hand.forEach(cardObj => {
-      const cardElement = createCardPreview(cardObj);
-      handPreview.appendChild(cardElement);
-    });
-  }
-
-  // Assemble player item
-  playerItem.appendChild(playerHeader);
-  playerItem.appendChild(handPreview);
-
-  return playerItem;
+function scheduleScrollAffordanceUpdate() {
+  window.requestAnimationFrame(updateScrollAffordance);
 }
 
-const typeToClassMap = {
-  'action': 'event',
-  'event': 'epidemic'
-};
+function updateScrollAffordance() {
+  if (!playerPanel || !playerList || !scrollHint) return;
 
-// Create a card preview element
-function createCardPreview(cardObj) {
-  if (!cardObj) { throw new Error("cardObj is undefined") }
-
-  // Use the appropriate class from the map or the card's color
-  const cardClasses = ["hand-card-preview", `${typeToClassMap[cardObj.type] || cardObj.color}`];
-  return createSimpleElement('div', cardClasses, cardObj.name);
-}
-
-// Format role text to be more readable (copied from current_player.js)
-function formatRoleText(role) {
-  if (!role) return 'Player'
-
-  // Convert to string and split by capitals
-  const words = String(role)
-    .replace(/([a-z])([A-Z])/g, '$1 $2')
-    .split('_')
-    .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
-    .join(' ')
-
-  return words;
+  const hasMoreBelow = playerList.scrollHeight - playerList.scrollTop - playerList.clientHeight > 2;
+  playerPanel.classList.toggle('can-scroll', hasMoreBelow);
+  scrollHint.hidden = !hasMoreBelow;
 }

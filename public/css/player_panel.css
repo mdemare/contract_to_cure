@@ -1,10 +1,10 @@
-/* Player Panel Styles - Side Dock */
+/* Player roster side drawer */
 .player-panel {
   position: fixed;
   right: 0;
-  top: 80px; /* Below header */
-  bottom: 170px; /* Above action buttons, with enough clearance */
-  width: 240px;
+  top: 80px;
+  bottom: 170px;
+  width: 280px;
   background-color: var(--panel-bg);
   border-bottom: 1px solid var(--border-color);
   border-bottom-left-radius: 8px;
@@ -13,20 +13,19 @@
   z-index: 90;
   display: flex;
   flex-direction: column;
-  overflow-y: auto; /* Allow scrolling in the entire panel */
+  overflow: hidden;
 }
 
 .player-panel.hidden {
-  transform: translateX(100%); /* Completely hide the panel */
+  transform: translateX(100%);
 }
 
-/* Toggle button is now a completely separate element */
 .player-panel-toggle {
   position: fixed;
-  right: 240px; /* Positioned at the left edge of the panel */
+  right: 280px;
   top: 50%;
   transform: translateY(-50%);
-  width: 40px;
+  width: 44px;
   height: 100px;
   background-color: var(--header-bg);
   border: none;
@@ -38,28 +37,24 @@
   align-items: center;
   justify-content: center;
   box-shadow: -2px 0 5px rgba(0, 0, 0, 0.3);
-  z-index: 91; /* Higher than the panel */
+  z-index: 91;
   font-size: 11px;
   gap: 5px;
   transition: right 0.3s ease-in-out, background-color 0.2s ease;
 }
 
-.player-panel-toggle:focus {
-  outline: none;
-  box-shadow: -2px 0 5px rgba(0, 0, 0, 0.3), 0 0 0 2px rgba(255, 255, 255, 0.5);
+.player-panel-toggle:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: -5px;
 }
 
 .player-panel-toggle:active {
-  background-color: #0f1c2a; /* Darker when clicked */
+  background-color: #0f1c2a;
 }
 
-/* When panel is hidden, move the toggle button to the right edge */
-.player-panel.hidden + .player-panel-toggle {
+.player-panel.hidden + .player-panel-toggle,
+.player-panel.hidden ~ .player-panel-toggle {
   right: 0;
-}
-
-.player-panel.hidden .player-panel-toggle {
-  right: 20px; /* Adjusted for partially visible panel */
 }
 
 .player-panel-toggle::before {
@@ -75,29 +70,63 @@
   letter-spacing: 1px;
 }
 
-/* When panel is hidden, move the toggle button to the right edge */
-.player-panel.hidden ~ .player-panel-toggle {
-  right: 0;
-}
-
 .player-panel-header {
-  padding: 10px 15px;
+  min-height: 42px;
+  padding: 9px 14px;
   background-color: var(--header-bg);
   color: white;
-  font-weight: bold;
   border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-  position: sticky;
-  top: 0;
-  z-index: 1;
+  flex: 0 0 auto;
+}
+
+.player-panel-header h2 {
+  font-size: 1rem;
+  line-height: 24px;
 }
 
 .player-list {
-  flex-grow: 1;
-  padding: 10px;
+  flex: 1 1 auto;
+  min-height: 0;
+  padding: 8px 8px 44px;
   display: flex;
   flex-direction: column;
-  gap: 15px;
+  gap: 8px;
   position: relative;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-gutter: stable;
+  scrollbar-color: #778899 transparent;
+  scrollbar-width: thin;
+}
+
+.player-list::-webkit-scrollbar {
+  width: 9px;
+}
+
+.player-list::-webkit-scrollbar-thumb {
+  background: #778899;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  background-clip: padding-box;
+}
+
+.player-panel-scroll-hint {
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  min-height: 38px;
+  padding: 13px 12px 7px;
+  background: linear-gradient(to bottom, rgba(240, 244, 248, 0), rgba(240, 244, 248, 0.98) 42%);
+  color: #37495a;
+  font-size: 0.72rem;
+  font-weight: bold;
+  text-align: center;
+  pointer-events: none;
+}
+
+.player-panel-scroll-hint[hidden] {
+  display: none;
 }
 
 .git-hash-display {
@@ -113,27 +142,57 @@
 }
 
 .player-item {
+  flex: 0 0 auto;
   background-color: white;
+  border: 1px solid transparent;
   border-radius: 8px;
   box-shadow: var(--panel-shadow);
   overflow: hidden;
 }
 
-.player-header {
-  padding: 10px;
-  display: flex;
+.player-item.current {
+  border-color: #2e7d32;
+  box-shadow: 0 0 0 2px rgba(46, 125, 50, 0.16), var(--panel-shadow);
+}
+
+.player-summary {
+  position: relative;
+  width: 100%;
+  min-height: 68px;
+  padding: 8px;
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 10px;
-  border-bottom: 1px solid var(--border-color);
+  gap: 8px;
+  color: #263442;
+  background: white;
+  border: 0;
+  font: inherit;
+  text-align: left;
+  touch-action: manipulation;
+}
+
+.player-item.current .player-summary {
+  background: #edf7ee;
+}
+
+.player-summary:hover {
+  background: #f4f7fa;
+}
+
+.player-summary:focus-visible {
+  z-index: 1;
+  outline: 3px solid #326fa8;
+  outline-offset: -3px;
 }
 
 .player-pawn {
-  width: 25px;
-  height: 25px;
+  width: 27px;
+  height: 27px;
   border-radius: 50% 50% 50% 50% / 45% 45% 55% 55%;
   position: relative;
   border: 2px solid #fff;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
 }
 
 .player-pawn::before {
@@ -149,77 +208,139 @@
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
 }
 
-/* Match role colors with the game's colors */
-.player-pawn.medic {
-  background: #ff8d1e; /* Orange */
+.player-pawn.medic { background: #ff8d1e; }
+.player-pawn.scientist { background: #fff; }
+.player-pawn.operations-expert { background: #2dd53d; }
+.player-pawn.dispatcher { background: #d022bd; }
+.player-pawn.researcher { background: #8b4513; }
+.player-pawn.quarantine-specialist { background: #4ca64c; }
+.player-pawn.contingency-planner { background: #00b7b7; }
+
+.player-identity,
+.player-state {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
 }
 
-.player-pawn.scientist {
-  background: #ffffff; /* White */
-}
-
-.player-pawn.operations-expert {
-  background: #2dd53d; /* Lime green */
-}
-
-.player-pawn.dispatcher {
-  background: #d022bd; /* Pink/Purple */
-}
-
-.player-pawn.researcher {
-  background: #8b4513; /* Brown */
-}
-
-.player-pawn.quarantine-specialist {
-  background: #4ca64c; /* Forest green */
-}
-
-.player-pawn.contingency-planner {
-  background: #00b7b7; /* Teal */
+.player-position {
+  color: #65717d;
+  font-size: 0.66rem;
+  font-weight: bold;
+  line-height: 1.1;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 .player-name {
+  overflow: hidden;
+  color: #1d2b38;
+  font-size: 0.84rem;
   font-weight: bold;
-  flex-grow: 1;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.player-role {
-  font-size: 0.8em;
-  color: #666;
+.player-location {
+  overflow: hidden;
+  color: #596774;
+  font-size: 0.7rem;
+  line-height: 1.2;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.player-state {
+  align-items: flex-end;
+  gap: 2px;
+}
+
+.turn-status {
+  padding: 2px 5px;
+  border-radius: 999px;
+  color: #66717d;
+  background: #edf0f2;
+  font-size: 0.61rem;
+  font-weight: bold;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.turn-status.active {
+  color: #fff;
+  background: #2e7d32;
+}
+
+.card-count {
+  color: #314253;
+  font-size: 0.7rem;
+  font-weight: bold;
+  white-space: nowrap;
+}
+
+.player-hand-action {
+  color: #526577;
+  font-size: 0.62rem;
+  white-space: nowrap;
+}
+
+.player-disclosure-icon {
+  position: absolute;
+  right: 7px;
+  bottom: 5px;
+  font-size: 0.8rem;
+  transition: transform 0.15s ease;
+}
+
+.player-summary[aria-expanded="true"] .player-disclosure-icon {
+  transform: rotate(180deg);
+}
+
+.player-hand-details {
+  max-height: min(35vh, 240px);
+  overflow-y: auto;
+  border-top: 1px solid var(--border-color);
+  background: #f7f9fb;
+  scrollbar-color: #778899 transparent;
+  scrollbar-width: thin;
+}
+
+.player-hand-details[hidden] {
+  display: none;
 }
 
 .player-hand-preview {
   display: flex;
   flex-direction: column;
-  padding: 5px 10px 10px 10px;
-  gap: 2px; /* Reduced spacing to see more card tops */
+  gap: 3px;
+  padding: 7px 8px 9px;
+  list-style: none;
 }
 
-.current-player-indicator {
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-  background-color: #4CAF50;
-  display: none;
-  margin-left: 5px;
+.empty-hand {
+  padding: 7px;
+  color: #65717d;
+  font-size: 0.75rem;
+  font-style: italic;
+  text-align: center;
 }
 
-.player-item.current .current-player-indicator {
-  display: block;
-}
-
-.player-item.current .player-header {
-  background-color: rgba(76, 175, 80, 0.1);
-}
-
-/* Responsive adjustments */
 @media (max-width: 768px) {
   .player-panel {
-    width: 200px;
-    bottom: 170px; /* More space for action buttons */
+    width: min(280px, calc(100vw - 44px));
+    bottom: 170px;
   }
 
-  .player-panel.hidden {
-    transform: translateX(190px);
+  .player-panel-toggle {
+    right: min(280px, calc(100vw - 44px));
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .player-panel,
+  .player-panel-toggle,
+  .player-disclosure-icon {
+    transition: none;
   }
 }
