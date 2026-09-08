@@ -8,6 +8,27 @@ import { initRetrieveCard, updateRetrieveButtonState } from './retrieve_card.js'
 import { processAPIRequest, showSuccessMessage, showErrorMessage } from './player_action_utils.js';
 import { handleEndOfTurnEvents } from './end_turn_events.js';
 
+let actionBarResizeObserver;
+
+function initializeActionBarLayout() {
+  const actionBar = document.querySelector('.action-buttons');
+  if (!actionBar) return;
+
+  const updateActionBarHeight = () => {
+    const height = Math.ceil(actionBar.getBoundingClientRect().height);
+    document.documentElement.style.setProperty('--action-bar-height', `${height}px`);
+  };
+
+  updateActionBarHeight();
+
+  if ('ResizeObserver' in window) {
+    actionBarResizeObserver = new ResizeObserver(updateActionBarHeight);
+    actionBarResizeObserver.observe(actionBar);
+  } else {
+    window.addEventListener('resize', updateActionBarHeight);
+  }
+}
+
 // Initialize the action buttons
 export function initActionButtons() {
   // Get button elements
@@ -55,6 +76,8 @@ export function initActionButtons() {
 
   // Initial hand update
   updatePlayerHand(getCurrentGameState());
+
+  initializeActionBarLayout();
 }
 
 // Update button states based on game state
@@ -69,6 +92,11 @@ export function updateButtonStates() {
   const actionsRemaining = gameState.gameStatus.actions_remaining;
   const phase = gameState.gameStatus.phase
   console.log(`phase = ${phase}`)
+
+  const actionBar = document.querySelector('.action-buttons');
+  if (actionBar) {
+    actionBar.dataset.phase = phase;
+  }
 
   if (!currentPlayer) return;
 

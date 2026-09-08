@@ -2,21 +2,23 @@
 
 .current-player {
   position: static;
+  grid-area: current;
   flex: 0 0 auto;
   align-self: center;
   display: flex;
   align-items: center;
-  gap: 15px;
+  gap: 10px;
   background: rgba(0, 0, 0, 0.7);
-  padding: 15px 20px;
-  border-radius: 10px;
+  padding: 8px 12px;
+  border-radius: 8px;
   box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
   z-index: 100;
 }
 
 .current-player-pawn {
-  width: 60px;
-  height: 60px;
+  flex: 0 0 auto;
+  width: 44px;
+  height: 44px;
   border-radius: 50% 50% 50% 50% / 45% 45% 55% 55%;
   position: relative;
   transition: all 0.3s ease;
@@ -27,22 +29,26 @@
 .current-player-pawn::before {
   content: '';
   position: absolute;
-  top: 10px;
+  top: 7px;
   left: 50%;
   transform: translateX(-50%);
-  width: 12px;
-  height: 12px;
+  width: 9px;
+  height: 9px;
   background: #fff;
   border-radius: 50%;
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
 }
 
 .current-player-label {
+  overflow: hidden;
+  max-width: clamp(105px, 15vw, 190px);
   color: #fff;
   font-family: 'Montserrat', sans-serif;
-  font-size: 18px;
+  font-size: 15px;
   font-weight: 700;
   text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 /* Player role colors */
@@ -87,18 +93,18 @@
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .current-player {
-    position: fixed;
-    left: 10px;
-    bottom: 80px;
-    padding: 10px 15px;
+    position: static;
+    max-width: 145px;
+    padding: 6px 8px;
   }
 
   .current-player-pawn {
-    width: 50px;
-    height: 50px;
+    width: 36px;
+    height: 36px;
   }
 
   .current-player-label {
-    font-size: 16px;
+    max-width: 85px;
+    font-size: 12px;
   }
 }
