@@ -84,7 +84,7 @@ globalThis.document = {
   createElement: tagName => new FakeElement(tagName)
 };
 
-const { renderPlayerRoster } = await import('../../public/js/player_roster.js');
+const { createPlayerRosterContainer, renderPlayerRoster } = await import('../../public/js/player_roster.js');
 
 function largeHand(playerIndex) {
   return Array.from({ length: 12 }, (_, cardIndex) => ({
@@ -142,4 +142,23 @@ test('maximum-size roster keeps summaries visible and large hands available on d
 
   renderPlayerRoster(container, gameState, expandedPlayers);
   assert.equal(container.children[2].querySelector('.player-hand-details').hidden, false);
+});
+
+test('production commit hash remains outside repeated roster renders', () => {
+  const gameState = {
+    gameStatus: { currentPlayerIndex: 0 },
+    players: [{ index: 0, role: 'medic', location: 'Atlanta', hand: [] }]
+  };
+  const { listContainer, rosterContainer } = createPlayerRosterContainer('abc123');
+  const gitHash = listContainer.querySelector('.git-hash-display');
+
+  assert.equal(gitHash.textContent, 'abc123');
+  assert.equal(rosterContainer.getAttribute('role'), 'list');
+  assert.equal(gitHash.getAttribute('role'), null);
+
+  renderPlayerRoster(rosterContainer, gameState);
+  renderPlayerRoster(rosterContainer, gameState);
+
+  assert.equal(listContainer.querySelector('.git-hash-display'), gitHash);
+  assert.equal(rosterContainer.querySelectorAll('.player-item').length, 1);
 });

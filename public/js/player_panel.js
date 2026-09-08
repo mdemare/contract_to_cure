@@ -1,11 +1,12 @@
 // player_panel.js
 import { getCurrentGameState } from './game_state.js';
 import { createSimpleElement } from './dom.js';
-import { renderPlayerRoster } from './player_roster.js';
+import { createPlayerRosterContainer, renderPlayerRoster } from './player_roster.js';
 
 // DOM elements
 let playerPanel;
 let playerList;
+let playerRoster;
 let panelToggleBtn;
 let scrollHint;
 let lastCurrentPlayerIndex;
@@ -23,7 +24,8 @@ export function initializePlayerPanel(gameState) {
   // Cache DOM elements
   playerPanel = document.querySelector('.player-panel');
   playerList = document.querySelector('.player-list');
-  if (!playerList) { throw new Error("don't call initializePlayerPanel until the DOM is loaded") }
+  playerRoster = document.querySelector('.player-roster');
+  if (!playerList || !playerRoster) { throw new Error("don't call initializePlayerPanel until the DOM is loaded") }
   panelToggleBtn = document.querySelector('.player-panel-toggle');
   scrollHint = document.querySelector('.player-panel-scroll-hint');
 
@@ -76,17 +78,9 @@ function createPlayerPanel() {
   title.id = 'player-panel-title';
   header.appendChild(title);
 
-  // Create player list container
-  const listContainer = createSimpleElement('div', 'player-list');
-  listContainer.setAttribute('role', 'list');
-  listContainer.setAttribute('aria-label', 'Players in turn order');
-  
-  // Add git commit hash to top-left of player list (production only)
+  // Keep production metadata outside the roster that is replaced on updates.
   const gitHashData = document.body.getAttribute('data-git-hash');
-  if (gitHashData && gitHashData.trim()) {
-    const gitHash = createSimpleElement('div', 'git-hash-display', gitHashData);
-    listContainer.appendChild(gitHash);
-  }
+  const { listContainer } = createPlayerRosterContainer(gitHashData);
 
   const hint = createSimpleElement('div', 'player-panel-scroll-hint', 'Scroll for more ↓');
   hint.setAttribute('aria-hidden', 'true');
@@ -119,7 +113,7 @@ function togglePlayerPanel() {
 
 // Update the player panel with current game state
 export function updatePlayerPanel(providedGameState) {
-  if (!playerList) {throw new Error('playerList not yet initialized')}
+  if (!playerList || !playerRoster) {throw new Error('player panel not yet initialized')}
   // Use the provided game state or get the current one
   const gameState = providedGameState || getCurrentGameState();
 
@@ -130,11 +124,11 @@ export function updatePlayerPanel(providedGameState) {
   const currentPlayerIndex = gameState.gameStatus?.currentPlayerIndex ?? 0;
   const currentPlayerChanged = currentPlayerIndex !== lastCurrentPlayerIndex;
 
-  renderPlayerRoster(playerList, gameState, expandedPlayers, scheduleScrollAffordanceUpdate);
+  renderPlayerRoster(playerRoster, gameState, expandedPlayers, scheduleScrollAffordanceUpdate);
   scheduleScrollAffordanceUpdate();
 
   if (currentPlayerChanged) {
-    const currentPlayer = playerList.querySelector('.player-item.current');
+    const currentPlayer = playerRoster.querySelector('.player-item.current');
     currentPlayer?.scrollIntoView({ block: 'nearest' });
     lastCurrentPlayerIndex = currentPlayerIndex;
   }
