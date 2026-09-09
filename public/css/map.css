@@ -93,38 +93,57 @@
 .map-inner .city-label {
   position: absolute;
   color: #172033;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 700;
   line-height: 1.2;
   text-shadow: 0 1px 1px #fff;
-  top: calc(50% + 10px);
+  top: 50%;
   left: 50%;
-  transform: translateX(-50%);
+  transform: translate(-50%, 10px);
   text-align: center;
   max-width: 92px;
   white-space: nowrap;
-  background-color: rgba(255, 255, 255, 0.9);
-  border: 1px solid rgba(21, 34, 58, 0.28);
-  padding: 1px 4px;
+  background-color: rgba(255, 255, 255, 0.84);
+  border: 1px solid rgba(21, 34, 58, 0.22);
+  padding: 1px 3px;
   border-radius: 4px;
   box-shadow: 0 1px 2px rgba(0, 0, 0, 0.25);
   z-index: 15;
   pointer-events: none;
 }
 
-.map-inner .city.label-left .city-label,
-.map-inner .city.has-cubes .city-label {
-  right: calc(50% + 8px);
-  left: auto;
-  transform: none;
+.map-inner .city.label-right .city-label {
+  transform: translate(10px, -50%);
+  text-align: left;
+}
+
+.map-inner .city.label-left .city-label {
+  transform: translate(calc(-100% - 10px), -50%);
   text-align: right;
 }
 
-.map-inner .city.label-right .city-label {
-  right: auto;
-  left: calc(50% + 8px);
-  transform: none;
+.map-inner .city.label-above .city-label {
+  transform: translate(-50%, calc(-100% - 10px));
+}
+
+.map-inner .city.label-below-right .city-label {
+  transform: translate(10px, 10px);
   text-align: left;
+}
+
+.map-inner .city.label-below-left .city-label {
+  transform: translate(calc(-100% - 10px), 10px);
+  text-align: right;
+}
+
+.map-inner .city.label-above-right .city-label {
+  transform: translate(10px, calc(-100% - 10px));
+  text-align: left;
+}
+
+.map-inner .city.label-above-left .city-label {
+  transform: translate(calc(-100% - 10px), calc(-100% - 10px));
+  text-align: right;
 }
 
 .map-inner .city.blue .dot { background-color: var(--blue-disease); }
@@ -134,25 +153,19 @@
 
 .map-inner .city .cubes {
   position: absolute;
-  display: flex;
-  align-items: center;
-  gap: 3px;
-  top: calc(50% + 9px);
-  left: calc(50% + 9px);
+  display: grid;
+  grid-template-columns: repeat(2, 9px);
+  gap: 2px;
+  top: calc(50% + 8px);
+  left: calc(50% + 8px);
   z-index: 25;
   pointer-events: none;
 }
 
-.map-inner .city.label-right .cubes {
-  right: calc(50% + 9px);
-  left: auto;
-}
-
 .cube {
   display: block;
-  width: 11px;
-  height: 11px;
-  flex: 0 0 11px;
+  width: 9px;
+  height: 9px;
   border: 1px solid #fff;
   border-radius: 1px;
   box-shadow: 0 0 0 1px #15223a, 1px 2px 2px rgba(0, 0, 0, 0.55);
@@ -164,25 +177,18 @@
 .cube.red { background-color: var(--red-disease); }
 
 .cube-count-badge {
-  position: absolute;
-  top: 8px;
-  right: -7px;
-  min-width: 12px;
-  height: 12px;
-  padding: 0 2px;
+  display: block;
+  width: 9px;
+  height: 9px;
+  padding: 0;
   border: 1px solid #fff;
-  border-radius: 6px;
+  border-radius: 50%;
   background: #172033;
   color: #fff;
   font-size: 8px;
   font-weight: 700;
-  line-height: 10px;
+  line-height: 7px;
   text-align: center;
-}
-
-.map-inner .city.label-right .cube-count-badge {
-  right: auto;
-  left: -7px;
 }
 
 .pawns {
@@ -192,7 +198,7 @@
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  gap: 4px;
+  gap: 2px;
   transform: translateX(-50%);
   z-index: 35;
   pointer-events: none;
@@ -202,18 +208,18 @@
   --pawn-color: #777;
   position: relative;
   display: block;
-  width: 15px;
-  height: 22px;
-  flex: 0 0 15px;
+  width: 13px;
+  height: 19px;
+  flex: 0 0 13px;
   filter: drop-shadow(0 0 1px #fff) drop-shadow(0 2px 1px rgba(0, 0, 0, 0.75));
 }
 
 .pawn-head {
   position: absolute;
   top: 0;
-  left: 4px;
-  width: 8px;
-  height: 8px;
+  left: 3px;
+  width: 7px;
+  height: 7px;
   border: 1px solid #172033;
   border-radius: 50%;
   background: var(--pawn-color);
@@ -224,7 +230,7 @@
   right: 1px;
   bottom: 0;
   left: 1px;
-  height: 13px;
+  height: 11px;
   border: 1px solid #172033;
   border-radius: 6px 6px 2px 2px;
   background: var(--pawn-color);
@@ -234,7 +240,7 @@
 .pawn.is-current-pawn::after {
   content: '';
   position: absolute;
-  inset: -3px;
+  inset: -2px;
   border: 2px solid #ffe066;
   border-radius: 9px 9px 4px 4px;
   box-shadow: 0 0 0 1px #15223a;
@@ -251,17 +257,17 @@
 /* Research stations stay separate from circular city markers. */
 .research-station {
   position: absolute;
-  top: calc(50% - 19px);
-  left: calc(50% + 10px);
-  width: 19px;
-  height: 16px;
+  top: calc(50% - 16px);
+  left: calc(50% + 9px);
+  width: 16px;
+  height: 13px;
   border: 2px solid #172033;
   border-radius: 2px;
   background: #f7fbff;
   color: #172033;
   font-size: 8px;
   font-weight: 800;
-  line-height: 13px;
+  line-height: 10px;
   text-align: center;
   box-shadow: 0 0 0 1px #fff, 0 2px 3px rgba(0, 0, 0, 0.55);
   z-index: 30;
@@ -271,10 +277,10 @@
 .research-station::before {
   content: '';
   position: absolute;
-  top: -6px;
+  top: -5px;
   left: 3px;
-  width: 9px;
-  height: 9px;
+  width: 7px;
+  height: 7px;
   border-top: 2px solid #172033;
   border-left: 2px solid #172033;
   background: #f7fbff;

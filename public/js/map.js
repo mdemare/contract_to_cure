@@ -9,7 +9,18 @@ let currentTransform = {
   scale: 1
 };
 
-const DENSE_CITY_DISTANCE = 72;
+const LABEL_HEIGHT = 16;
+const LABEL_GAP = 10;
+const LABEL_POSITIONS = [
+  'below',
+  'right',
+  'left',
+  'above',
+  'below-right',
+  'below-left',
+  'above-right',
+  'above-left'
+];
 
 function formatRoleName(role) {
   return String(role)
@@ -44,8 +55,8 @@ export function createCityOnPanel(cityData, cityName, panel) {
 
   // Keep the coordinate and interaction target independent from the piece layout.
   city.dataset.cityName = cityName;
-  city.dataset.labelSide = cityData.labelSide ?? 'center';
-  city.classList.add(`label-${city.dataset.labelSide}`);
+  city.dataset.labelPosition = cityData.labelPosition ?? 'below';
+  city.classList.add(`label-${city.dataset.labelPosition}`);
   city.setAttribute('aria-label', cityDescription(cityName, cityData));
 
   if (cityData.isCurrentCity) {
@@ -156,13 +167,11 @@ export function renderPandemicCities(pandemicMap) {
   // Track which cities we've rendered to avoid duplicates
   const renderedCities = new Set();
 
-  const labelSides = Object.fromEntries(
-    Object.keys(pandemicMap).map(cityName => [cityName, getCityLabelSide(cityName, pandemicMap)])
-  );
+  const labelPositions = layoutCityLabels(pandemicMap);
 
   // First, render all the base cities, three copies of each
   for (const [cityName, cityData] of Object.entries(pandemicMap)) {
-    const renderData = { ...cityData, labelSide: labelSides[cityName] };
+    const renderData = { ...cityData, labelPosition: labelPositions[cityName] };
     mapInner.appendChild(createCityOnPanel(renderData, cityName, 0));
     mapInner.appendChild(createCityOnPanel(renderData, cityName, 1));
     mapInner.appendChild(createCityOnPanel(renderData, cityName, 2));
@@ -183,25 +192,107 @@ export function renderPandemicCities(pandemicMap) {
   document.dispatchEvent(mapUpdatedEvent);
 }
 
-// Point labels away from nearby cities so dense pairs do not converge on each other.
-export function getCityLabelSide(cityName, map) {
-  const city = map[cityName];
-  if (!city) return 'center';
+function estimatedLabelWidth(cityName) {
+  return Math.min(92, Math.max(30, cityName.length * 5.8 + 8));
+}
 
-  const nearbyCities = Object.entries(map).filter(([otherName, other]) => {
-    if (otherName === cityName) return false;
-    return Math.hypot(other.x - city.x, other.y - city.y) <= DENSE_CITY_DISTANCE;
-  });
+// Return the estimated label rectangle in map coordinates. Keeping this pure makes
+// collision handling independent from browser font metrics and stable across panels.
+export function getCityLabelBounds(cityName, city, position) {
+  const width = estimatedLabelWidth(cityName);
+  const height = LABEL_HEIGHT;
+  const x = city.x;
+  const y = city.y;
 
-  if (nearbyCities.length === 0) return 'center';
+  switch (position) {
+    case 'right':
+      return { x: x + LABEL_GAP, y: y - height / 2, width, height };
+    case 'left':
+      return { x: x - LABEL_GAP - width, y: y - height / 2, width, height };
+    case 'above':
+      return { x: x - width / 2, y: y - LABEL_GAP - height, width, height };
+    case 'below-right':
+      return { x: x + LABEL_GAP, y: y + LABEL_GAP, width, height };
+    case 'below-left':
+      return { x: x - LABEL_GAP - width, y: y + LABEL_GAP, width, height };
+    case 'above-right':
+      return { x: x + LABEL_GAP, y: y - LABEL_GAP - height, width, height };
+    case 'above-left':
+      return { x: x - LABEL_GAP - width, y: y - LABEL_GAP - height, width, height };
+    default:
+      return { x: x - width / 2, y: y + LABEL_GAP, width, height };
+  }
+}
 
-  const citiesToLeft = nearbyCities.filter(([, other]) => other.x < city.x).length;
-  const citiesToRight = nearbyCities.filter(([, other]) => other.x > city.x).length;
-  if (citiesToRight > citiesToLeft) return 'left';
-  if (citiesToLeft > citiesToRight) return 'right';
+function rectanglesOverlap(left, right, padding = 0) {
+  return left.x < right.x + right.width + padding &&
+    left.x + left.width + padding > right.x &&
+    left.y < right.y + right.height + padding &&
+    left.y + left.height + padding > right.y;
+}
 
-  const cluster = [cityName, ...nearbyCities.map(([otherName]) => otherName)].sort();
-  return cluster.indexOf(cityName) % 2 === 0 ? 'left' : 'right';
+// Piece footprints mirror map.css and let labels move away from occupied cities.
+export function getCityPieceBounds(city) {
+  const bounds = [];
+
+  if ((Number(city.cubes) || 0) > 0) {
+    bounds.push({ x: city.x + 8, y: city.y + 8, width: 20, height: 20 });
+  }
+
+  if (city.pawns?.length) {
+    const width = city.pawns.length * 13 + (city.pawns.length - 1) * 2;
+    bounds.push({ x: city.x - width / 2, y: city.y - 29, width, height: 19 });
+  }
+
+  if (city.hasStation) {
+    bounds.push({ x: city.x + 7, y: city.y - 22, width: 20, height: 21 });
+  }
+
+  return bounds;
+}
+
+function labelPositionScore(cityName, map, layouts, position) {
+  const bounds = getCityLabelBounds(cityName, map[cityName], position);
+  let score = LABEL_POSITIONS.indexOf(position);
+
+  // Labels should never cover a city marker, including their own marker.
+  for (const city of Object.values(map)) {
+    const markerBounds = { x: city.x - 9, y: city.y - 9, width: 18, height: 18 };
+    if (rectanglesOverlap(bounds, markerBounds, 2)) score += 10_000;
+
+    for (const pieceBounds of getCityPieceBounds(city)) {
+      if (rectanglesOverlap(bounds, pieceBounds, 2)) score += 10_000;
+    }
+  }
+
+  // Repeated relaxation considers every other label rather than just a nearest pair.
+  for (const [otherName, otherPosition] of Object.entries(layouts)) {
+    if (otherName === cityName) continue;
+    const otherBounds = getCityLabelBounds(otherName, map[otherName], otherPosition);
+    if (rectanglesOverlap(bounds, otherBounds, 2)) score += 1_000;
+  }
+
+  return score;
+}
+
+// Place labels around all eight sides of a marker, then repeatedly resolve collisions.
+// The stable ordering and fixed size estimate prevent labels from jumping between
+// equivalent positions on identical game-state renders.
+export function layoutCityLabels(map) {
+  const cityNames = Object.keys(map).sort();
+  const layouts = Object.fromEntries(cityNames.map(cityName => [cityName, 'below']));
+
+  for (let pass = 0; pass < 6; pass++) {
+    for (const cityName of cityNames) {
+      layouts[cityName] = LABEL_POSITIONS.reduce((best, candidate) => {
+        const candidateScore = labelPositionScore(cityName, map, layouts, candidate);
+        const bestScore = labelPositionScore(cityName, map, layouts, best);
+        return candidateScore < bestScore ? candidate : best;
+      }, layouts[cityName]);
+    }
+  }
+
+  return layouts;
 }
 
 // Prepare the raw city data for rendering by adding default properties
