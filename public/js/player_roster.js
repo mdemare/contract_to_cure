@@ -68,8 +68,10 @@ export function createPlayerItem(player, playerIndex, isCurrent) {
   pawnElement.setAttribute('aria-hidden', 'true');
 
   const identity = createSimpleElement('span', 'player-identity');
-  identity.appendChild(createSimpleElement('span', 'player-position', `Player ${playerNumber}`));
-  identity.appendChild(createSimpleElement('span', 'player-name', roleText));
+  const title = createSimpleElement('span', 'player-title');
+  title.appendChild(createSimpleElement('span', 'player-position', `Player ${playerNumber}`));
+  title.appendChild(createSimpleElement('span', 'player-name', roleText));
+  identity.appendChild(title);
   if (player.location) {
     identity.appendChild(createSimpleElement('span', 'player-location', player.location));
   }
