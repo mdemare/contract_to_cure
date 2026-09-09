@@ -63,17 +63,6 @@ button {
     flex-direction: column;
   }
 
-  .game-status {
-    width: 100%;
-    height: auto;
-    max-height: 200px;
-    flex-direction: row;
-    overflow-x: auto;
-  }
-
-  .status-panel, .cure-status, .legend {
-    min-width: unset;
-  }
 }
 
 

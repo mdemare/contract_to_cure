@@ -42,61 +42,79 @@
       <div class="logo-container">
         <img src="/logo.jpg" alt="Contract To Cure">
       </div>
-      <div class="game-status">
-        <div class="status-panel">
-          <h3>Game Status</h3>
-          <div class="status-item">
-            <span>Actions:</span>
-            <span id="action-counter">0</span>
+      <aside class="game-status" aria-labelledby="game-status-heading">
+        <section class="status-panel">
+          <div class="status-heading">
+            <h2 id="game-status-heading">Game status</h2>
+            <span class="turn-context">Turn <strong id="turn-counter">1</strong></span>
           </div>
-          <div class="status-item">
-            <span>Turn:</span>
-            <span id="turn-counter">1</span>
-          </div>
-          <div class="status-item">
-            <span>Outbreaks:</span>
-            <span id="outbreak-counter">0</span>
-          </div>
-          <div class="status-item">
-            <span>Player Cards:</span>
-            <span id="player-cards">35</span>
-          </div>
-        </div>
 
-        <div class="cure-status">
-          <h3>Disease Status</h3>
-          <div class="cure-grid">
-            <div class="cure-item blue">
-              <div class="cure-info">
-                <div class="cure-color"></div>
-                <div id="blue-cure" class="cure-label">Not Cured</div>
+          <div class="status-metrics">
+            <div id="actions-status" class="status-metric actions-status" data-risk="critical"
+                 aria-label="0 of 4 actions remaining, critical">
+              <div class="metric-heading">
+                <span class="metric-label">Actions left</span>
+                <span class="risk-label">Critical</span>
               </div>
-              <div id="blue-cubes" class="cube-count">24 cubes</div>
+              <div class="metric-value"><strong id="action-counter">0</strong><span> / 4</span></div>
+              <div class="action-pips" aria-hidden="true">
+                <span class="action-pip"></span>
+                <span class="action-pip"></span>
+                <span class="action-pip"></span>
+                <span class="action-pip"></span>
+              </div>
             </div>
-            <div class="cure-item yellow">
-              <div class="cure-info">
-                <div class="cure-color"></div>
-                <div id="yellow-cure" class="cure-label">Not Cured</div>
+
+            <div id="outbreak-status" class="status-metric outbreak-status" data-risk="normal"
+                 aria-label="0 of 8 outbreaks, stable">
+              <div class="metric-heading">
+                <span class="metric-label">Outbreaks</span>
+                <span class="risk-label">Stable</span>
               </div>
-              <div id="yellow-cubes" class="cube-count">24 cubes</div>
-            </div>
-            <div class="cure-item black">
-              <div class="cure-info">
-                <div class="cure-color"></div>
-                <div id="black-cure" class="cure-label">Not Cured</div>
+              <div class="metric-value"><strong id="outbreak-counter">0</strong><span> / 8</span></div>
+              <div id="outbreak-meter" class="status-meter" role="progressbar"
+                   aria-label="0 of 8 outbreaks" aria-valuemin="0" aria-valuemax="8" aria-valuenow="0">
+                <span class="status-meter-fill"></span>
               </div>
-              <div id="black-cubes" class="cube-count">24 cubes</div>
-            </div>
-            <div class="cure-item red">
-              <div class="cure-info">
-                <div class="cure-color"></div>
-                <div id="red-cure" class="cure-label">Not Cured</div>
-              </div>
-              <div id="red-cubes" class="cube-count">24 cubes</div>
             </div>
           </div>
-        </div>
-      </div>
+
+          <dl class="status-context">
+            <div>
+              <dt>Phase</dt>
+              <dd id="phase-status">Player actions</dd>
+            </div>
+            <div>
+              <dt>Player deck</dt>
+              <dd><strong id="player-cards">35</strong> cards</dd>
+            </div>
+          </dl>
+        </section>
+
+        <section class="cure-status" aria-labelledby="disease-status-heading">
+          <h2 id="disease-status-heading">Disease supply</h2>
+          <div class="cure-grid">
+            <% %w[blue yellow black red].each do |color| %>
+              <article class="cure-item <%= color %>" data-risk="normal" aria-labelledby="<%= color %>-disease-name">
+                <div class="cure-info">
+                  <span class="cure-color" aria-hidden="true"></span>
+                  <strong id="<%= color %>-disease-name" class="disease-name"><%= color.capitalize %></strong>
+                  <span id="<%= color %>-cure" class="cure-label">Not cured</span>
+                </div>
+                <div class="cube-supply">
+                  <span id="<%= color %>-cubes" class="cube-count">24 of 24 cubes</span>
+                  <span class="supply-warning" aria-hidden="true"></span>
+                </div>
+                <div id="<%= color %>-cube-meter" class="cube-meter" role="progressbar"
+                     aria-label="24 of 24 <%= color %> disease cubes remaining"
+                     aria-valuemin="0" aria-valuemax="24" aria-valuenow="24">
+                  <span class="cube-meter-fill"></span>
+                </div>
+              </article>
+            <% end %>
+          </div>
+        </section>
+      </aside>
     </div>
     <div class="right-view">
       <div class="game-header">

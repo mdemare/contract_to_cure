@@ -4,6 +4,7 @@ import { updatePlayerPanel } from './player_panel.js';
 import { updateCurrentPlayer } from './current_player.js';
 import { CITIES } from './game_state.js';
 import { updateButtonStates } from './action_buttons.js';
+import { updateGameStatus } from './game_status.js';
 
 // Define color keys for disease tracking
 const COLOR_KEYS = ['blue', 'yellow', 'black', 'red'];
@@ -69,28 +70,7 @@ export function updateGameUI(gameState) {
       return;
     }
 
-    // Update actions counter
-    if (gameState.gameStatus.actions_remaining !== undefined) {
-      document.getElementById('action-counter').textContent = gameState.gameStatus.actions_remaining;
-    }
-
-    // Update turn counter
-    if (gameState.gameStatus.turn !== undefined) {
-      document.getElementById('turn-counter').textContent = gameState.gameStatus.turn;
-    }
-
-    // Update outbreak counter
-    if (gameState.gameStatus.outbreaks !== undefined) {
-      document.getElementById('outbreak-counter').textContent = gameState.gameStatus.outbreaks;
-    }
-
-    // Update player cards count
-    if (gameState.decks && gameState.decks.playerDeck) {
-      document.getElementById('player-cards').textContent = gameState.decks.playerDeck;
-    }
-
-
-    updateCureStatus(gameState);
+    updateGameStatus(gameState);
     updatePlayerPanel(gameState);
     updatePlayerHand(gameState);
     updateButtonStates()
@@ -103,32 +83,7 @@ export function updateGameUI(gameState) {
 
 // Update the cure status UI
 export function updateCureStatus(gameState) {
-  // Update cure status for each disease color
-  COLOR_KEYS.forEach(color => {
-    const cureElement = document.getElementById(`${color}-cure`);
-    const cubesElement = document.getElementById(`${color}-cubes`);
-
-    // Check if the color exists in the game state
-    if (gameState.diseaseCubes && gameState.diseaseCubes[color]) {
-      const diseaseInfo = gameState.diseaseCubes[color];
-
-      if (cureElement) {
-        if (diseaseInfo.cured) {
-          cureElement.textContent = diseaseInfo.eradicated ? 'ERADICATED' : 'CURED';
-          cureElement.classList.add('cured');
-        } else {
-          cureElement.textContent = 'Not Cured';
-          cureElement.classList.remove('cured');
-        }
-      }
-
-      // Update cube count display
-      if (cubesElement) {
-        const cubeCount = diseaseInfo.inSupply || 0;
-        cubesElement.textContent = `${cubeCount} cubes`;
-      }
-    }
-  });
+  updateGameStatus(gameState);
 }
 
 // Update the map with disease cubes, research stations, and player pawns
