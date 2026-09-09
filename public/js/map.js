@@ -371,39 +371,37 @@ function drawStyledLine(svg, x1, y1, x2, y2, isDashed = false) {
 }
 
 // Helper function to calculate where a line would intersect the map edge
-function calculateEdgeIntersection(x1, y1, x2, y2, edgeX, isWrapAround = false) {
+function calculateEdgeIntersection(x1, y1, x2, y2, edgeX) {
   // If the line is vertical, there's no well-defined intersection
   if (x2 === x1) {
     return y1;
   }
 
-  // When creating wrap-around connections, we need to adjust x2
-  // The incoming x2 should already be adjusted for wrap-around if isWrapAround is true
-
-  // Now calculate the y value at the specified edge x
   return y1 + (y2 - y1) / (x2 - x1) * (edgeX - x1);
 }
 
-function renderConnection(svg, x1, y1, target) {
+export function renderConnection(svg, x1, y1, target) {
   // Get the target's adjusted position
   // The target is target.x + k*MAP_WIDTH.
   // k is chosen so that 2 * Math.abs(x1 - target.x + k*MAP_WIDTH) < MAP_WIDTH
   const dx = target.x - x1;
   const k = Math.floor(0.5 - dx / MAP_WIDTH);
   const x2 = target.x + k * MAP_WIDTH;
+  const sourceY = y1 - MAP_Y_OFFSET;
+  const targetY = target.y - MAP_Y_OFFSET;
 
   if (x2 >= 0 && x2 < 3*MAP_WIDTH) {
-    drawStyledLine(svg, x1, y1 - MAP_Y_OFFSET, x2, target.y - MAP_Y_OFFSET);
+    drawStyledLine(svg, x1, sourceY, x2, targetY);
   } else {
     // Target connection is out of bounds. Only draw to the edge of the map
     if (x2 < 0) {
       // City is on left, target on right - draw to left edge
-      const leftEdgeY = calculateEdgeIntersection(x1, y1 - MAP_Y_OFFSET, x2, target.y - MAP_Y_OFFSET, 0);
-      drawStyledLine(svg, x1, y1 - MAP_Y_OFFSET, 0, leftEdgeY - MAP_Y_OFFSET, true);
+      const leftEdgeY = calculateEdgeIntersection(x1, sourceY, x2, targetY, 0);
+      drawStyledLine(svg, x1, sourceY, 0, leftEdgeY, true);
     } else {
       // City is on right, target on left - draw to right edge
-      const rightEdgeY = calculateEdgeIntersection(x1, y1, x2, target.y, 3*MAP_WIDTH);
-      drawStyledLine(svg, x1, y1 - MAP_Y_OFFSET, 3*MAP_WIDTH, rightEdgeY - MAP_Y_OFFSET, true);
+      const rightEdgeY = calculateEdgeIntersection(x1, sourceY, x2, targetY, 3*MAP_WIDTH);
+      drawStyledLine(svg, x1, sourceY, 3*MAP_WIDTH, rightEdgeY, true);
     }
   }
 }
