@@ -37,6 +37,12 @@ class TestMapBackdrop < Minitest::Test
     assert_match(/viewBox="0 0 #{MAP_WIDTH} #{MAP_HEIGHT}"/, svg_root)
   end
 
+  def test_vector_uses_recognizable_coastline_data
+    assert_match(/Natural Earth 1:110m land/, @svg)
+    assert_operator @svg.scan(/\d+,\d+/).length, :>, 1_000
+    assert_match(/fill-rule="evenodd"/, @svg)
+  end
+
   def test_constrained_devices_have_a_no_download_fallback
     assert_match(/connection\?\.saveData/, @javascript)
     assert_match(/navigator\.deviceMemory <= 2/, @javascript)
