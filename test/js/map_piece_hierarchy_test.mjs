@@ -68,7 +68,8 @@ class FakeElement {
 }
 
 globalThis.document = {
-  createElement: tagName => new FakeElement(tagName)
+  createElement: tagName => new FakeElement(tagName),
+  createElementNS: (_namespace, tagName) => new FakeElement(tagName)
 };
 
 const {
@@ -76,7 +77,8 @@ const {
   getCityLabelBounds,
   getCityPieceBounds,
   layoutCityLabels,
-  prepareMapWithGameState
+  prepareMapWithGameState,
+  renderConnection
 } = await import('../../public/js/map.js');
 
 const rawMap = {
@@ -241,4 +243,40 @@ test('a piece-heavy city keeps every pawn and cube individually represented', ()
   assert.equal(city.querySelector('.cube-count-badge'), null);
   assert.equal(city.querySelectorAll('.pawn').length, 4);
   assert.equal(city.querySelectorAll('.is-current-pawn').length, 1);
+});
+
+test('left wraparound connection intersects the map edge in normalized coordinates', () => {
+  const svg = new FakeElement('svg');
+
+  renderConnection(svg, 100, 300, { x: 1200, y: 400 });
+
+  assert.equal(svg.children.length, 1);
+  assert.deepEqual(Object.fromEntries(svg.children[0].attributes), {
+    x1: '100',
+    y1: '135',
+    x2: '0',
+    y2: '185',
+    stroke: '#aaa',
+    'stroke-width': '2',
+    'stroke-dasharray': '5,3',
+    'stroke-linecap': 'round'
+  });
+});
+
+test('right wraparound connection intersects the map edge in normalized coordinates', () => {
+  const svg = new FakeElement('svg');
+
+  renderConnection(svg, 3800, 400, { x: 100, y: 300 });
+
+  assert.equal(svg.children.length, 1);
+  assert.deepEqual(Object.fromEntries(svg.children[0].attributes), {
+    x1: '3800',
+    y1: '235',
+    x2: '3900',
+    y2: '185',
+    stroke: '#aaa',
+    'stroke-width': '2',
+    'stroke-dasharray': '5,3',
+    'stroke-linecap': 'round'
+  });
 });
