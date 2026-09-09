@@ -24,15 +24,21 @@ class TestMapPieceHierarchy < Minitest::Test
     pawns = @css.match(/\.pawns\s*\{(?<body>[^}]*)\}/m)[:body]
     cubes = @css.match(/\.map-inner \.city \.cubes\s*\{(?<body>[^}]*)\}/m)[:body]
     label = @css.match(/\.map-inner \.city-label\s*\{(?<body>[^}]*)\}/m)[:body]
+    connections = @css.match(/\.connections-layer\s*\{(?<body>[^}]*)\}/m)[:body]
 
     assert_match(/width:\s*44px/, city)
     assert_match(/height:\s*44px/, city)
+    assert_match(/z-index:\s*10/, city)
+    assert_match(/z-index:\s*5/, connections)
     assert_match(/display:\s*flex/, pawns)
-    assert_match(/gap:\s*4px/, pawns)
+    assert_match(/gap:\s*2px/, pawns)
     assert_match(/z-index:\s*35/, pawns)
-    assert_match(/gap:\s*3px/, cubes)
+    assert_match(/display:\s*grid/, cubes)
+    assert_match(/grid-template-columns:\s*repeat\(2, 9px\)/, cubes)
+    assert_match(/gap:\s*2px/, cubes)
     assert_match(/z-index:\s*25/, cubes)
     assert_match(/z-index:\s*15/, label)
+    assert_match(/background-color:\s*#f8fbff/, label)
     assert_match(/\.city\.is-current-city \.dot::after/, @css)
     assert_match(/\.pawn\.is-current-pawn::after/, @css)
   end

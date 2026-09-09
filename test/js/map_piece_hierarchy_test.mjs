@@ -1,5 +1,7 @@
 import assert from 'node:assert/strict';
+import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { MAP_WIDTH } from '../../public/js/constants.js';
 
 class FakeClassList {
   constructor() {
@@ -71,7 +73,9 @@ globalThis.document = {
 
 const {
   createCityOnPanel,
-  getCityLabelSide,
+  getCityLabelBounds,
+  getCityPieceBounds,
+  layoutCityLabels,
   prepareMapWithGameState
 } = await import('../../public/js/map.js');
 
@@ -107,13 +111,63 @@ test('map presentation identifies the current pawn and city without mutating pla
   assert.equal(players.some(player => Object.hasOwn(player, 'order')), false);
 });
 
-test('dense city labels point away from each other', () => {
-  assert.equal(getCityLabelSide('London', rawMap), 'left');
-  assert.equal(getCityLabelSide('Paris', rawMap), 'right');
-  assert.equal(getCityLabelSide('Atlanta', rawMap), 'center');
+function rectanglesOverlap(left, right) {
+  return left.x < right.x + right.width &&
+    left.x + left.width > right.x &&
+    left.y < right.y + right.height &&
+    left.y + left.height > right.y;
+}
+
+test('dense city labels avoid labels, markers, and live pieces', async () => {
+  const cityMap = JSON.parse(await readFile(new URL('../../public/cities.json', import.meta.url)));
+  const preparedMap = prepareMapWithGameState(cityMap, {
+    gameStatus: { currentPlayerIndex: 0 },
+    players: [
+      { index: 0, role: 'operations_expert', location: 'Kolkata' },
+      { index: 1, role: 'contingency_planner', location: 'Kolkata' }
+    ],
+    diseaseCubes: {
+      blue: { onBoard: { London: 2, Paris: 1 } },
+      yellow: { onBoard: { Nairobi: 3 } },
+      black: { onBoard: { Baghdad: 3, Kabul: 3, Delhi: 2 } }
+    },
+    researchStations: { locations: ['Istanbul', 'Kolkata'] }
+  });
+  const layouts = layoutCityLabels(preparedMap);
+  const cityNames = Object.keys(preparedMap);
+  const overlaps = [];
+
+  for (let index = 0; index < cityNames.length; index++) {
+    const cityName = cityNames[index];
+    const bounds = getCityLabelBounds(cityName, preparedMap[cityName], layouts[cityName]);
+
+    for (const otherName of cityNames.slice(index + 1)) {
+      const otherBounds = getCityLabelBounds(otherName, preparedMap[otherName], layouts[otherName]);
+      if (rectanglesOverlap(bounds, otherBounds)) overlaps.push([cityName, otherName]);
+    }
+
+    for (const city of Object.values(preparedMap)) {
+      const markerBounds = { x: city.x - 9, y: city.y - 9, width: 18, height: 18 };
+      if (rectanglesOverlap(bounds, markerBounds)) overlaps.push([cityName, 'marker']);
+
+      for (const pieceBounds of getCityPieceBounds(city)) {
+        if (rectanglesOverlap(bounds, pieceBounds)) overlaps.push([cityName, 'piece']);
+      }
+    }
+  }
+
+  assert.deepEqual(overlaps, []);
+  assert.ok(new Set(Object.values(layouts)).size >= 3);
+
+  for (const [cityName, position] of Object.entries(layouts)) {
+    const bounds = getCityLabelBounds(cityName, preparedMap[cityName], position);
+    assert.ok(bounds.x >= 4, `${cityName} label crosses the left panel edge`);
+    assert.ok(bounds.x + bounds.width <= MAP_WIDTH - 4, `${cityName} label crosses the right panel edge`);
+    assert.ok(bounds.y >= 169, `${cityName} label crosses the top map edge`);
+  }
 });
 
-test('one, two, and three cube cities expose both pieces and a numeric count', () => {
+test('one, two, and three cube cities expose every piece without a visual counter', () => {
   for (const cubeCount of [1, 2, 3]) {
     const city = createCityOnPanel({
       ...rawMap.Atlanta,
@@ -124,7 +178,7 @@ test('one, two, and three cube cities expose both pieces and a numeric count', (
     }, 'Atlanta', 0);
 
     assert.equal(city.querySelectorAll('.cube').length, cubeCount);
-    assert.equal(city.querySelector('.cube-count-badge').textContent, String(cubeCount));
+    assert.equal(city.querySelector('.cube-count-badge'), null);
     assert.match(city.getAttribute('aria-label'), new RegExp(`${cubeCount} disease cube`));
   }
 });
@@ -135,7 +189,7 @@ test('a piece-heavy city keeps every pawn and cube individually represented', ()
     cubes: 3,
     hasStation: true,
     isCurrentCity: true,
-    labelSide: 'left',
+    labelPosition: 'left',
     pawns: [
       { role: 'operations_expert', playerIndex: 2, isCurrent: true },
       { role: 'medic', playerIndex: 0, isCurrent: false },
@@ -150,11 +204,11 @@ test('a piece-heavy city keeps every pawn and cube individually represented', ()
   assert.equal(city.getAttribute('aria-current'), 'location');
   assert.match(city.getAttribute('aria-label'), /3 disease cubes/);
   assert.match(city.getAttribute('aria-label'), /4 pawns/);
-  assert.equal(city.dataset.labelSide, 'left');
+  assert.equal(city.dataset.labelPosition, 'left');
   assert.equal(city.querySelectorAll('.dot').length, 1);
   assert.equal(city.querySelectorAll('.research-station').length, 1);
   assert.equal(city.querySelectorAll('.cube').length, 3);
-  assert.equal(city.querySelector('.cube-count-badge').textContent, '3');
+  assert.equal(city.querySelector('.cube-count-badge'), null);
   assert.equal(city.querySelectorAll('.pawn').length, 4);
   assert.equal(city.querySelectorAll('.is-current-pawn').length, 1);
 });
