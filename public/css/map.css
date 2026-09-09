@@ -92,9 +92,14 @@
 }
 
 /* A rounded-square marker identifies cities with a research station. */
-.map-inner .city.has-station .dot,
-.map-inner .city.has-station.is-current-city .dot::after {
+.map-inner .city.has-station .dot {
+  width: 16px;
+  height: 16px;
   border-radius: 3px;
+}
+
+.map-inner .city.has-station.is-current-city .dot::after {
+  border-radius: 4px;
 }
 
 .map-inner .city-label {
