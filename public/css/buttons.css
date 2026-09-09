@@ -166,12 +166,21 @@
 
 .action-buttons[data-phase="draw_cards"] .draw-cards,
 .action-buttons[data-phase="infect_cities"] .infect-cities {
-  width: auto;
-  min-width: 132px;
   min-height: 56px;
   height: 56px;
   padding: 8px 16px;
   flex-direction: row;
+}
+
+.action-buttons[data-phase="draw_cards"] .draw-cards {
+  width: fit-content;
+  min-width: 0;
+  max-width: 100%;
+}
+
+.action-buttons[data-phase="infect_cities"] .infect-cities {
+  width: auto;
+  min-width: 132px;
 }
 
 #draw-cards-btn {
