@@ -9,6 +9,24 @@ let currentTransform = {
   scale: 1
 };
 
+function shouldUseLightweightBackdrop() {
+  const connection = navigator.connection || navigator.mozConnection || navigator.webkitConnection;
+  const hasLimitedMemory = typeof navigator.deviceMemory === 'number' && navigator.deviceMemory <= 2;
+
+  return Boolean(connection?.saveData || hasLimitedMemory);
+}
+
+function createMapBackdrop() {
+  const backdrop = createSimpleElement('div', 'map-backdrop');
+  backdrop.setAttribute('aria-hidden', 'true');
+
+  if (shouldUseLightweightBackdrop()) {
+    backdrop.classList.add('map-backdrop--lightweight');
+  }
+
+  return backdrop;
+}
+
 // Create city div with centralized dot
 function createCityOnPanel(cityData, cityName, panel) {
   const city = createSimpleElement('div', ['city', cityData.color]);
@@ -96,6 +114,9 @@ export function renderPandemicCities(pandemicMap) {
 
   // Apply the saved transform instead of always resetting to initial
   mapInner.style.transform = `translate(${currentTransform.translateX}px, ${currentTransform.translateY}px) scale(${currentTransform.scale})`;
+
+  // The backdrop repeats at the same panel boundary as cities and connections.
+  mapInner.appendChild(createMapBackdrop());
 
   // Add the SVG layer back
   const svgLayer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
