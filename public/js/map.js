@@ -11,6 +11,8 @@ let currentTransform = {
 
 const LABEL_HEIGHT = 16;
 const LABEL_GAP = 10;
+const LABEL_EDGE_GAP = 4;
+const MAP_Y_OFFSET = 165;
 const LABEL_POSITIONS = [
   'below',
   'right',
@@ -51,7 +53,7 @@ export function createCityOnPanel(cityData, cityName, panel) {
   // Position the city div at the exact coordinate (dot will be centered)
   const xPos = cityData.x + panel * MAP_WIDTH;
   city.style.left = `${xPos}px`;
-  city.style.top = `${cityData.y - 165}px`;
+  city.style.top = `${cityData.y - MAP_Y_OFFSET}px`;
 
   // Keep the coordinate and interaction target independent from the piece layout.
   city.dataset.cityName = cityName;
@@ -77,7 +79,7 @@ export function createCityOnPanel(cityData, cityName, panel) {
   const label = createSimpleElement('span', 'city-label', cityName.replace(/ /g, '\u00A0'));
   city.appendChild(label);
 
-  // Disease cubes remain individually visible and carry an explicit count.
+  // Disease cubes remain individually visible; their total is exposed by the city label.
   if (cubeCount > 0) {
     const cubes = createSimpleElement('span', 'cubes');
     cubes.dataset.count = cubeCount;
@@ -87,9 +89,6 @@ export function createCityOnPanel(cityData, cityName, panel) {
       const cube = createSimpleElement('span', ['cube', cityData.color]);
       cubes.appendChild(cube);
     }
-
-    const cubeCountBadge = createSimpleElement('span', 'cube-count-badge', cubeCount);
-    cubes.appendChild(cubeCountBadge);
 
     city.appendChild(cubes);
   }
@@ -255,6 +254,11 @@ function labelPositionScore(cityName, map, layouts, position) {
   const bounds = getCityLabelBounds(cityName, map[cityName], position);
   let score = LABEL_POSITIONS.indexOf(position);
 
+  const outsidePanel = bounds.x < LABEL_EDGE_GAP ||
+    bounds.x + bounds.width > MAP_WIDTH - LABEL_EDGE_GAP ||
+    bounds.y < MAP_Y_OFFSET + LABEL_EDGE_GAP;
+  if (outsidePanel) score += 100_000;
+
   // Labels should never cover a city marker, including their own marker.
   for (const city of Object.values(map)) {
     const markerBounds = { x: city.x - 9, y: city.y - 9, width: 18, height: 18 };
@@ -394,17 +398,17 @@ function renderConnection(svg, x1, y1, target) {
   const x2 = target.x + k * MAP_WIDTH;
 
   if (x2 >= 0 && x2 < 3*MAP_WIDTH) {
-    drawStyledLine(svg, x1, y1 - 165, x2, target.y - 165);
+    drawStyledLine(svg, x1, y1 - MAP_Y_OFFSET, x2, target.y - MAP_Y_OFFSET);
   } else {
     // Target connection is out of bounds. Only draw to the edge of the map
     if (x2 < 0) {
       // City is on left, target on right - draw to left edge
-      const leftEdgeY = calculateEdgeIntersection(x1, y1 - 165, x2, target.y - 165, 0);
-      drawStyledLine(svg, x1, y1 - 165, 0, leftEdgeY - 165, true);
+      const leftEdgeY = calculateEdgeIntersection(x1, y1 - MAP_Y_OFFSET, x2, target.y - MAP_Y_OFFSET, 0);
+      drawStyledLine(svg, x1, y1 - MAP_Y_OFFSET, 0, leftEdgeY - MAP_Y_OFFSET, true);
     } else {
       // City is on right, target on left - draw to right edge
       const rightEdgeY = calculateEdgeIntersection(x1, y1, x2, target.y, 3*MAP_WIDTH);
-      drawStyledLine(svg, x1, y1 - 165, 3*MAP_WIDTH, rightEdgeY - 165, true);
+      drawStyledLine(svg, x1, y1 - MAP_Y_OFFSET, 3*MAP_WIDTH, rightEdgeY - MAP_Y_OFFSET, true);
     }
   }
 }

@@ -1,6 +1,7 @@
 import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
+import { MAP_WIDTH } from '../../public/js/constants.js';
 
 class FakeClassList {
   constructor() {
@@ -157,9 +158,16 @@ test('dense city labels avoid labels, markers, and live pieces', async () => {
 
   assert.deepEqual(overlaps, []);
   assert.ok(new Set(Object.values(layouts)).size >= 3);
+
+  for (const [cityName, position] of Object.entries(layouts)) {
+    const bounds = getCityLabelBounds(cityName, preparedMap[cityName], position);
+    assert.ok(bounds.x >= 4, `${cityName} label crosses the left panel edge`);
+    assert.ok(bounds.x + bounds.width <= MAP_WIDTH - 4, `${cityName} label crosses the right panel edge`);
+    assert.ok(bounds.y >= 169, `${cityName} label crosses the top map edge`);
+  }
 });
 
-test('one, two, and three cube cities expose both pieces and a numeric count', () => {
+test('one, two, and three cube cities expose every piece without a visual counter', () => {
   for (const cubeCount of [1, 2, 3]) {
     const city = createCityOnPanel({
       ...rawMap.Atlanta,
@@ -170,7 +178,7 @@ test('one, two, and three cube cities expose both pieces and a numeric count', (
     }, 'Atlanta', 0);
 
     assert.equal(city.querySelectorAll('.cube').length, cubeCount);
-    assert.equal(city.querySelector('.cube-count-badge').textContent, String(cubeCount));
+    assert.equal(city.querySelector('.cube-count-badge'), null);
     assert.match(city.getAttribute('aria-label'), new RegExp(`${cubeCount} disease cube`));
   }
 });
@@ -200,7 +208,7 @@ test('a piece-heavy city keeps every pawn and cube individually represented', ()
   assert.equal(city.querySelectorAll('.dot').length, 1);
   assert.equal(city.querySelectorAll('.research-station').length, 1);
   assert.equal(city.querySelectorAll('.cube').length, 3);
-  assert.equal(city.querySelector('.cube-count-badge').textContent, '3');
+  assert.equal(city.querySelector('.cube-count-badge'), null);
   assert.equal(city.querySelectorAll('.pawn').length, 4);
   assert.equal(city.querySelectorAll('.is-current-pawn').length, 1);
 });

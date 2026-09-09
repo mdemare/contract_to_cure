@@ -50,6 +50,7 @@
   transform: translate(-50%, -50%);
   cursor: pointer;
   overflow: visible;
+  z-index: 10;
   -webkit-tap-highlight-color: transparent;
 }
 
@@ -96,14 +97,14 @@
   font-size: 10px;
   font-weight: 700;
   line-height: 1.2;
-  text-shadow: 0 1px 1px #fff;
+  text-shadow: none;
   top: 50%;
   left: 50%;
   transform: translate(-50%, 10px);
   text-align: center;
   max-width: 92px;
   white-space: nowrap;
-  background-color: rgba(255, 255, 255, 0.84);
+  background-color: #f8fbff;
   border: 1px solid rgba(21, 34, 58, 0.22);
   padding: 1px 3px;
   border-radius: 4px;
@@ -175,21 +176,6 @@
 .cube.yellow { background-color: var(--yellow-disease); }
 .cube.black { background-color: var(--black-disease); }
 .cube.red { background-color: var(--red-disease); }
-
-.cube-count-badge {
-  display: block;
-  width: 9px;
-  height: 9px;
-  padding: 0;
-  border: 1px solid #fff;
-  border-radius: 50%;
-  background: #172033;
-  color: #fff;
-  font-size: 8px;
-  font-weight: 700;
-  line-height: 7px;
-  text-align: center;
-}
 
 .pawns {
   position: absolute;
