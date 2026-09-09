@@ -42,4 +42,11 @@ class TestMapPieceHierarchy < Minitest::Test
     assert_match(/\.city\.is-current-city \.dot::after/, @css)
     assert_match(/\.pawn\.is-current-pawn::after/, @css)
   end
+
+  def test_research_stations_use_rounded_square_city_markers
+    station_marker = @css.match(/\.map-inner \.city\.has-station \.dot,\s*\.map-inner \.city\.has-station\.is-current-city \.dot::after\s*\{(?<body>[^}]*)\}/m)[:body]
+
+    assert_match(/border-radius:\s*3px/, station_marker)
+    refute_match(/\.research-station\s*\{/, @css)
+  end
 end

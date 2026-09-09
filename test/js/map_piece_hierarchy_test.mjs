@@ -147,7 +147,13 @@ test('dense city labels avoid labels, markers, and live pieces', async () => {
     }
 
     for (const city of Object.values(preparedMap)) {
-      const markerBounds = { x: city.x - 9, y: city.y - 9, width: 18, height: 18 };
+      const markerSize = city.hasStation ? 20 : 18;
+      const markerBounds = {
+        x: city.x - markerSize / 2,
+        y: city.y - markerSize / 2,
+        width: markerSize,
+        height: markerSize
+      };
       if (rectanglesOverlap(bounds, markerBounds)) overlaps.push([cityName, 'marker']);
 
       for (const pieceBounds of getCityPieceBounds(city)) {
@@ -183,6 +189,29 @@ test('one, two, and three cube cities expose every piece without a visual counte
   }
 });
 
+test('research stations change the city marker instead of adding a separate icon', () => {
+  const stationCity = createCityOnPanel({
+    ...rawMap.Atlanta,
+    cubes: 0,
+    pawns: [],
+    hasStation: true,
+    isCurrentCity: false
+  }, 'Atlanta', 0);
+  const regularCity = createCityOnPanel({
+    ...rawMap.Paris,
+    cubes: 0,
+    pawns: [],
+    hasStation: false,
+    isCurrentCity: false
+  }, 'Paris', 0);
+
+  assert.equal(stationCity.classList.contains('has-station'), true);
+  assert.equal(stationCity.querySelectorAll('.dot').length, 1);
+  assert.equal(stationCity.querySelectorAll('.research-station').length, 0);
+  assert.match(stationCity.getAttribute('aria-label'), /research station/);
+  assert.equal(regularCity.classList.contains('has-station'), false);
+});
+
 test('a piece-heavy city keeps every pawn and cube individually represented', () => {
   const city = createCityOnPanel({
     ...rawMap.Atlanta,
@@ -205,8 +234,9 @@ test('a piece-heavy city keeps every pawn and cube individually represented', ()
   assert.match(city.getAttribute('aria-label'), /3 disease cubes/);
   assert.match(city.getAttribute('aria-label'), /4 pawns/);
   assert.equal(city.dataset.labelPosition, 'left');
+  assert.equal(city.classList.contains('has-station'), true);
   assert.equal(city.querySelectorAll('.dot').length, 1);
-  assert.equal(city.querySelectorAll('.research-station').length, 1);
+  assert.equal(city.querySelectorAll('.research-station').length, 0);
   assert.equal(city.querySelectorAll('.cube').length, 3);
   assert.equal(city.querySelector('.cube-count-badge'), null);
   assert.equal(city.querySelectorAll('.pawn').length, 4);
