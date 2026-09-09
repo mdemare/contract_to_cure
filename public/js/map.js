@@ -69,6 +69,7 @@ export function createCityOnPanel(cityData, cityName, panel) {
   const cubeCount = Number(cityData.cubes) || 0;
   if (cubeCount > 0) city.classList.add('has-cubes', `cube-count-${cubeCount}`);
   if (cityData.pawns?.length) city.classList.add('has-pawns');
+  if (cityData.hasStation) city.classList.add('has-station');
 
   // City dot (centered at the city coordinates)
   const dot = createSimpleElement('span', 'dot');
@@ -111,14 +112,6 @@ export function createCityOnPanel(cityData, cityName, panel) {
     });
 
     city.appendChild(pawns);
-  }
-
-  // A station is its own building silhouette; the circular city marker remains visible.
-  if (cityData.hasStation) {
-    city.classList.add('has-station');
-    const station = createSimpleElement('span', 'research-station', 'R');
-    station.setAttribute('aria-hidden', 'true');
-    city.appendChild(station);
   }
 
   return city;
@@ -243,10 +236,6 @@ export function getCityPieceBounds(city) {
     bounds.push({ x: city.x - width / 2, y: city.y - 29, width, height: 19 });
   }
 
-  if (city.hasStation) {
-    bounds.push({ x: city.x + 7, y: city.y - 22, width: 20, height: 21 });
-  }
-
   return bounds;
 }
 
@@ -261,7 +250,13 @@ function labelPositionScore(cityName, map, layouts, position) {
 
   // Labels should never cover a city marker, including their own marker.
   for (const city of Object.values(map)) {
-    const markerBounds = { x: city.x - 9, y: city.y - 9, width: 18, height: 18 };
+    const markerSize = city.hasStation ? 20 : 18;
+    const markerBounds = {
+      x: city.x - markerSize / 2,
+      y: city.y - markerSize / 2,
+      width: markerSize,
+      height: markerSize
+    };
     if (rectanglesOverlap(bounds, markerBounds, 2)) score += 10_000;
 
     for (const pieceBounds of getCityPieceBounds(city)) {
