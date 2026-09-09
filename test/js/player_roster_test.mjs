@@ -94,7 +94,7 @@ function largeHand(playerIndex) {
   }));
 }
 
-test('maximum-size roster keeps summaries visible and large hands available on demand', () => {
+test('maximum-size roster keeps every complete hand visible', () => {
   const roles = ['medic', 'scientist', 'operations_expert', 'quarantine_specialist'];
   const gameState = {
     gameStatus: { currentPlayerIndex: 2 },
@@ -106,22 +106,22 @@ test('maximum-size roster keeps summaries visible and large hands available on d
     }))
   };
   const container = new FakeElement('div');
-  const expandedPlayers = new Set();
-  let toggles = 0;
 
-  renderPlayerRoster(container, gameState, expandedPlayers, () => { toggles += 1; });
+  renderPlayerRoster(container, gameState);
 
   assert.equal(container.children.length, 4);
   for (const [index, item] of container.children.entries()) {
     const summary = item.querySelector('.player-summary');
     const details = item.querySelector('.player-hand-details');
 
-    assert.equal(summary.tagName, 'BUTTON');
-    assert.equal(summary.getAttribute('aria-expanded'), 'false');
+    assert.equal(summary.tagName, 'DIV');
+    assert.equal(summary.getAttribute('aria-expanded'), null);
     assert.equal(summary.textContent.includes(`Player ${index + 1}`), true);
     assert.equal(summary.textContent.includes('12 cards'), true);
     assert.equal(summary.textContent.includes(index === 2 ? 'Current turn' : 'Waiting'), true);
-    assert.equal(details.hidden, true);
+    assert.equal(details.hidden, false);
+    assert.equal(details.querySelectorAll('.hand-card-preview').length, 12);
+    assert.equal(details.textContent.includes(`Player ${index + 1} City 12`), true);
   }
 
   const currentItem = container.children[2];
@@ -129,19 +129,15 @@ test('maximum-size roster keeps summaries visible and large hands available on d
   assert.equal(currentItem.textContent.includes('Operations Expert'), true);
   assert.equal(currentItem.textContent.includes('Atlanta'), true);
 
-  const currentSummary = currentItem.querySelector('.player-summary');
   const currentDetails = currentItem.querySelector('.player-hand-details');
-  currentSummary.click();
-
-  assert.equal(currentSummary.getAttribute('aria-expanded'), 'true');
   assert.equal(currentDetails.hidden, false);
   assert.equal(currentDetails.querySelectorAll('.hand-card-preview').length, 12);
   assert.equal(currentDetails.textContent.includes('Player 3 City 12'), true);
-  assert.equal(expandedPlayers.has(2), true);
-  assert.equal(toggles, 1);
 
-  renderPlayerRoster(container, gameState, expandedPlayers);
+  renderPlayerRoster(container, gameState);
   assert.equal(container.children[2].querySelector('.player-hand-details').hidden, false);
+  assert.equal(container.querySelectorAll('.player-hand-action').length, 0);
+  assert.equal(container.querySelectorAll('.player-disclosure-icon').length, 0);
 });
 
 test('production commit hash remains outside repeated roster renders', () => {

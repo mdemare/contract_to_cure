@@ -81,15 +81,6 @@
 }
 
 
-/* Player role colors */
-.pawn.dispatcher { color: #bd22d2; }
-.pawn.contingency-planner { color: #0ff8f1; }
-.pawn.operations-expert { color: #14d528; }
-.pawn.medic { color: #ea6f0a; }
-.pawn.quarantine-specialist { color: #047e15; }
-.pawn.researcher { color: #917544; }
-.pawn.scientist { color: #ffffff; }
-
 /* Responsive adjustments */
 @media (max-width: 768px) {
   .current-player {

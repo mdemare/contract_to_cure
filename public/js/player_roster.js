@@ -26,14 +26,12 @@ export function createPlayerRosterContainer(gitHashData) {
 }
 
 /**
- * Render the compact roster while keeping hand details available on demand.
+ * Render the roster with every player's complete hand visible.
  *
  * @param {HTMLElement} container
  * @param {Object} gameState
- * @param {Set<number>} expandedPlayers
- * @param {Function} onToggle
  */
-export function renderPlayerRoster(container, gameState, expandedPlayers = new Set(), onToggle = () => {}) {
+export function renderPlayerRoster(container, gameState) {
   container.innerHTML = '';
 
   const currentPlayerIndex = gameState.gameStatus?.currentPlayerIndex ?? 0;
@@ -42,21 +40,14 @@ export function renderPlayerRoster(container, gameState, expandedPlayers = new S
     if (!player || !player.role) return;
 
     const playerIndex = Number.isInteger(player.index) ? player.index : rosterIndex;
-    container.appendChild(createPlayerItem(
-      player,
-      playerIndex,
-      rosterIndex === currentPlayerIndex,
-      expandedPlayers,
-      onToggle
-    ));
+    container.appendChild(createPlayerItem(player, playerIndex, playerIndex === currentPlayerIndex));
   });
 }
 
 /**
- * Create one roster row. The summary is deliberately a button so hands work
- * equally well with a keyboard, pointer, or touch screen.
+ * Create one roster row with an always-visible card list.
  */
-export function createPlayerItem(player, playerIndex, isCurrent, expandedPlayers = new Set(), onToggle = () => {}) {
+export function createPlayerItem(player, playerIndex, isCurrent) {
   const playerNumber = playerIndex + 1;
   const roleName = String(player.role).toLowerCase();
   const roleText = formatRoleText(player.role);
@@ -64,25 +55,23 @@ export function createPlayerItem(player, playerIndex, isCurrent, expandedPlayers
   const cardCountText = `${cards.length} ${cards.length === 1 ? 'card' : 'cards'}`;
   const detailsId = `player-${playerIndex}-hand`;
   const summaryId = `player-${playerIndex}-summary`;
-  const isExpanded = expandedPlayers.has(playerIndex);
 
   const playerItem = createSimpleElement('div', ['player-item', isCurrent && 'current'].filter(Boolean));
   playerItem.setAttribute('role', 'listitem');
   playerItem.dataset.playerIndex = playerIndex;
   if (isCurrent) playerItem.setAttribute('aria-current', 'true');
 
-  const summary = createSimpleElement('button', 'player-summary');
-  summary.type = 'button';
+  const summary = createSimpleElement('div', 'player-summary');
   summary.id = summaryId;
-  summary.setAttribute('aria-controls', detailsId);
-  summary.setAttribute('aria-expanded', String(isExpanded));
 
   const pawnElement = createSimpleElement('span', ['player-pawn', roleName.replaceAll('_', '-')]);
   pawnElement.setAttribute('aria-hidden', 'true');
 
   const identity = createSimpleElement('span', 'player-identity');
-  identity.appendChild(createSimpleElement('span', 'player-position', `Player ${playerNumber}`));
-  identity.appendChild(createSimpleElement('span', 'player-name', roleText));
+  const title = createSimpleElement('span', 'player-title');
+  title.appendChild(createSimpleElement('span', 'player-position', `Player ${playerNumber}`));
+  title.appendChild(createSimpleElement('span', 'player-name', roleText));
+  identity.appendChild(title);
   if (player.location) {
     identity.appendChild(createSimpleElement('span', 'player-location', player.location));
   }
@@ -95,12 +84,6 @@ export function createPlayerItem(player, playerIndex, isCurrent, expandedPlayers
   ));
   state.appendChild(createSimpleElement('span', 'card-count', cardCountText));
 
-  const disclosure = createSimpleElement('span', 'player-hand-action', isExpanded ? 'Hide hand' : 'Show hand');
-  const chevron = createSimpleElement('span', 'player-disclosure-icon', '⌄');
-  chevron.setAttribute('aria-hidden', 'true');
-  state.appendChild(disclosure);
-  state.appendChild(chevron);
-
   summary.appendChild(pawnElement);
   summary.appendChild(identity);
   summary.appendChild(state);
@@ -108,7 +91,6 @@ export function createPlayerItem(player, playerIndex, isCurrent, expandedPlayers
   const handDetails = createSimpleElement('div', 'player-hand-details');
   handDetails.id = detailsId;
   handDetails.setAttribute('aria-labelledby', summaryId);
-  handDetails.hidden = !isExpanded;
 
   const handList = createSimpleElement('ul', 'player-hand-preview');
   if (cards.length === 0) {
@@ -117,21 +99,6 @@ export function createPlayerItem(player, playerIndex, isCurrent, expandedPlayers
     cards.forEach(card => handList.appendChild(createCardPreview(card)));
   }
   handDetails.appendChild(handList);
-
-  summary.addEventListener('click', () => {
-    const shouldExpand = summary.getAttribute('aria-expanded') !== 'true';
-    summary.setAttribute('aria-expanded', String(shouldExpand));
-    handDetails.hidden = !shouldExpand;
-    disclosure.textContent = shouldExpand ? 'Hide hand' : 'Show hand';
-
-    if (shouldExpand) {
-      expandedPlayers.add(playerIndex);
-    } else {
-      expandedPlayers.delete(playerIndex);
-    }
-
-    onToggle();
-  });
 
   playerItem.appendChild(summary);
   playerItem.appendChild(handDetails);

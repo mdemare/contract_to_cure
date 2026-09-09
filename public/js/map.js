@@ -9,57 +9,106 @@ let currentTransform = {
   scale: 1
 };
 
-// Create city div with centralized dot
-function createCityOnPanel(cityData, cityName, panel) {
-  const city = createSimpleElement('div', ['city', cityData.color]);
+const DENSE_CITY_DISTANCE = 72;
+
+function formatRoleName(role) {
+  return String(role)
+    .replaceAll('_', ' ')
+    .replace(/\b\w/g, character => character.toUpperCase());
+}
+
+function cityDescription(cityName, cityData) {
+  const details = [];
+  const cubeCount = Number(cityData.cubes) || 0;
+
+  if (cityData.isCurrentCity) details.push('current player location');
+  if (cityData.hasStation) details.push('research station');
+  if (cubeCount > 0) details.push(`${cubeCount} disease ${cubeCount === 1 ? 'cube' : 'cubes'}`);
+  if (cityData.pawns?.length) {
+    const roles = cityData.pawns.map(pawn => formatRoleName(pawn.role ?? pawn));
+    details.push(`${roles.length} ${roles.length === 1 ? 'pawn' : 'pawns'}: ${roles.join(', ')}`);
+  }
+
+  return details.length ? `${cityName}. ${details.join('. ')}` : cityName;
+}
+
+// Create a fixed-size city hit target with independently layered board pieces.
+export function createCityOnPanel(cityData, cityName, panel) {
+  const city = createSimpleElement('button', ['city', cityData.color]);
+  city.type = 'button';
 
   // Position the city div at the exact coordinate (dot will be centered)
   const xPos = cityData.x + panel * MAP_WIDTH;
   city.style.left = `${xPos}px`;
   city.style.top = `${cityData.y - 165}px`;
 
-  // Add data attribute for city name (useful for debugging)
+  // Keep the coordinate and interaction target independent from the piece layout.
   city.dataset.cityName = cityName;
+  city.dataset.labelSide = cityData.labelSide ?? 'center';
+  city.classList.add(`label-${city.dataset.labelSide}`);
+  city.setAttribute('aria-label', cityDescription(cityName, cityData));
+
+  if (cityData.isCurrentCity) {
+    city.classList.add('is-current-city');
+    city.setAttribute('aria-current', 'location');
+  }
+
+  const cubeCount = Number(cityData.cubes) || 0;
+  if (cubeCount > 0) city.classList.add('has-cubes', `cube-count-${cubeCount}`);
+  if (cityData.pawns?.length) city.classList.add('has-pawns');
 
   // City dot (centered at the city coordinates)
-  const dot = createSimpleElement('div', 'dot');
+  const dot = createSimpleElement('span', 'dot');
   dot.title = cityName;
   city.appendChild(dot);
 
   // City label (positioned below the dot)
-  const label = createSimpleElement('div', 'city-label', cityName.replace(/ /g, '\u00A0'));
+  const label = createSimpleElement('span', 'city-label', cityName.replace(/ /g, '\u00A0'));
   city.appendChild(label);
 
-  // Disease cubes (if any)
-  if (cityData.cubes > 0) {
-    const cubes = createSimpleElement('div', 'cubes');
+  // Disease cubes remain individually visible and carry an explicit count.
+  if (cubeCount > 0) {
+    const cubes = createSimpleElement('span', 'cubes');
+    cubes.dataset.count = cubeCount;
+    cubes.setAttribute('aria-hidden', 'true');
 
-    for (let i = 0; i < cityData.cubes; i++) {
-      const cube = createSimpleElement('div', ['cube', cityData.color]);
+    for (let i = 0; i < cubeCount; i++) {
+      const cube = createSimpleElement('span', ['cube', cityData.color]);
       cubes.appendChild(cube);
     }
+
+    const cubeCountBadge = createSimpleElement('span', 'cube-count-badge', cubeCount);
+    cubes.appendChild(cubeCountBadge);
 
     city.appendChild(cubes);
   }
 
-  // Pawns (if any) - now using chess pawns
+  // Pawns use separate silhouettes instead of overlapping font glyphs.
   if (cityData.pawns && cityData.pawns.length > 0) {
-    const pawns = createSimpleElement('div', 'pawns');
+    const pawns = createSimpleElement('span', 'pawns');
+    pawns.setAttribute('aria-hidden', 'true');
 
-    // cityData.pawns contain role names
-    // It's a stack, visually, so the first pawn in the array should be the last element in the div.
-    for (let i = cityData.pawns.length - 1; i >= 0; i--) {
-      let role = cityData.pawns[i];
-      const pawn = createSimpleElement('div', ['pawn', role.replaceAll('_','-')], '♟');
+    cityData.pawns.forEach(pawnData => {
+      const role = String(pawnData.role ?? pawnData).toLowerCase();
+      const isCurrent = Boolean(pawnData.isCurrent);
+      const pawn = createSimpleElement('span', ['pawn', role.replaceAll('_', '-')]);
+      if (isCurrent) pawn.classList.add('is-current-pawn');
+      pawn.dataset.playerIndex = pawnData.playerIndex ?? '';
+      pawn.title = `${formatRoleName(role)}${isCurrent ? ' (current player)' : ''}`;
+      pawn.appendChild(createSimpleElement('span', 'pawn-head'));
+      pawn.appendChild(createSimpleElement('span', 'pawn-body'));
       pawns.appendChild(pawn);
-    }
+    });
 
     city.appendChild(pawns);
   }
 
-  // Add a class to the city if it has a research station
+  // A station is its own building silhouette; the circular city marker remains visible.
   if (cityData.hasStation) {
     city.classList.add('has-station');
+    const station = createSimpleElement('span', 'research-station', 'R');
+    station.setAttribute('aria-hidden', 'true');
+    city.appendChild(station);
   }
 
   return city;
@@ -107,11 +156,16 @@ export function renderPandemicCities(pandemicMap) {
   // Track which cities we've rendered to avoid duplicates
   const renderedCities = new Set();
 
+  const labelSides = Object.fromEntries(
+    Object.keys(pandemicMap).map(cityName => [cityName, getCityLabelSide(cityName, pandemicMap)])
+  );
+
   // First, render all the base cities, three copies of each
   for (const [cityName, cityData] of Object.entries(pandemicMap)) {
-    mapInner.appendChild(createCityOnPanel(cityData, cityName, 0));
-    mapInner.appendChild(createCityOnPanel(cityData, cityName, 1));
-    mapInner.appendChild(createCityOnPanel(cityData, cityName, 2));
+    const renderData = { ...cityData, labelSide: labelSides[cityName] };
+    mapInner.appendChild(createCityOnPanel(renderData, cityName, 0));
+    mapInner.appendChild(createCityOnPanel(renderData, cityName, 1));
+    mapInner.appendChild(createCityOnPanel(renderData, cityName, 2));
     renderedCities.add(cityName);
   }
 
@@ -129,6 +183,27 @@ export function renderPandemicCities(pandemicMap) {
   document.dispatchEvent(mapUpdatedEvent);
 }
 
+// Point labels away from nearby cities so dense pairs do not converge on each other.
+export function getCityLabelSide(cityName, map) {
+  const city = map[cityName];
+  if (!city) return 'center';
+
+  const nearbyCities = Object.entries(map).filter(([otherName, other]) => {
+    if (otherName === cityName) return false;
+    return Math.hypot(other.x - city.x, other.y - city.y) <= DENSE_CITY_DISTANCE;
+  });
+
+  if (nearbyCities.length === 0) return 'center';
+
+  const citiesToLeft = nearbyCities.filter(([, other]) => other.x < city.x).length;
+  const citiesToRight = nearbyCities.filter(([, other]) => other.x > city.x).length;
+  if (citiesToRight > citiesToLeft) return 'left';
+  if (citiesToLeft > citiesToRight) return 'right';
+
+  const cluster = [cityName, ...nearbyCities.map(([otherName]) => otherName)].sort();
+  return cluster.indexOf(cityName) % 2 === 0 ? 'left' : 'right';
+}
+
 // Prepare the raw city data for rendering by adding default properties
 export function prepareMapForRendering(rawMap) {
   const fullMap = {};
@@ -136,13 +211,53 @@ export function prepareMapForRendering(rawMap) {
   for (const [cityName, data] of Object.entries(rawMap)) {
     fullMap[cityName] = {
       ...data,
-      cubes: {},          // No disease cubes by default
+      cubes: 0,           // No disease cubes by default
       pawns: [],          // No pawns by default
-      hasStation: false   // No research station by default
+      hasStation: false,  // No research station by default
+      isCurrentCity: false
     };
   }
 
   return fullMap;
+}
+
+// Add live game pieces without mutating the authoritative game-state objects.
+export function prepareMapWithGameState(rawMap, gameState) {
+  const updatedMap = prepareMapForRendering(rawMap);
+  const currentPlayerIndex = gameState.gameStatus?.currentPlayerIndex;
+
+  for (const diseaseInfo of Object.values(gameState.diseaseCubes ?? {})) {
+    for (const [cityName, cubeCount] of Object.entries(diseaseInfo?.onBoard ?? {})) {
+      if (updatedMap[cityName]) updatedMap[cityName].cubes = cubeCount;
+    }
+  }
+
+  for (const cityName of gameState.researchStations?.locations ?? []) {
+    if (updatedMap[cityName]) updatedMap[cityName].hasStation = true;
+  }
+
+  const players = Array.isArray(gameState.players) ? gameState.players : [];
+  const playerCount = players.length;
+  const orderedPlayers = [...players].sort((left, right) => {
+    const leftOrder = (playerCount + left.index - currentPlayerIndex) % playerCount;
+    const rightOrder = (playerCount + right.index - currentPlayerIndex) % playerCount;
+    return leftOrder - rightOrder;
+  });
+
+  for (const player of orderedPlayers) {
+    const city = updatedMap[player?.location];
+    if (!city) continue;
+
+    const isCurrent = player.index === currentPlayerIndex;
+    city.pawns.push({
+      role: String(player.role).toLowerCase(),
+      playerIndex: player.index,
+      isCurrent
+    });
+    if (isCurrent) city.isCurrentCity = true;
+  }
+
+  return updatedMap;
 }
 
 // Helper function to draw a styled line in the SVG
