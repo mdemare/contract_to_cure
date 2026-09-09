@@ -171,24 +171,12 @@
   gap: 8px;
   color: #263442;
   background: white;
-  border: 0;
   font: inherit;
   text-align: left;
-  touch-action: manipulation;
 }
 
 .player-item.current .player-summary {
   background: #edf7ee;
-}
-
-.player-summary:hover {
-  background: #f4f7fa;
-}
-
-.player-summary:focus-visible {
-  z-index: 1;
-  outline: 3px solid #326fa8;
-  outline-offset: -3px;
 }
 
 .player-pawn {
@@ -284,35 +272,9 @@
   white-space: nowrap;
 }
 
-.player-hand-action {
-  color: #526577;
-  font-size: 0.62rem;
-  white-space: nowrap;
-}
-
-.player-disclosure-icon {
-  position: absolute;
-  right: 7px;
-  bottom: 5px;
-  font-size: 0.8rem;
-  transition: transform 0.15s ease;
-}
-
-.player-summary[aria-expanded="true"] .player-disclosure-icon {
-  transform: rotate(180deg);
-}
-
 .player-hand-details {
-  max-height: min(35vh, 240px);
-  overflow-y: auto;
   border-top: 1px solid var(--border-color);
   background: #f7f9fb;
-  scrollbar-color: #778899 transparent;
-  scrollbar-width: thin;
-}
-
-.player-hand-details[hidden] {
-  display: none;
 }
 
 .player-hand-preview {
@@ -344,8 +306,7 @@
 
 @media (prefers-reduced-motion: reduce) {
   .player-panel,
-  .player-panel-toggle,
-  .player-disclosure-icon {
+  .player-panel-toggle {
     transition: none;
   }
 }

@@ -10,7 +10,6 @@ let playerRoster;
 let panelToggleBtn;
 let scrollHint;
 let lastCurrentPlayerIndex;
-const expandedPlayers = new Set();
 
 // Initialize the player panel
 export function initializePlayerPanel(gameState) {
@@ -124,7 +123,7 @@ export function updatePlayerPanel(providedGameState) {
   const currentPlayerIndex = gameState.gameStatus?.currentPlayerIndex ?? 0;
   const currentPlayerChanged = currentPlayerIndex !== lastCurrentPlayerIndex;
 
-  renderPlayerRoster(playerRoster, gameState, expandedPlayers, scheduleScrollAffordanceUpdate);
+  renderPlayerRoster(playerRoster, gameState);
   scheduleScrollAffordanceUpdate();
 
   if (currentPlayerChanged) {

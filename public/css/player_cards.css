@@ -167,7 +167,7 @@
 
 /* ===== Card Preview Styles (used in player panel sidebar) ===== */
 .hand-card-preview {
-  height: 24px; /* Slightly shorter for compact view */
+  min-height: 24px;
   border-radius: 3px;
   position: relative;
   background-color: #f5f5f5;
@@ -178,9 +178,8 @@
   padding: 0 10px;
   justify-content: space-between;
   font-size: 12px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
 }
 
 .hand-card-preview:hover {
