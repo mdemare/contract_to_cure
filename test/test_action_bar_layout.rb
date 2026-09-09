@@ -36,6 +36,17 @@ class TestActionBarLayout < Minitest::Test
     assert_match(/\.phase-actions\s*\{[^}]*overflow-x:\s*auto/m, @interface_css)
   end
 
+  def test_draw_cards_button_uses_its_content_width
+    draw_cards = @buttons_css.match(
+      /\.action-buttons\[data-phase="draw_cards"\] \.draw-cards\s*\{(?<body>[^}]*)\}/m
+    )[:body]
+
+    assert_match(/width:\s*fit-content/, draw_cards)
+    assert_match(/min-width:\s*0/, draw_cards)
+    assert_match(/max-width:\s*100%/, draw_cards)
+    refute_match(/min-width:\s*132px/, draw_cards)
+  end
+
   def test_player_drawer_tracks_the_measured_action_bar_height
     assert_match(/ResizeObserver/, @javascript)
     assert_match(/--action-bar-height/, @javascript)
