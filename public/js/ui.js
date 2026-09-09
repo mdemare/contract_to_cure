@@ -1,5 +1,5 @@
 // game_state.js
-import { renderPandemicCities } from './map.js';
+import { prepareMapWithGameState, renderPandemicCities } from './map.js';
 import { updatePlayerPanel } from './player_panel.js';
 import { updateCurrentPlayer } from './current_player.js';
 import { CITIES } from './game_state.js';
@@ -99,64 +99,4 @@ export async function updateMapState(gameState) {
   } catch (error) {
     console.error('Error updating map state:', error);
   }
-}
-
-// Prepare the map data with the current game state
-function prepareMapWithGameState(citiesData, gameState) {
-  const updatedMap = {};
-
-  // First, initialize all cities with their basic data
-  for (const [cityName, cityData] of Object.entries(citiesData)) {
-    updatedMap[cityName] = {
-      ...cityData,
-      cubes: {},          // Will be populated with disease cubes
-      pawns: [],          // Will be populated with player pawns
-      hasStation: false   // Will be set if the city has a research station
-    };
-
-    // Initialize empty cubes for all colors
-    updatedMap[cityName].cubes = 0;
-  }
-
-  // Add disease cubes
-  if (gameState.diseaseCubes) {
-    COLOR_KEYS.forEach(color => {
-      const diseaseInfo = gameState.diseaseCubes[color];
-      if (diseaseInfo && diseaseInfo.onBoard) {
-        Object.entries(diseaseInfo.onBoard).forEach(([cityName, cubeCount]) => {
-          if (updatedMap[cityName]) {
-            updatedMap[cityName].cubes = cubeCount;
-          }
-        });
-      }
-    });
-  }
-
-  // Add research stations
-  if (gameState.researchStations && Array.isArray(gameState.researchStations.locations)) {
-    gameState.researchStations.locations.forEach(cityName => {
-      if (updatedMap[cityName]) {
-        updatedMap[cityName].hasStation = true;
-      }
-    });
-  }
-
-  // Add player pawns
-  if (gameState.players && Array.isArray(gameState.players)) {
-    let nrPlayers = gameState.players.length;
-    let orderedPlayers = gameState.players.map(item => item);
-    orderedPlayers.forEach((pl,idx) => { pl.order = (nrPlayers + pl.index - gameState.gameStatus.currentPlayerIndex) % nrPlayers });
-    orderedPlayers.sort((a, b) => a.order - b.order).forEach((player, idx) => {
-      if (player && player.location) {
-        const cityName = player.location;
-        if (updatedMap[cityName]) {
-          // Use the player's role or index as an identifier
-          const pawnIdentifier = String(player.role).toLowerCase();
-          updatedMap[cityName].pawns.push(pawnIdentifier);
-        }
-      }
-    });
-  }
-
-  return updatedMap;
 }
