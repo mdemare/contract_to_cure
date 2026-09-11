@@ -1,0 +1,20 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 232 112" role="img" aria-labelledby="title description">
+  <title id="title">Contract to Cure</title>
+  <desc id="description">A compass rose joined with a laboratory flask.</desc>
+  <rect width="232" height="112" fill="#17322f"/>
+  <path d="M0 92h232M18 0v112M214 0v112" stroke="#31504a" stroke-width="1" opacity=".65"/>
+  <g transform="translate(28 23)" fill="none" stroke="#d3a457" stroke-linecap="round" stroke-linejoin="round">
+    <circle cx="32" cy="32" r="28" stroke-width="1.5" opacity=".55"/>
+    <path d="m32 8 5 19 19 5-19 5-5 19-5-19-19-5 19-5Z" stroke-width="1.5"/>
+    <path d="m32 14 3.5 14.5L50 32l-14.5 3.5L32 50l-3.5-14.5L14 32l14.5-3.5Z" fill="#d3a457" stroke="none"/>
+    <path d="M32 22v20M22 32h20" stroke="#17322f" stroke-width="2"/>
+  </g>
+  <g transform="translate(88 22)">
+    <text x="0" y="17" fill="#f4f0e5" font-family="Georgia, serif" font-size="17" font-weight="700" letter-spacing="1.6">CONTRACT</text>
+    <text x="0" y="38" fill="#f4f0e5" font-family="Georgia, serif" font-size="12" letter-spacing="3.2">TO CURE</text>
+    <path d="M0 48h106" stroke="#597169" stroke-width="1"/>
+    <g transform="translate(0 54)" fill="#aec1b8" font-family="Arial, sans-serif" font-size="6.5" font-weight="700" letter-spacing="1.4">
+      <text>GLOBAL RESPONSE UNIT</text>
+    </g>
+  </g>
+</svg>
