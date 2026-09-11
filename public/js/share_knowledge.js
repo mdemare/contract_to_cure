@@ -4,14 +4,13 @@ import { executeShareKnowledge } from './ordinary_player_actions.js';
 import { getCityColor } from './player_action_utils.js';
 import { createSimpleElement } from './dom.js';
 import { decorateGameCard } from './card_visuals.js';
+import { openCardModal } from './modal_focus.js';
 
 // State to track which players can share knowledge
 let applicableCards = [];
 let eligiblePlayers = [];
-let activeModalBackdrop = null;
+let closeActiveModal = null;
 let shareModalId = 0;
-let shareModalTrigger = null;
-let shareModalKeydown = null;
 
 // Initialize the share knowledge functionality
 export function initShareKnowledge() {
@@ -164,25 +163,15 @@ function handleShareKnowledgeClick() {
 
 // Close the share knowledge modal
 function closeShareModal() {
-  if (activeModalBackdrop) {
-    document.body.removeChild(activeModalBackdrop);
-    activeModalBackdrop = null;
-  }
-  if (shareModalKeydown) {
-    document.removeEventListener('keydown', shareModalKeydown);
-    shareModalKeydown = null;
-  }
-  if (shareModalTrigger?.focus) shareModalTrigger.focus();
+  closeActiveModal?.();
+  closeActiveModal = null;
 }
 
 // Create and show the share knowledge modal
 export function showShareKnowledgeModal(cards, players) {
-  shareModalTrigger = document.activeElement;
+  closeShareModal();
   // Create modal backdrop
   const modalBackdrop = createSimpleElement('div', 'modal-backdrop');
-
-  // Store reference to the modal backdrop
-  activeModalBackdrop = modalBackdrop;
 
   // Create modal content
   const modalContent = createSimpleElement('div', 'modal-content');
@@ -243,13 +232,9 @@ export function showShareKnowledgeModal(cards, players) {
 
   // Add modal to page
   modalBackdrop.appendChild(modalContent);
-  document.body.appendChild(modalBackdrop);
-  modalContent.querySelector('button')?.focus();
-
-  shareModalKeydown = event => {
-    if (event.key === 'Escape') closeShareModal();
-  };
-  document.addEventListener('keydown', shareModalKeydown);
+  closeActiveModal = openCardModal(modalBackdrop, modalContent, {
+    onCancel: closeShareModal
+  });
 }
 
 async function shareKnowledge(cityName, otherPlayerIndex, action) {
