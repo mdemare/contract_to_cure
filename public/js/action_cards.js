@@ -21,18 +21,6 @@ import { showErrorMessage } from './player_action_utils.js'
 export { completeForecast } from './action_card_requests.js';
 export { getActionCardSource } from './action_card_state.js';
 
-function closeCardSelectionModal() {
-  const modalBackdrop = document.querySelector('.modal-backdrop');
-  if (modalBackdrop) {
-    document.body.removeChild(modalBackdrop);
-  }
-}
-
-function setCurrentActionCardSource(cardSource) {
-  closeCardSelectionModal();
-  setActionCardSource(cardSource);
-}
-
 function showActionNotification(message) {
   const existingNotification = document.getElementById('action-notification');
   if (existingNotification) {
@@ -162,13 +150,14 @@ function handleActionCardsClick() {
  * @param {Object} cardSource - The source of the card (player index and card index)
  */
 function handleForecast(cardSource) {
-  setCurrentActionCardSource(cardSource);
+  const returnFocus = document.activeElement;
+  setActionCardSource(cardSource);
 
   actionCardRequest({ card: 'Forecast' }, 'Failed to use Forecast card')
     .then(data => {
     if (data.status === 'success' && data.type === 'forecast_view') {
       // Show the cards in a reorderable modal
-      showForecastModal(data.cards);
+      showForecastModal(data.cards, { returnFocus });
     } else {
       // Show error message
       showErrorMessage(data.message || "Failed to use Forecast card");
@@ -207,7 +196,7 @@ export function updateActionCardsButtonState(gameState) {
  * @param {Object} cardSource - The source of the card (player index and card index)
  */
 function handleResilientPopulation(cardSource) {
-  setCurrentActionCardSource(cardSource);
+  setActionCardSource(cardSource);
 
   const gameState = getCurrentGameState();
 
@@ -244,7 +233,7 @@ function completeResilientPopulation(cityName) {
  * @param {Object} cardSource - The source of the card (player index and card index)
  */
 function handleGovernmentGrant(cardSource) {
-  setCurrentActionCardSource(cardSource);
+  setActionCardSource(cardSource);
   showActionNotification('Choose a city to build a research station');
 
   // Set the mode to government grant
@@ -257,7 +246,7 @@ function handleGovernmentGrant(cardSource) {
  * @param {Object} cardSource - The source of the card (player index and card index)
  */
 function handleAirlift(cardSource) {
-  setCurrentActionCardSource(cardSource);
+  setActionCardSource(cardSource);
   showActionNotification('Select a player to airlift');
 
   // Set the mode to airlift

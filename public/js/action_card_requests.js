@@ -38,6 +38,7 @@ export async function completeForecast(cardOrder) {
 
     if (data.status === 'success' || data.players) {
       await loadGameState();
+      return true;
     } else {
       showErrorMessage(data.message || 'Failed to apply Forecast card order');
     }
@@ -45,6 +46,7 @@ export async function completeForecast(cardOrder) {
     console.error('Error applying Forecast card order:', error);
     showErrorMessage(error.message || 'Error applying Forecast card order. Please try again.');
   }
+  return false;
 }
 
 export async function useResilientPopulation(cityName) {

@@ -4,6 +4,7 @@ import { createSimpleElement } from './dom.js';
 import { completeForecast } from './action_card_requests.js';
 import { registerHandLimitHandler } from './hand_limit_prompt.js';
 import { decorateGameCard } from './card_visuals.js';
+import { openCardModal } from './modal_focus.js';
 
 let cardModalId = 0;
 
@@ -117,7 +118,6 @@ export function showHandSelectionModal(count, cardIndices, completionFunction, {
 }
 
 export function showGeneralCardSelectionModal(count, cards, completionFunction, {customTitle, useArrayIndex = false, hideCancel = false}) {
-  const previouslyFocused = document.activeElement;
   // Create modal backdrop
   const modalBackdrop = createSimpleElement('div', 'modal-backdrop');
 
@@ -167,9 +167,7 @@ export function showGeneralCardSelectionModal(count, cards, completionFunction, 
     confirmButton.addEventListener('click', () => {
       if (selectedCards.size === count) {
         const selectedIndices = Array.from(selectedCards);
-        closeModal();
-        if (!selectedIndices.every(item => typeof item === 'number')) { throw new Error("must be indices")}
-        completionFunction(selectedIndices);
+        selectionComplete(selectedIndices);
       }
     });
     buttonContainer.appendChild(confirmButton);
@@ -179,10 +177,33 @@ export function showGeneralCardSelectionModal(count, cards, completionFunction, 
   }
 
   // Function to handle selection completion
-  function selectionComplete(selectedIndices) {
+  let submitting = false;
+  async function selectionComplete(selectedIndices) {
+    if (submitting) return;
     if (!selectedIndices.every(item => typeof item === 'number')) { throw new Error("must be indices")}
-    closeModal();
-    completionFunction(selectedIndices);
+    if (!hideCancel) {
+      closeModal();
+      completionFunction(selectedIndices);
+      return;
+    }
+
+    submitting = true;
+    modalContent.setAttribute('aria-busy', 'true');
+    try {
+      await completionFunction(selectedIndices);
+      closeModal();
+    } catch (error) {
+      instructions.setAttribute('role', 'alert');
+      instructions.textContent = `${error.message || 'Unable to complete selection.'} Please try again.`;
+      selectedCards.clear();
+      updateSelectableCardStates(selectableCards, selectedCards, count);
+      confirmButton.disabled = true;
+      confirmButton.classList.add('disabled');
+      selectableCards.find(card => !card.disabled)?.focus();
+    } finally {
+      submitting = false;
+      modalContent.removeAttribute('aria-busy');
+    }
   }
 
   // Create card elements for selection
@@ -209,24 +230,10 @@ export function showGeneralCardSelectionModal(count, cards, completionFunction, 
 
   // Assemble and show the modal
   modalBackdrop.appendChild(modalContent);
-  document.body.appendChild(modalBackdrop);
-
-  const firstAvailableCard = selectableCards.find(card => !card.disabled);
-  if (firstAvailableCard) firstAvailableCard.focus();
-
-  function handleModalKeydown(event) {
-    if (event.key === 'Escape' && !hideCancel) closeModal();
-  }
-  document.addEventListener('keydown', handleModalKeydown);
-
-  // Function to close the modal
-  function closeModal() {
-    document.removeEventListener('keydown', handleModalKeydown);
-    if (modalBackdrop.parentNode) {
-      document.body.removeChild(modalBackdrop);
-    }
-    if (previouslyFocused?.focus) previouslyFocused.focus();
-  }
+  const closeModal = openCardModal(modalBackdrop, modalContent, {
+    initialFocus: selectableCards.find(card => !card.disabled),
+    onCancel: hideCancel ? undefined : () => closeModal()
+  });
 }
 
 /**
@@ -235,7 +242,6 @@ export function showGeneralCardSelectionModal(count, cards, completionFunction, 
  * @param {Function} completionFunction - Function to call when a card is selected
  */
 export function showResilientPopulationModal(infectionCards, completionFunction) {
-  const previouslyFocused = document.activeElement;
   // Create modal backdrop
   const modalBackdrop = createSimpleElement('div', 'modal-backdrop');
 
@@ -289,7 +295,7 @@ export function showResilientPopulationModal(infectionCards, completionFunction)
 
   const cancelButton = createSimpleElement('button', 'cancel-btn', 'Cancel');
   cancelButton.type = 'button';
-  cancelButton.addEventListener('click', closeModal);
+  cancelButton.addEventListener('click', () => closeModal());
   buttonContainer.appendChild(cancelButton);
 
   modalContent.appendChild(cardSelectionContainer);
@@ -297,23 +303,10 @@ export function showResilientPopulationModal(infectionCards, completionFunction)
 
   // Assemble and show the modal
   modalBackdrop.appendChild(modalContent);
-  document.body.appendChild(modalBackdrop);
-
-  cardSelectionContainer.querySelector('.selectable-card')?.focus();
-  document.addEventListener('keydown', handleModalKeydown);
-
-  function handleModalKeydown(event) {
-    if (event.key === 'Escape') closeModal();
-  }
-
-  // Function to close the modal
-  function closeModal() {
-    document.removeEventListener('keydown', handleModalKeydown);
-    if (modalBackdrop.parentNode) {
-      document.body.removeChild(modalBackdrop);
-    }
-    if (previouslyFocused?.focus) previouslyFocused.focus();
-  }
+  const closeModal = openCardModal(modalBackdrop, modalContent, {
+    initialFocus: cardSelectionContainer.querySelector('.selectable-card'),
+    onCancel: () => closeModal()
+  });
 }
 
 /**
@@ -397,9 +390,10 @@ export function handleHandLimitCheck(playerIndex, discardCount, completionCallba
         })
       });
 
+      if (!response.ok) throw new Error('Unable to discard cards.');
       if (response.ok) {
         // Refresh game state after discard
-        loadGameState();
+        await loadGameState();
 
         // Show success message
         const notification = createSimpleElement('div', ['game-notification', 'success'],
@@ -415,6 +409,7 @@ export function handleHandLimitCheck(playerIndex, discardCount, completionCallba
       }
     } catch (error) {
       console.error('Error discarding cards:', error);
+      throw error;
     }
 
     // Call completion callback
@@ -431,8 +426,7 @@ registerHandLimitHandler((playerIndex, discardCount) => new Promise(resolve => {
  * Allows cards to be reordered by dragging
  * @param {Array} cards - Array of infection cards from the top of the deck
  */
-export function showForecastModal(cards) {
-  const previouslyFocused = document.activeElement;
+export function showForecastModal(cards, { returnFocus } = {}) {
   // Create modal backdrop
   const modalBackdrop = createSimpleElement('div', 'modal-backdrop');
 
@@ -499,10 +493,22 @@ export function showForecastModal(cards) {
   // Add confirm button
   const confirmButton = createSimpleElement('button', 'confirm-btn', 'Confirm Order');
   confirmButton.type = 'button';
-  confirmButton.addEventListener('click', () => {
+  confirmButton.addEventListener('click', async () => {
+    if (confirmButton.disabled) return;
     const cardOrder = Array.from(cardContainer.children).map(card => card.dataset.cityName);
-    closeModal();
-    completeForecast(cardOrder);
+    confirmButton.disabled = true;
+    modalContent.focus();
+    modalContent.setAttribute('aria-busy', 'true');
+    const completed = await completeForecast(cardOrder);
+    if (completed) {
+      closeModal();
+    } else {
+      instructions.setAttribute('role', 'alert');
+      instructions.textContent = 'Unable to confirm the Forecast order. Please try again.';
+      confirmButton.disabled = false;
+      confirmButton.focus();
+    }
+    modalContent.removeAttribute('aria-busy');
   });
   buttonContainer.appendChild(confirmButton);
 
@@ -510,16 +516,6 @@ export function showForecastModal(cards) {
 
   // Assemble and show the modal
   modalBackdrop.appendChild(modalContent);
-  document.body.appendChild(modalBackdrop);
-
-  // Function to close the modal
-  function closeModal() {
-    if (modalBackdrop.parentNode) {
-      document.body.removeChild(modalBackdrop);
-    }
-    if (previouslyFocused?.focus) previouslyFocused.focus();
-  }
-
   // Drag and drop functions
   let draggedCard = null;
 
@@ -533,6 +529,9 @@ export function showForecastModal(cards) {
       cardContainer.insertBefore(sibling, card);
     }
     updatePositionIndicators();
+    const controls = card.querySelectorAll('.forecast-move-button');
+    const preferred = controls[direction < 0 ? 0 : 1];
+    (preferred.disabled ? controls[direction < 0 ? 1 : 0] : preferred).focus();
   }
 
   function dragStart(e) {
@@ -595,5 +594,8 @@ export function showForecastModal(cards) {
   }
 
   updatePositionIndicators();
-  cardContainer.querySelector('.forecast-move-button:not(:disabled)')?.focus();
+  const closeModal = openCardModal(modalBackdrop, modalContent, {
+    initialFocus: cardContainer.querySelector('.forecast-move-button:not(:disabled)'),
+    returnFocus
+  });
 }
