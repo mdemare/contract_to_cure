@@ -1,15 +1,25 @@
 // action_cards.js
 // Handles all action card related functionality, including button creation,
 // displaying cards in a modal, and handling specific action card behaviors.
-import { toggleMode, resetMode, getCurrentGameState, loadGameState } from './game_state.js';
+import { getCurrentGameState } from './game_state.js';
+import { resetMode, toggleMode, getCurrentMode } from './action_mode.js';
 import { showGeneralCardSelectionModal, showForecastModal } from './select_cards.js';
-import { useAirlift, useQuietNight, useResilientPopulation } from './player_actions.js';
+import {
+  actionCardRequest,
+  useAirlift,
+  useQuietNight,
+  useResilientPopulation
+} from './action_card_requests.js';
+import {
+  clearActionCardSource,
+  setActionCardSource
+} from './action_card_state.js';
 import { createSimpleElement } from './dom.js';
 import { showPlayerSelectionPanel, getSelectedPlayerIndex } from './player_selection.js';
 import { showErrorMessage } from './player_action_utils.js'
 
-// Store the current action card source for Government Grant and Airlift
-let currentActionCardSource = null;
+export { completeForecast } from './action_card_requests.js';
+export { getActionCardSource } from './action_card_state.js';
 
 function closeCardSelectionModal() {
   const modalBackdrop = document.querySelector('.modal-backdrop');
@@ -20,7 +30,7 @@ function closeCardSelectionModal() {
 
 function setCurrentActionCardSource(cardSource) {
   closeCardSelectionModal();
-  currentActionCardSource = cardSource;
+  setActionCardSource(cardSource);
 }
 
 function showActionNotification(message) {
@@ -33,24 +43,6 @@ function showActionNotification(message) {
   const notification = createSimpleElement('div', 'action-notification', message);
   notification.id = 'action-notification';
   document.body.insertBefore(notification, document.body.firstChild);
-}
-
-async function actionCardRequest(payload, fallbackErrorMessage) {
-  const response = await fetch('/action_card', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-    },
-    body: JSON.stringify(payload)
-  });
-
-  const data = await response.json();
-  if (!response.ok || data.status === 'error') {
-    throw new Error(data.message || fallbackErrorMessage);
-  }
-
-  return data;
 }
 
 /**
@@ -188,36 +180,6 @@ function handleForecast(cardSource) {
 }
 
 /**
- * Complete the Forecast action by submitting the new card order
- * @param {Array} cardOrder - Array of city names in the desired order
- */
-export function completeForecast(cardOrder) {
-  actionCardRequest(
-    {
-      card: 'Forecast',
-      card_order: cardOrder
-    },
-    'Failed to apply Forecast card order'
-  )
-    .then(data => {
-    if (data.status === 'success' || data.players) {
-      // The forecast was successful, reload the game state
-      loadGameState();
-    } else {
-      // Show error message
-      showErrorMessage(data.message || "Failed to apply Forecast card order");
-    }
-  })
-  .catch(error => {
-    console.error('Error applying Forecast card order:', error);
-    showErrorMessage(error.message || "Error applying Forecast card order. Please try again.");
-  });
-
-  // Reset the action card source
-  currentActionCardSource = null;
-}
-
-/**
  * Update the visibility of the Action Cards button
  * @param {Object} gameState - The current game state
  */
@@ -236,14 +198,6 @@ export function updateActionCardsButtonState(gameState) {
   );
   // Show/hide the button based on whether action cards are available
   actionCardsBtn.style.display = hasActionCards ? 'inline-flex' : 'none';
-}
-
-/**
- * Get the current action card source
- * @returns {Object|null} The source of the action card
- */
-export function getActionCardSource() {
-  return currentActionCardSource;
 }
 
 /**
@@ -280,7 +234,7 @@ function completeResilientPopulation(cityName) {
   useResilientPopulation(cityName);
 
   // Reset the action card source
-  currentActionCardSource = null;
+  clearActionCardSource();
 }
 
 /**
@@ -340,9 +294,11 @@ export function completeAirlift(cityName) {
     notification.remove();
   }
   // Reset the action card source
-  currentActionCardSource = null;
+  clearActionCardSource();
 }
 
-document.addEventListener('playerSelected', (event) => {
-  handleAirliftPlayerSelected();
-})
+document.addEventListener('playerSelectedForMove', () => {
+  if (getCurrentMode() === 'airlift') {
+    handleAirliftPlayerSelected();
+  }
+});

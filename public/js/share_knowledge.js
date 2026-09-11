@@ -1,6 +1,6 @@
 // share_knowledge.js
 import { getCurrentGameState } from './game_state.js';
-import { executeShareKnowledge } from './player_actions.js';
+import { executeShareKnowledge } from './ordinary_player_actions.js';
 import { getCityColor } from './player_action_utils.js';
 import { createSimpleElement } from './dom.js';
 

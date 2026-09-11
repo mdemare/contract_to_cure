@@ -1,9 +1,9 @@
 // Import dependencies
-import { getCurrentGameState } from '/js/game_state.js';
+import { getCurrentGameState, loadGameState } from './game_state.js';
 import { getCityColor } from './player_action_utils.js';
 import { createSimpleElement } from './dom.js';
-import { loadGameState } from './game_state.js';
-import { completeForecast } from './action_cards.js';
+import { completeForecast } from './action_card_requests.js';
+import { registerHandLimitHandler } from './hand_limit_prompt.js';
 
 /**
  * Creates a selectable card element for the card selection modal
@@ -353,6 +353,10 @@ export function handleHandLimitCheck(playerIndex, discardCount, completionCallba
     if (completionCallback) completionCallback();
   }, {customTitle, playerIndex, hideCancel: true});
 }
+
+registerHandLimitHandler((playerIndex, discardCount) => new Promise(resolve => {
+  handleHandLimitCheck(playerIndex, discardCount, resolve);
+}));
 
 /**
  * Shows a modal with the top infection cards for Forecast

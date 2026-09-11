@@ -1,15 +1,13 @@
 // player_action_utils.js
 
 import { loadGameState, CITIES } from './game_state.js';
+import { promptHandLimit } from './hand_limit_prompt.js';
 
-// Avoid circular dependencies by using dynamic imports
 let endTurnEventsModule = null;
-let selectCardsModule = null;
 
 // Function to initialize modules (call this at startup)
 export async function initializeModules() {
   endTurnEventsModule = await import('./end_turn_events.js');
-  selectCardsModule = await import('./select_cards.js');
 }
 
 function resultIncludesHandLimitPrompt(result) {
@@ -33,13 +31,7 @@ async function handleSuccessfulAPIRequest(result, successMessage, eventData) {
   if (result.exceeded_hand_limit) {
     const { player_index, discard_count } = result.exceeded_hand_limit;
 
-    if (!selectCardsModule) {
-      selectCardsModule = await import('./select_cards.js');
-    }
-
-    await new Promise(resolve => {
-      selectCardsModule.handleHandLimitCheck(player_index, discard_count, resolve);
-    });
+    await promptHandLimit(player_index, discard_count);
   }
 
   // Check for end of turn events
@@ -102,9 +94,9 @@ export async function processAPIRequest(endpoint, requestData, successMessage, f
       } else if (result.status === 'card_required' && endpoint === '/move') {
         // Handle operations expert special move card selection
         if (result.movement_type === 'operations_expert_special') {
-          handleOperationsExpertMove(requestData.player_index, requestData.destination);
+          dispatchMovementCardRequired(result.movement_type, requestData);
         } else if (result.movement_type === 'flight_choice') {
-          handleFlightChoice(requestData.player_index, requestData.destination);
+          dispatchMovementCardRequired(result.movement_type, requestData);
         } else {
           // Handle other card selection scenarios if needed
           showErrorMessage(result.message);
@@ -120,30 +112,14 @@ export async function processAPIRequest(endpoint, requestData, successMessage, f
   }
 }
 
-// Helper functions for operations expert and flight choice movements
-async function handleOperationsExpertMove(playerIndex, destination) {
-  // Dynamically import player_actions to avoid circular dependency
-  const playerActionsModule = await import('./player_actions.js');
-
-  // Call the function from player_actions
-  if (playerActionsModule.handleOperationsExpertMove) {
-    playerActionsModule.handleOperationsExpertMove(playerIndex, destination);
-  } else {
-    showErrorMessage("Operations Expert move handler not implemented");
-  }
-}
-
-async function handleFlightChoice(playerIndex, destination) {
-  console.log(`handleFlightChoice(${playerIndex}, ${destination})`)
-  // Dynamically import player_actions to avoid circular dependency
-  const playerActionsModule = await import('./player_actions.js');
-
-  // Call the function from player_actions
-  if (playerActionsModule.handleFlightChoice) {
-    playerActionsModule.handleFlightChoice(playerIndex, destination);
-  } else {
-    showErrorMessage("Flight choice handler not implemented");
-  }
+function dispatchMovementCardRequired(movementType, requestData) {
+  document.dispatchEvent(new CustomEvent('movementCardRequired', {
+    detail: {
+      movementType,
+      playerIndex: requestData.player_index,
+      destination: requestData.destination
+    }
+  }));
 }
 
 // Helper function to get a city's color
