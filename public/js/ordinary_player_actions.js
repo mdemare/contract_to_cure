@@ -113,7 +113,7 @@ export async function cureDisease() {
       const selectedCards = selectedIndices.map(arrayIndex => colorCards[arrayIndex]);
       cureWithCards(selectedCards);
     },
-    { customTitle: `Select ${cardsNeeded} ${selectedColor} cards to cure the disease` }
+    { customTitle: `Select ${cardsNeeded} ${selectedColor} cards to cure the disease`, useArrayIndex: true }
   );
 }
 

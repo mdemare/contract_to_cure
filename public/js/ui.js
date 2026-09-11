@@ -5,6 +5,7 @@ import { updateCurrentPlayer } from './current_player.js';
 import { CITIES } from './game_state.js';
 import { updateButtonStates } from './action_buttons.js';
 import { updateGameStatus } from './game_status.js';
+import { decorateGameCard } from './card_visuals.js';
 
 // Define color keys for disease tracking
 const COLOR_KEYS = ['blue', 'yellow', 'black', 'red'];
@@ -20,6 +21,9 @@ export function updatePlayerHand(gameState) {
   // Clear existing cards
   handContainer.innerHTML = '';
 
+  const handCount = document.getElementById('active-hand-count');
+  if (handCount) handCount.textContent = '0 cards';
+
   // Get current player
   if (!gameState || !gameState.gameStatus) return;
 
@@ -28,34 +32,63 @@ export function updatePlayerHand(gameState) {
 
   if (!currentPlayer || !currentPlayer.hand) return;
 
+  const cardCount = currentPlayer.hand.length;
+  if (handCount) handCount.textContent = `${cardCount} ${cardCount === 1 ? 'card' : 'cards'}`;
+  handContainer.setAttribute('aria-label', `Current player's hand, ${cardCount} ${cardCount === 1 ? 'card' : 'cards'}`);
+
+  if (cardCount === 0) {
+    const emptyHand = document.createElement('span');
+    emptyHand.classList.add('player-hand-empty');
+    emptyHand.textContent = 'No cards in hand';
+    handContainer.appendChild(emptyHand);
+    return;
+  }
+
   // Create card elements
   currentPlayer.hand.forEach((cardObj, index) => {
-    const card = document.createElement('div');
+    const card = document.createElement('button');
+    card.type = 'button';
     card.classList.add('hand-card');
-    const cardName = cardObj.name
+    card.setAttribute('aria-pressed', 'false');
 
     // Determine card type and color
     if (cardObj.type === 'action') {
       card.classList.add('action');
-      card.title = 'Action Card';
-    } else if (cardObj.type === 'event') {
+    } else if (cardObj.type === 'epidemic') {
       card.classList.add('epidemic');
-      card.title = 'Epidemic!';
     } else {
-      // City card - find the color
       card.classList.add('city-card');
-      card.classList.add(cardObj.color);
-      card.title = `City: ${cardName}`;
+      if (cardObj.color) card.classList.add(cardObj.color);
     }
 
-    // Create card name element
-    const cardNameElement = document.createElement('span');
-    cardNameElement.classList.add('card-name');
-    cardNameElement.textContent = cardName;
-    card.appendChild(cardNameElement);
+    const presentation = decorateGameCard(card, cardObj);
+    card.setAttribute(
+      'aria-label',
+      `${presentation.name}, ${presentation.typeLabel}, ${presentation.familyLabel}. Press to keep card expanded.`
+    );
 
     // Add data attribute for card index
     card.dataset.cardIndex = index;
+
+    card.addEventListener('click', () => {
+      const willExpand = !card.classList.contains('is-expanded');
+      handContainer.querySelectorAll('.hand-card.is-expanded').forEach(otherCard => {
+        if (otherCard !== card) {
+          otherCard.classList.remove('is-expanded');
+          otherCard.setAttribute('aria-pressed', 'false');
+        }
+      });
+      card.classList.toggle('is-expanded', willExpand);
+      card.setAttribute('aria-pressed', String(willExpand));
+    });
+
+    card.addEventListener('keydown', event => {
+      if (event.key === 'Escape') {
+        card.classList.remove('is-expanded');
+        card.setAttribute('aria-pressed', 'false');
+        card.blur();
+      }
+    });
 
     handContainer.appendChild(card);
   });

@@ -109,8 +109,14 @@
 }
 
 .player-option {
+  appearance: none;
+  display: block;
+  width: 100%;
   padding: 8px 12px;
+  background: white;
+  border: 0;
   cursor: pointer;
+  text-align: left;
   white-space: nowrap;
 }
 
