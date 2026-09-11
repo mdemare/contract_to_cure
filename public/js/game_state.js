@@ -1,61 +1,14 @@
 // game_state.js
-import { updateGameUI } from './ui.js';
-import { showPlayerSelectionPanel, hidePlayerSelectionPanel } from './player_selection.js';
-import { setSelectedPlayerIndex } from './player_actions.js';
 import { updateAuthUI } from './auth.js';
+import { promptHandLimit } from './hand_limit_prompt.js';
+
+export { getCurrentMode, resetMode, toggleMode } from './action_mode.js';
 
 // Global variable to store the current game state
 let currentGameState = null;
-// Game mode state to track which action is currently selected
-let currentMode = null;
 export let CITIES = null;
 let pendingHandLimitPromptKey = null;
 let pendingHandLimitPromptActive = false;
-
-// Get the current action mode
-export function getCurrentMode() {
-  return currentMode;
-}
-
-document.addEventListener('playerSelectedForMove', (event) => {
-  if (currentMode === 'airlift') {
-    handleAirliftPlayerSelected();
-  } else {
-    toggleMode('moveSelectedPlayer');
-    setSelectedPlayerIndex(event.detail.playerIndex);
-  }
-});
-
-// Toggle action mode when a button is clicked
-export function toggleMode(mode) {
-  // If the mode is already active, deactivate it
-  if (currentMode === mode) {
-    resetMode();
-    return;
-  }
-
-  console.log(`Set mode to ${mode}`)
-  // Set the new mode
-  currentMode = mode;
-
-  // Update UI to show active mode
-  updateActiveModeUI();
-
-  console.log(`Mode switched to: ${mode}`);
-}
-
-// Reset the current mode
-export function resetMode() {
-  currentMode = null;
-  updateActiveModeUI();
-
-  // Also reset selected player when mode is reset
-  hidePlayerSelectionPanel();
-
-  // Dispatch event to notify that the mode has been reset
-  const modeResetEvent = new CustomEvent('actionModeReset');
-  document.dispatchEvent(modeResetEvent);
-}
 
 /**
  * Check if current player is the Dispatcher
@@ -70,32 +23,6 @@ export function isDispatcher() {
 
   return currentPlayer && currentPlayer.role &&
          String(currentPlayer.role).toLowerCase() === 'dispatcher';
-}
-
-// Update UI to highlight the active mode button
-function updateActiveModeUI() {
-  // Remove active class from all buttons
-  const buttons = document.querySelectorAll('.action-btn');
-  buttons.forEach(button => {
-    button.classList.remove('active');
-  });
-
-  // Add active class to the current mode button
-  if (currentMode) {
-    const activeButton = document.getElementById(`${currentMode}-btn`);
-    if (activeButton) {
-      activeButton.classList.add('active');
-    }
-
-    // Handle Dispatcher move mode - show player selection
-    if (currentMode === 'move' && isDispatcher()) {
-      showPlayerSelectionPanel();
-    } else {
-      hidePlayerSelectionPanel();
-    }
-  } else {
-    hidePlayerSelectionPanel();
-  }
 }
 
 export async function loadCities() {
@@ -143,14 +70,10 @@ export async function promptPendingHandLimitIfNeeded(gameState = currentGameStat
   pendingHandLimitPromptActive = true;
 
   try {
-    const selectCardsModule = await import('./select_cards.js');
-    await new Promise(resolve => {
-      selectCardsModule.handleHandLimitCheck(
-        pendingHandLimit.player_index,
-        pendingHandLimit.discard_count,
-        resolve
-      );
-    });
+    await promptHandLimit(
+      pendingHandLimit.player_index,
+      pendingHandLimit.discard_count
+    );
   } finally {
     pendingHandLimitPromptActive = false;
   }
@@ -184,8 +107,9 @@ export async function loadGameState(providedGameState = null, { promptPendingHan
       updateAuthUI(null);
     }
 
-    // Update the UI with the new game state
-    updateGameUI(gameState);
+    document.dispatchEvent(new CustomEvent('gameStateLoaded', {
+      detail: { gameState }
+    }));
 
     if (promptPendingHandLimit) {
       promptPendingHandLimitIfNeeded(gameState).catch(error => {

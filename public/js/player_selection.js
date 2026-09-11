@@ -1,7 +1,8 @@
 // player_selection.js
 // Manages the Dispatcher-specific player selection panel and player button creation/handling.
 
-import { getCurrentGameState, resetMode, getCurrentMode } from './game_state.js';
+import { getCurrentMode, resetMode, toggleMode } from './action_mode.js';
+import { getCurrentGameState, isDispatcher } from './game_state.js';
 import { createSimpleElement } from './dom.js';
 
 // Store the selected player index for dispatcher move action
@@ -155,7 +156,15 @@ export function getSelectedPlayerIndex() {
  * Helper function to avoid circular imports
  */
 export function setMoveSelectedPlayerMode() {
-  // Access directly through window to avoid circular dependency
-  window.gameState = window.gameState || {};
-  window.gameState.currentMode = 'moveSelectedPlayer';
+  if (getCurrentMode() !== 'moveSelectedPlayer') {
+    toggleMode('moveSelectedPlayer');
+  }
 }
+
+document.addEventListener('actionModeChanged', event => {
+  if (event.detail.mode === 'move' && isDispatcher()) {
+    showPlayerSelectionPanel();
+  } else {
+    hidePlayerSelectionPanel();
+  }
+});

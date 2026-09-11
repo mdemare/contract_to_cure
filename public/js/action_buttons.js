@@ -1,7 +1,7 @@
 // action_buttons.js - updated with retrieve card functionality and draw cards button
-import { getCurrentGameState, toggleMode } from './game_state.js';
-import { updatePlayerHand } from './ui.js';
-import { treatDisease, pass, cureDisease } from './player_actions.js';
+import { toggleMode } from './action_mode.js';
+import { getCurrentGameState } from './game_state.js';
+import { cureDisease, pass, treatDisease } from './ordinary_player_actions.js';
 import { initShareKnowledge, updateShareKnowledgeButtonState } from './share_knowledge.js';
 import { initActionCardsButton, updateActionCardsButtonState } from './action_cards.js';
 import { initRetrieveCard, updateRetrieveButtonState } from './retrieve_card.js';
@@ -45,7 +45,7 @@ export function initActionButtons() {
   treatBtn.addEventListener('click', () => treatDisease());
   cureBtn.addEventListener('click', () => cureDisease());
   shareBtn.addEventListener('click', () => toggleMode('trade'));
-  // Build button is handled by player_actions.js
+  // Build button is handled by ordinary_player_actions.js
   passBtn.addEventListener('click', handlePassAction);
 
   // Add draw cards button event listener
@@ -73,9 +73,6 @@ export function initActionButtons() {
 
   // Update button states based on current game state
   updateButtonStates();
-
-  // Initial hand update
-  updatePlayerHand(getCurrentGameState());
 
   initializeActionBarLayout();
 }

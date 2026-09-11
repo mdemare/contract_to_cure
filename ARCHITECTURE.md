@@ -154,7 +154,8 @@ The frontend uses **ES6 modules** with a clear dependency hierarchy and separati
 ┌─────────────────────▼───────────────────────────────────────┐
 │                  State Management                          │
 ├─────────────────────────────────────────────────────────────┤
-│  game_state.js (Central State, Mode Management)            │
+│  game_state.js (Central Game State)                        │
+│  action_mode.js (Current Action Mode)                      │
 └─────────────────────┬───────────────────────────────────────┘
                       │
 ┌─────────────────────▼───────────────────────────────────────┐
@@ -170,7 +171,10 @@ The frontend uses **ES6 modules** with a clear dependency hierarchy and separati
 ┌─────────────────────▼───────────────────────────────────────┐
 │                  Action Layer                              │
 ├─────────────────────────────────────────────────────────────┤
-│  player_actions.js (Game Action Implementations)           │
+│  movement_actions.js (Map & Movement Workflows)            │
+│  ordinary_player_actions.js (Ordinary Player Actions)      │
+│  action_card_requests.js (Event-card Requests)             │
+│  player_actions.js (Compatibility Facade)                  │
 │  player_action_utils.js (API Communication)                │
 │  share_knowledge.js, end_turn_events.js (Specialized)      │
 └─────────────────────┬───────────────────────────────────────┘
@@ -196,7 +200,7 @@ The frontend uses **ES6 modules** with a clear dependency hierarchy and separati
 **Centralized State Pattern:**
 - Single source of truth in `game_state.js`
 - Global state access via exported functions
-- Mode management for current action context
+- Action mode state isolated in `action_mode.js`
 - Event-driven UI updates
 
 **State Flow:**

@@ -3,12 +3,17 @@ import { prepareMapForRendering, renderPandemicCities } from './map.js';
 import { initScrolling } from './scrolling.js';
 import { loadCities, loadGameState, CITIES } from './game_state.js';
 import { initActionButtons } from './action_buttons.js';
-import { initMoveActions } from './player_actions.js';
+import { initMoveActions } from './movement_actions.js';
 import { initializeCurrentPlayer } from './current_player.js';
 import { initShareKnowledge } from './share_knowledge.js';
 import { initGameOver } from './game_over.js';
 import { initializeModules } from './player_action_utils.js';
 import { initializePlayerPanel } from './player_panel.js';
+import { updateGameUI } from './ui.js';
+
+document.addEventListener('gameStateLoaded', event => {
+  updateGameUI(event.detail.gameState);
+});
 
 // Initialize the pandemic map
 async function initializePandemicMap() {
