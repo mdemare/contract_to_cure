@@ -96,13 +96,14 @@ function drawLayer(context, canvas, mapInner, bounds, cubeCities, elapsed) {
 
   for (const { cityName, cityData, cubeCount, color } of cubeCities) {
     const cityPhase = stablePhase(cityName);
+    const orbitSpeed = ORBIT_SPEED * (1 + (cubeCount - 1) * 0.25);
 
     for (let panel = 0; panel < 3; panel++) {
       const cityX = cityData.x + panel * MAP_WIDTH;
       const cityY = cityData.y - MAP_Y_OFFSET;
 
       for (let index = 0; index < cubeCount; index++) {
-        const angle = cityPhase + elapsed * ORBIT_SPEED + index * Math.PI * 2 / cubeCount;
+        const angle = cityPhase + elapsed * orbitSpeed + index * Math.PI * 2 / cubeCount;
         const x = cityX + Math.cos(angle) * ORBIT_RADIUS;
         const y = cityY + Math.sin(angle) * ORBIT_RADIUS;
         drawCube(context, x - bounds.left, y - bounds.top, angle, color);
