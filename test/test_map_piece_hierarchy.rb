@@ -22,7 +22,7 @@ class TestMapPieceHierarchy < Minitest::Test
   def test_city_hit_target_and_piece_layers_are_explicit
     city = @css.match(/\.map-inner \.city\s*\{(?<body>[^}]*)\}/m)[:body]
     pawns = @css.match(/\.pawns\s*\{(?<body>[^}]*)\}/m)[:body]
-    cubes = @css.match(/\.map-inner \.city \.cubes\s*\{(?<body>[^}]*)\}/m)[:body]
+    cubes = @css.match(/\.disease-cube-layer\s*\{(?<body>[^}]*)\}/m)[:body]
     label = @css.match(/\.map-inner \.city-label\s*\{(?<body>[^}]*)\}/m)[:body]
     connections = @css.match(/\.connections-layer\s*\{(?<body>[^}]*)\}/m)[:body]
 
@@ -33,10 +33,9 @@ class TestMapPieceHierarchy < Minitest::Test
     assert_match(/display:\s*flex/, pawns)
     assert_match(/gap:\s*2px/, pawns)
     assert_match(/z-index:\s*35/, pawns)
-    assert_match(/display:\s*grid/, cubes)
-    assert_match(/grid-template-columns:\s*repeat\(2, 9px\)/, cubes)
-    assert_match(/gap:\s*2px/, cubes)
-    assert_match(/z-index:\s*25/, cubes)
+    assert_match(/position:\s*absolute/, cubes)
+    assert_match(/pointer-events:\s*none/, cubes)
+    assert_match(/z-index:\s*8/, cubes)
     assert_match(/z-index:\s*15/, label)
     assert_match(/background-color:\s*#f8fbff/, label)
     assert_match(/\.city\.is-current-city \.dot::after/, @css)

@@ -175,7 +175,7 @@ test('dense city labels avoid labels, markers, and live pieces', async () => {
   }
 });
 
-test('one, two, and three cube cities expose every piece without a visual counter', () => {
+test('one, two, and three cube cities expose their canvas-rendered pieces accessibly', () => {
   for (const cubeCount of [1, 2, 3]) {
     const city = createCityOnPanel({
       ...rawMap.Atlanta,
@@ -185,7 +185,7 @@ test('one, two, and three cube cities expose every piece without a visual counte
       isCurrentCity: false
     }, 'Atlanta', 0);
 
-    assert.equal(city.querySelectorAll('.cube').length, cubeCount);
+    assert.equal(city.querySelectorAll('.cube').length, 0);
     assert.equal(city.querySelector('.cube-count-badge'), null);
     assert.match(city.getAttribute('aria-label'), new RegExp(`${cubeCount} disease cube`));
   }
@@ -214,7 +214,7 @@ test('research stations change the city marker instead of adding a separate icon
   assert.equal(regularCity.classList.contains('has-station'), false);
 });
 
-test('a piece-heavy city keeps every pawn and cube individually represented', () => {
+test('a piece-heavy city keeps pawn details and canvas cube counts accessible', () => {
   const city = createCityOnPanel({
     ...rawMap.Atlanta,
     cubes: 3,
@@ -239,7 +239,7 @@ test('a piece-heavy city keeps every pawn and cube individually represented', ()
   assert.equal(city.classList.contains('has-station'), true);
   assert.equal(city.querySelectorAll('.dot').length, 1);
   assert.equal(city.querySelectorAll('.research-station').length, 0);
-  assert.equal(city.querySelectorAll('.cube').length, 3);
+  assert.equal(city.querySelectorAll('.cube').length, 0);
   assert.equal(city.querySelector('.cube-count-badge'), null);
   assert.equal(city.querySelectorAll('.pawn').length, 4);
   assert.equal(city.querySelectorAll('.is-current-pawn').length, 1);

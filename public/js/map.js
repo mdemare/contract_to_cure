@@ -1,6 +1,7 @@
 // map.js
 import { MAP_WIDTH } from './constants.js';
 import { createSimpleElement } from './dom.js';
+import { renderDiseaseCubeCanvas } from './disease_cube_canvas.js';
 
 // Store the current transform state so it can be preserved during re-renders
 let currentTransform = {
@@ -79,20 +80,6 @@ export function createCityOnPanel(cityData, cityName, panel) {
   // City label (positioned below the dot)
   const label = createSimpleElement('span', 'city-label', cityName.replace(/ /g, '\u00A0'));
   city.appendChild(label);
-
-  // Disease cubes remain individually visible; their total is exposed by the city label.
-  if (cubeCount > 0) {
-    const cubes = createSimpleElement('span', 'cubes');
-    cubes.dataset.count = cubeCount;
-    cubes.setAttribute('aria-hidden', 'true');
-
-    for (let i = 0; i < cubeCount; i++) {
-      const cube = createSimpleElement('span', ['cube', cityData.color]);
-      cubes.appendChild(cube);
-    }
-
-    city.appendChild(cubes);
-  }
 
   // Pawns use separate silhouettes instead of overlapping font glyphs.
   if (cityData.pawns && cityData.pawns.length > 0) {
@@ -173,6 +160,9 @@ export function renderPandemicCities(pandemicMap) {
   // Append the inner container to the scrollable container
   container.appendChild(mapInner);
 
+  // Disease cubes use a transparent animated layer separate from city controls.
+  renderDiseaseCubeCanvas(mapInner, pandemicMap);
+
   // Set initial cursor style
   container.style.cursor = 'grab';
 
@@ -193,26 +183,27 @@ function estimatedLabelWidth(cityName) {
 export function getCityLabelBounds(cityName, city, position) {
   const width = estimatedLabelWidth(cityName);
   const height = LABEL_HEIGHT;
+  const gap = (Number(city.cubes) || 0) > 0 ? 28 : LABEL_GAP;
   const x = city.x;
   const y = city.y;
 
   switch (position) {
     case 'right':
-      return { x: x + LABEL_GAP, y: y - height / 2, width, height };
+      return { x: x + gap, y: y - height / 2, width, height };
     case 'left':
-      return { x: x - LABEL_GAP - width, y: y - height / 2, width, height };
+      return { x: x - gap - width, y: y - height / 2, width, height };
     case 'above':
-      return { x: x - width / 2, y: y - LABEL_GAP - height, width, height };
+      return { x: x - width / 2, y: y - gap - height, width, height };
     case 'below-right':
-      return { x: x + LABEL_GAP, y: y + LABEL_GAP, width, height };
+      return { x: x + gap, y: y + gap, width, height };
     case 'below-left':
-      return { x: x - LABEL_GAP - width, y: y + LABEL_GAP, width, height };
+      return { x: x - gap - width, y: y + gap, width, height };
     case 'above-right':
-      return { x: x + LABEL_GAP, y: y - LABEL_GAP - height, width, height };
+      return { x: x + gap, y: y - gap - height, width, height };
     case 'above-left':
-      return { x: x - LABEL_GAP - width, y: y - LABEL_GAP - height, width, height };
+      return { x: x - gap - width, y: y - gap - height, width, height };
     default:
-      return { x: x - width / 2, y: y + LABEL_GAP, width, height };
+      return { x: x - width / 2, y: y + gap, width, height };
   }
 }
 
@@ -228,7 +219,7 @@ export function getCityPieceBounds(city) {
   const bounds = [];
 
   if ((Number(city.cubes) || 0) > 0) {
-    bounds.push({ x: city.x + 8, y: city.y + 8, width: 20, height: 20 });
+    bounds.push({ x: city.x - 25, y: city.y - 25, width: 50, height: 50 });
   }
 
   if (city.pawns?.length) {
