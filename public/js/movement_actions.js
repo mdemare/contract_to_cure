@@ -1,4 +1,5 @@
 // Handles city clicks and movement-specific follow-up selections.
+import { initRouteHighlights } from './route_highlights.js';
 import { getCurrentMode, resetMode, toggleMode } from './action_mode.js';
 import { completeAirlift } from './action_cards.js';
 import { useGovernmentGrant } from './action_card_requests.js';
@@ -19,9 +20,11 @@ let selectedPlayerIndex = null;
 
 export function setSelectedPlayerIndex(index) {
   selectedPlayerIndex = index;
+  document.dispatchEvent(new CustomEvent('movePawnChanged', { detail: { playerIndex: index } }));
 }
 
 export function initMoveActions() {
+  initRouteHighlights();
   setupCityClickHandlers();
   document.addEventListener('mapUpdated', setupCityClickHandlers);
   initBuildStation();
@@ -52,6 +55,8 @@ async function handleCityClick(event) {
     return;
   }
 
+  if (mode === 'move' && isDispatcher()) return;
+
   switch (mode) {
     case 'governmentGrant':
       resetMode();
@@ -72,8 +77,9 @@ async function handleCityClick(event) {
       }
 
       if (selectedPlayerIndex !== null) {
+        const pawnIndex = selectedPlayerIndex;
         resetMode();
-        await movePlayer(selectedPlayerIndex, cityName);
+        await movePlayer(pawnIndex, cityName);
       }
       return;
     default:
@@ -125,9 +131,10 @@ export async function handleOperationsExpertMove(playerIndex, destination) {
 }
 
 export async function handleFlightChoice(playerIndex, destination) {
-  const currentPlayer = getCurrentGameState().players[playerIndex];
+  const currentPlayer = getCurrentPlayer();
+  const source = getCurrentGameState().players[playerIndex].location;
   const flightCards = currentPlayer.hand.filter(card =>
-    card.name === currentPlayer.location || card.name === destination
+    card.name === source || card.name === destination
   );
 
   showHandSelectionModal(
@@ -163,7 +170,12 @@ document.addEventListener('playerSelectedForMove', event => {
   setSelectedPlayerIndex(event.detail.playerIndex);
 });
 
+document.addEventListener('actionModeChanged', event => {
+  if (event.detail.mode !== 'moveSelectedPlayer') selectedPlayerIndex = null;
+});
+
 document.addEventListener('movementCardRequired', event => {
+  resetMode();
   const { movementType, playerIndex, destination } = event.detail;
   if (movementType === 'operations_expert_special') {
     handleOperationsExpertMove(playerIndex, destination);

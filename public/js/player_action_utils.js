@@ -64,6 +64,7 @@ async function handleSuccessfulAPIRequest(result, successMessage, eventData) {
 
 // Generic handler for API requests and responses
 export async function processAPIRequest(endpoint, requestData, successMessage, failurePrefix, eventData = null) {
+  let succeeded = false;
   try {
     // Get CSRF token from meta tag
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
@@ -84,7 +85,8 @@ export async function processAPIRequest(endpoint, requestData, successMessage, f
       const result = await response.json();
       if(!result) { throw new Error("no result")}
       if (result.status === 'success') {
-        await handleSuccessfulAPIRequest(result, successMessage, eventData)
+        await handleSuccessfulAPIRequest(result, successMessage, eventData);
+        succeeded = true;
       } else if (result.status === 'action_unavailable') {
         // Action was not available, reload game state to ensure UI is in sync
         if (result.game_state) {
@@ -109,6 +111,10 @@ export async function processAPIRequest(endpoint, requestData, successMessage, f
     }
   } catch (error) {
     showErrorMessage(`Network error: ${error.message}`);
+  } finally {
+    if (endpoint === '/move' && !succeeded) {
+      document.dispatchEvent(new CustomEvent('movementRequestFailed'));
+    }
   }
 }
 

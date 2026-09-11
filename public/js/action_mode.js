@@ -12,18 +12,20 @@ export function toggleMode(mode) {
     return;
   }
 
+  const previousMode = currentMode;
   currentMode = mode;
   updateActiveModeButtons();
   document.dispatchEvent(new CustomEvent('actionModeChanged', {
-    detail: { mode: currentMode }
+    detail: { previousMode, mode: currentMode }
   }));
 }
 
 export function resetMode() {
+  const previousMode = currentMode;
   currentMode = null;
   updateActiveModeButtons();
   document.dispatchEvent(new CustomEvent('actionModeChanged', {
-    detail: { mode: currentMode }
+    detail: { previousMode, mode: currentMode }
   }));
   document.dispatchEvent(new CustomEvent('actionModeReset'));
 }
