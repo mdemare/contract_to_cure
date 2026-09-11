@@ -70,47 +70,50 @@ function closeMenu() {
   menuToggle.setAttribute('aria-expanded', 'false');
 }
 
+export async function restartGame(loadState = async () => {
+  const { loadGameState } = await import('./game_state.js');
+  return loadGameState();
+}) {
+  const response = await fetch('/restart_game', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content
+    },
+    credentials: 'same-origin'
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to restart game');
+  }
+
+  const data = await response.json();
+  if (!data.success) return false;
+
+  await loadState();
+
+  const gameOverDialog = document.querySelector('.game-over-dialog');
+  if (gameOverDialog) {
+    gameOverDialog.style.display = 'none';
+  }
+
+  return true;
+}
+
 function handleNewGame() {
   closeMenu();
-  
+
   if (confirm('Are you sure you want to start a new game? Your current progress will be lost.')) {
-    fetch('/restart_game', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.content
-      },
-      credentials: 'same-origin'
-    })
-    .then(response => {
-      if (!response.ok) {
-        throw new Error('Failed to restart game');
-      }
-      return response.json();
-    })
-    .then(async data => {
-      if (data.success) {
-        // Import and call loadGameState to reload the game
-        const { loadGameState } = await import('./game_state.js');
-        await loadGameState();
-        
-        // Close any open dialogs or overlays
-        const gameOverDialog = document.querySelector('.game-over-dialog');
-        if (gameOverDialog) {
-          gameOverDialog.style.display = 'none';
+    restartGame()
+      .then(restarted => {
+        if (!restarted) {
+          alert('Failed to start new game. Please try again.');
         }
-        
-        // Update the UI to reflect the new game state
-        const { updateUI } = await import('./ui.js');
-        updateUI();
-      } else {
-        alert('Failed to start new game. Please try again.');
-      }
-    })
-    .catch(error => {
-      console.error('Error restarting game:', error);
-      alert('An error occurred while starting a new game.');
-    });
+      })
+      .catch(error => {
+        console.error('Error restarting game:', error);
+        alert('An error occurred while starting a new game.');
+      });
   }
 }
 
