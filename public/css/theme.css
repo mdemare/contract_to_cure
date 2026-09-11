@@ -1,0 +1,661 @@
+/*
+ * Contract to Cure visual system
+ * A restrained field-laboratory palette keeps disease colors available for
+ * gameplay information. Component styles below consume only these shared
+ * typography, surface, spacing, border, elevation, and interaction tokens.
+ */
+:root {
+  color-scheme: light;
+
+  /* Typography */
+  --font-display: 'Roboto Slab', Georgia, serif;
+  --font-body: 'Montserrat', 'Segoe UI', sans-serif;
+  --font-label: 'Montserrat', 'Segoe UI', sans-serif;
+  --text-xs: 0.625rem;
+  --text-sm: 0.75rem;
+  --text-md: 0.875rem;
+  --text-lg: 1.125rem;
+  --tracking-label: 0.075em;
+
+  /* Expedition surfaces */
+  --ink-strong: #172824;
+  --ink: #31443f;
+  --ink-muted: #63736d;
+  --canvas: #e7e2d5;
+  --surface: #f7f4ea;
+  --surface-raised: #fffdf6;
+  --surface-muted: #eeeadf;
+  --chrome: #17322f;
+  --chrome-raised: #21413b;
+  --chrome-muted: #a9bbb2;
+  --accent: #bd8638;
+  --accent-strong: #8e5e21;
+  --accent-soft: #f4e4c7;
+  --success: #327052;
+  --warning: #9b671f;
+  --danger: #a43f35;
+  --info: #356b78;
+
+  /* Disease colors: reserved for game-state meaning */
+  --blue-disease: #2878bb;
+  --yellow-disease: #d3a400;
+  --black-disease: #343b3d;
+  --red-disease: #c54a43;
+  --event-color: #76558c;
+  --epidemic-color: #a43f35;
+  --cured-color: var(--success);
+
+  /* Shape, rhythm, and depth */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+  --border-subtle: #cbc5b7;
+  --border-strong: #8b968f;
+  --shadow-low: 0 2px 5px rgba(20, 36, 32, 0.16);
+  --shadow-high: 0 14px 36px rgba(13, 27, 24, 0.32);
+  --focus-ring: #f0bc65;
+  --transition-fast: 140ms ease;
+
+  /* Compatibility names used by older component modules */
+  --header-bg: var(--chrome);
+  --main-bg: var(--canvas);
+  --panel-bg: var(--surface-raised);
+  --border-color: var(--border-subtle);
+  --panel-shadow: var(--shadow-low);
+}
+
+body {
+  color: var(--ink-strong);
+  background: var(--canvas);
+  background-image:
+    linear-gradient(rgba(23, 50, 47, 0.035) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(23, 50, 47, 0.035) 1px, transparent 1px);
+  background-size: 24px 24px;
+  font-family: var(--font-body);
+}
+
+h1,
+h2,
+h3,
+.card-header,
+.metric-value strong {
+  font-family: var(--font-display);
+}
+
+button,
+input,
+select {
+  font: inherit;
+}
+
+button:focus-visible,
+[role='button']:focus-visible,
+.selectable-card:focus-visible,
+.forecast-card:focus-visible {
+  outline: 3px solid var(--focus-ring);
+  outline-offset: 3px;
+}
+
+/* Shell and brand */
+.right-view,
+.game-header,
+.action-buttons {
+  background: var(--chrome);
+}
+
+.left-view {
+  background: var(--chrome);
+  border-right: 1px solid #3b5751;
+}
+
+.logo-container {
+  min-height: 112px;
+  padding: 0;
+  background: var(--chrome);
+  border-bottom: 1px solid #3b5751;
+}
+
+.logo-container img {
+  height: 112px;
+  object-fit: cover;
+}
+
+.game-header {
+  min-height: 55px;
+  padding: 8px 0;
+  border-bottom: 1px solid #3b5751;
+}
+
+.game-status {
+  background: var(--surface-muted);
+  border-color: var(--border-subtle);
+  padding: var(--space-3);
+  gap: var(--space-3);
+}
+
+.map-wrapper {
+  border-radius: 0;
+  box-shadow: inset 0 1px rgba(255, 255, 255, 0.08);
+}
+
+.map-container {
+  background-color: #244c51;
+  background-image:
+    linear-gradient(rgba(231, 226, 213, 0.065) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(231, 226, 213, 0.065) 1px, transparent 1px),
+    radial-gradient(circle at 48% 45%, #376b6d 0, #244c51 55%, #19393b 100%);
+  background-size: 52px 52px, 52px 52px, 100% 100%;
+}
+
+/* Panels and readouts */
+.status-panel,
+.cure-status,
+.player-item {
+  background: var(--surface-raised);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-low);
+}
+
+.status-panel,
+.cure-status {
+  padding: var(--space-3);
+}
+
+.status-heading h2,
+.cure-status h2,
+.player-panel-header h2 {
+  color: var(--ink-strong);
+  font-size: var(--text-sm);
+  letter-spacing: var(--tracking-label);
+}
+
+.turn-context,
+.status-context dt,
+.cube-count,
+.risk-label,
+.supply-warning {
+  color: var(--ink-muted);
+}
+
+.turn-context strong,
+.metric-value,
+.status-context dd,
+.disease-name {
+  color: var(--ink-strong);
+}
+
+.status-metric,
+.cure-item {
+  background: var(--surface);
+  border-color: var(--border-subtle);
+  border-radius: var(--radius-sm);
+}
+
+.action-pip,
+.status-meter,
+.cube-meter {
+  border-color: var(--border-strong);
+  border-radius: var(--radius-sm);
+  background: #ddd9ce;
+}
+
+.action-pip.is-remaining,
+.status-meter-fill {
+  border-color: var(--info);
+  background: var(--info);
+}
+
+.cure-label,
+.turn-status,
+.action-badge {
+  border-radius: var(--radius-sm);
+  letter-spacing: var(--tracking-label);
+}
+
+.cure-label.cured,
+.turn-status.active {
+  color: #fff;
+  border-color: var(--success);
+  background: var(--success);
+}
+
+/* Navigation and player drawer */
+.menu-container {
+  padding-right: var(--space-4);
+}
+
+.menu-toggle,
+.player-panel-toggle {
+  color: #f7f4ea;
+  background: var(--chrome-raised);
+  border: 1px solid #597169;
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+  letter-spacing: 0.04em;
+  transition: background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.menu-toggle:hover,
+.menu-toggle.active,
+.player-panel-toggle:hover {
+  background: #2b514a;
+  border-color: #82988f;
+}
+
+.dropdown-menu {
+  overflow: hidden;
+  color: var(--ink-strong);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-high);
+}
+
+.menu-item,
+.user-info {
+  color: var(--ink-strong);
+}
+
+.menu-item:hover,
+.menu-item:focus-visible {
+  background: var(--accent-soft);
+}
+
+.menu-divider,
+.user-info {
+  border-color: var(--border-subtle);
+}
+
+.user-email {
+  color: var(--ink-muted);
+}
+
+.player-panel {
+  background: var(--surface-muted);
+  border: 1px solid var(--border-strong);
+  border-right: 0;
+  border-radius: var(--radius-md) 0 0 var(--radius-md);
+  box-shadow: var(--shadow-high);
+}
+
+.player-panel-header {
+  color: #f7f4ea;
+  background: var(--chrome);
+  border-color: #3b5751;
+}
+
+.player-panel-header h2 {
+  color: inherit;
+}
+
+.player-item.current {
+  border-color: var(--accent-strong);
+  box-shadow: 0 0 0 2px rgba(189, 134, 56, 0.22), var(--shadow-low);
+}
+
+.player-summary,
+.player-item.current .player-summary,
+.player-hand-details {
+  background: var(--surface-raised);
+  color: var(--ink-strong);
+}
+
+.player-item.current .player-summary {
+  background: var(--accent-soft);
+}
+
+.player-name,
+.card-count {
+  color: var(--ink-strong);
+}
+
+.player-location,
+.player-position,
+.empty-hand {
+  color: var(--ink-muted);
+}
+
+.player-panel-scroll-hint {
+  color: var(--ink);
+  background: linear-gradient(to bottom, transparent, var(--surface-muted) 42%);
+}
+
+/* Action bar and monochrome field icons */
+.action-buttons {
+  gap: var(--space-2) var(--space-4);
+  padding: 10px var(--space-4) 8px;
+  border-top: 1px solid #49645d;
+  box-shadow: 0 -5px 18px rgba(13, 27, 24, 0.24);
+}
+
+.current-player {
+  color: #f7f4ea;
+  background: #102724;
+  border: 1px solid #49645d;
+  border-radius: var(--radius-md);
+  box-shadow: none;
+}
+
+.current-player-label {
+  color: inherit;
+  font-family: var(--font-body);
+  text-shadow: none;
+}
+
+.action-btn,
+.action-btn.special-action,
+#draw-cards-btn,
+.action-btn.infect-cities {
+  color: #f7f4ea;
+  background: var(--chrome-raised);
+  background-image: none;
+  border: 1px solid #597169;
+  border-radius: var(--radius-md);
+  box-shadow: none;
+  letter-spacing: 0.02em;
+  transition: transform var(--transition-fast), background-color var(--transition-fast), border-color var(--transition-fast);
+}
+
+.action-btn:hover,
+.action-btn.special-action:hover,
+#draw-cards-btn:hover,
+.action-btn.infect-cities:hover {
+  background: #2b514a;
+  border-color: var(--accent);
+  box-shadow: none;
+  transform: translateY(-2px);
+}
+
+.action-btn.active {
+  color: #fffaf0;
+  background: var(--accent-strong);
+  border-color: var(--focus-ring);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
+}
+
+.action-btn.disabled,
+.action-btn:disabled {
+  color: #8fa099;
+  background: #213b36;
+  border-color: #3c5650;
+  opacity: 1;
+}
+
+.action-btn i {
+  width: 25px;
+  height: 25px;
+  color: var(--chrome-muted);
+}
+
+.action-btn:hover i,
+.action-btn.active i {
+  color: var(--focus-ring);
+}
+
+.action-btn i::before {
+  display: block;
+  width: 100%;
+  height: 100%;
+  content: '' !important;
+  background: currentColor;
+  -webkit-mask: var(--action-icon) center / contain no-repeat;
+  mask: var(--action-icon) center / contain no-repeat;
+}
+
+.action-btn.move { --action-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M12 2 7 7h3v4H6V8l-5 5 5 5v-3h4v4H7l5 5 5-5h-3v-4h4v3l5-5-5-5v3h-4V7h3Z'/%3E%3C/svg%3E"); }
+.action-btn.treat { --action-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8.2 3a5.2 5.2 0 0 0-3.7 8.9l7.6 7.6a5.2 5.2 0 0 0 7.4-7.4l-7.6-7.6A5.2 5.2 0 0 0 8.2 3Zm-1.8 7a2.6 2.6 0 0 1 3.7-3.7l2.9 2.9-3.8 3.8Z'/%3E%3C/svg%3E"); }
+.action-btn.share { --action-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 4a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm8 10a3 3 0 1 0 0 6 3 3 0 0 0 0-6Zm1-6V5l5 4-5 4v-3h-5V8ZM7 16v3l-5-4 5-4v3h5v2Z'/%3E%3C/svg%3E"); }
+.action-btn.cure { --action-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M8 2h8v2h-1v5.2l4.8 8.1A3.1 3.1 0 0 1 17.1 22H6.9a3.1 3.1 0 0 1-2.7-4.7L9 9.2V4H8Zm3 8-2.2 4h6.4L13 10V4h-2Z'/%3E%3C/svg%3E"); }
+.action-btn.build { --action-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M3 20h18v2H3Zm2-9h4v8H5Zm5-5h4v13h-4Zm5 3h4v10h-4ZM4 9l8-7 8 7-1.3 1.5L12 4.7l-6.7 5.8Z'/%3E%3C/svg%3E"); }
+.action-btn.retrieve { --action-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M4 4h12v3h4v13H8v-3H4Zm6 5v9h8V9ZM6 6v9h2V7h6V6Z'/%3E%3C/svg%3E"); }
+.action-btn.pass { --action-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M6 2h12v5a6 6 0 0 1-3 5 6 6 0 0 1 3 5v5H6v-5a6 6 0 0 1 3-5 6 6 0 0 1-3-5Zm2 2v3a4 4 0 0 0 4 4 4 4 0 0 0 4-4V4Zm4 9a4 4 0 0 0-4 4v3h8v-3a4 4 0 0 0-4-4Z'/%3E%3C/svg%3E"); }
+.action-btn.draw-cards { --action-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M5 3h14v18H5Zm2 2v14h10V5Zm2 2h6v2H9Zm0 4h6v2H9Z'/%3E%3C/svg%3E"); }
+.action-btn.infect-cities { --action-icon: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath d='M11 2h2v3.1a7 7 0 0 1 3.4 1.4l2.2-2.2 1.4 1.4-2.2 2.2A7 7 0 0 1 19 11h3v2h-3.1a7 7 0 0 1-1.4 3.4l2.2 2.2-1.4 1.4-2.2-2.2A7 7 0 0 1 13 19v3h-2v-3.1a7 7 0 0 1-3.4-1.4l-2.2 2.2L4 18.3l2.2-2.2A7 7 0 0 1 5 13H2v-2h3.1a7 7 0 0 1 1.4-3.4L4.3 5.4 5.7 4l2.2 2.2A7 7 0 0 1 11 5Zm1 5a5 5 0 1 0 0 10 5 5 0 0 0 0-10Zm-2 3h2v2h-2Zm4 3h2v2h-2Z'/%3E%3C/svg%3E"); }
+
+.action-btn.special-action {
+  color: #f6ddae;
+  border-color: var(--accent);
+}
+
+.action-btn.special-action .card-header {
+  color: var(--chrome);
+  background: var(--accent);
+  border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+}
+
+/* Cards: paper objects with disease color used only as an identifier strip */
+.card-base,
+.animated-card,
+.selectable-card,
+.hand-card,
+.hand-card-preview,
+.share-card,
+.forecast-card {
+  color: var(--ink-strong);
+  background: var(--surface-raised);
+  border-color: var(--border-subtle);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-low);
+}
+
+.card-blue,
+.card-yellow,
+.card-black,
+.card-red,
+.city-card.blue,
+.city-card.yellow,
+.city-card.black,
+.city-card.red,
+.selectable-card.city,
+.share-card.blue,
+.share-card.yellow,
+.share-card.black,
+.share-card.red,
+.animated-card.city-card.blue,
+.animated-card.city-card.yellow,
+.animated-card.city-card.black,
+.animated-card.city-card.red {
+  background: var(--surface-raised);
+}
+
+.selectable-card:hover,
+.forecast-card:hover,
+.hand-card:hover,
+.hand-card-preview:hover {
+  box-shadow: 0 6px 14px rgba(20, 36, 32, 0.22);
+}
+
+.selectable-card.selected {
+  border-color: var(--success);
+  box-shadow: 0 0 0 3px rgba(50, 112, 82, 0.22);
+}
+
+.selectable-card.selected::after {
+  background: var(--success);
+}
+
+.card-event,
+.event-card,
+.hand-card-preview.event,
+.hand-card.action,
+.selectable-card.action {
+  background: #f4f0e7;
+  border-color: var(--event-color);
+}
+
+.selectable-card.action::before,
+.action-badge {
+  background: var(--event-color);
+}
+
+.card-epidemic,
+.epidemic-card,
+.hand-card-preview.epidemic,
+.hand-card.epidemic,
+.selectable-card.epidemic {
+  background: #f6ece8;
+  border-color: var(--epidemic-color);
+}
+
+/* Modals, menus, overlays, and transient feedback */
+.modal-backdrop,
+.game-over-overlay,
+.card-draw-animation-container,
+.player-selection-panel {
+  background: rgba(10, 25, 22, 0.78);
+  backdrop-filter: blur(3px);
+}
+
+.modal-content,
+.game-over-modal {
+  color: var(--ink-strong);
+  background: var(--surface-raised);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-high);
+}
+
+.modal-content h3,
+.modal-content h4,
+.card-selection-modal h3,
+.game-over-subtitle {
+  color: var(--ink-strong);
+}
+
+.modal-instructions,
+.game-over-reason {
+  color: var(--ink);
+}
+
+.forecast-cards-container,
+.game-over-reason {
+  background: var(--surface-muted);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-md);
+}
+
+.confirm-btn,
+.share-btn,
+.restart-button {
+  color: #fff;
+  background: var(--success);
+}
+
+.confirm-btn:hover:not(.disabled),
+.share-btn:hover,
+.restart-button:hover {
+  background: #255d42;
+}
+
+.cancel-btn,
+.cancel-button,
+.menu-button {
+  color: #fff;
+  background: var(--ink-muted);
+}
+
+.cancel-btn:hover,
+.cancel-button:hover,
+.menu-button:hover {
+  background: var(--ink);
+}
+
+.modal-buttons button,
+.game-over-button,
+.share-btn,
+.cancel-btn,
+.cancel-button,
+.player-select-btn {
+  border-radius: var(--radius-sm);
+  box-shadow: none;
+}
+
+.player-select-btn {
+  color: #fff;
+  background: var(--chrome-raised);
+  border: 1px solid #597169;
+}
+
+.player-select-btn:hover {
+  background: #2b514a;
+}
+
+.game-over-title {
+  color: var(--danger);
+  text-shadow: none;
+}
+
+.game-over-overlay.victory .game-over-title {
+  color: var(--success);
+}
+
+.game-notification,
+.share-notification,
+.action-notification,
+.error-message {
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-high);
+}
+
+.game-notification.success,
+.share-notification.success,
+.action-notification { background: var(--success); }
+.game-notification.error,
+.share-notification.error { background: var(--danger); }
+.game-notification.warning,
+.share-notification.warning { background: var(--warning); }
+.game-notification.info { background: var(--info); }
+
+.error-message {
+  color: var(--danger);
+  background: var(--surface-raised);
+}
+
+/* Map details harmonize with the atlas surface. Disease and pawn colors remain semantic. */
+.map-inner .city-label {
+  color: var(--ink-strong);
+  background: rgba(255, 253, 246, 0.94);
+  border-color: rgba(23, 40, 36, 0.38);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-low);
+}
+
+.map-inner .city .dot,
+.cube {
+  border-color: #fffdf6;
+  box-shadow: 0 0 0 1px var(--ink-strong), 1px 2px 3px rgba(9, 22, 20, 0.55);
+}
+
+.map-inner .city.is-current-city .dot::after,
+.pawn.is-current-pawn::after {
+  border-color: var(--focus-ring);
+  box-shadow: 0 0 0 2px rgba(23, 50, 47, 0.82);
+}
+
+@media (max-width: 768px) {
+  .game-status {
+    background: var(--surface-muted);
+  }
+
+  .action-buttons {
+    padding: 8px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
