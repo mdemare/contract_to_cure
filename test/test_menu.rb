@@ -1,4 +1,5 @@
 require_relative 'test_helper'
+require 'open3'
 
 class TestMenu < Minitest::Test
   include Rack::Test::Methods
@@ -46,6 +47,18 @@ class TestMenu < Minitest::Test
 
     # Check that menu.js is included
     assert_match %r{<script type="module" src="/js/menu.js"></script>}, last_response.body
+  end
+
+  def test_restart_menu_workflow
+    test_file = File.join(__dir__, 'js', 'menu_test.mjs')
+    stdout, stderr, status = Open3.capture3(
+      'node',
+      '--experimental-default-type=module',
+      '--test',
+      test_file
+    )
+
+    assert status.success?, [stdout, stderr].reject(&:empty?).join("\n")
   end
 
   def test_old_auth_container_removed
