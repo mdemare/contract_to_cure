@@ -251,14 +251,12 @@ test('left wraparound connection intersects the map edge in normalized coordinat
 
   renderConnection(svg, 100, 300, { x: 1200, y: 400 });
 
-  assert.equal(svg.children.length, 1);
+  assert.equal(svg.children.length, 2);
   assert.deepEqual(Object.fromEntries(svg.children[0].attributes), {
     x1: '100',
     y1: '135',
     x2: '0',
     y2: '185',
-    stroke: '#aaa',
-    'stroke-width': '2',
     'stroke-dasharray': '5,3',
     'stroke-linecap': 'round'
   });
@@ -269,14 +267,12 @@ test('right wraparound connection intersects the map edge in normalized coordina
 
   renderConnection(svg, 3800, 400, { x: 100, y: 300 });
 
-  assert.equal(svg.children.length, 1);
+  assert.equal(svg.children.length, 2);
   assert.deepEqual(Object.fromEntries(svg.children[0].attributes), {
     x1: '3800',
     y1: '235',
     x2: '3900',
     y2: '185',
-    stroke: '#aaa',
-    'stroke-width': '2',
     'stroke-dasharray': '5,3',
     'stroke-linecap': 'round'
   });
