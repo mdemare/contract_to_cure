@@ -39,9 +39,7 @@
 
 .disease-cube-layer {
   position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
+  /* The renderer sets the surface bounds to include overflowing city orbits. */
   pointer-events: none;
   z-index: 8;
 }

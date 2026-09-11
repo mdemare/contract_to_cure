@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import { readFile } from 'node:fs/promises';
 import test from 'node:test';
 import { MAP_WIDTH } from '../../public/js/constants.js';
+import { renderDiseaseCubeCanvas } from '../../public/js/disease_cube_canvas.js';
 
 class FakeClassList {
   constructor() {
@@ -279,4 +280,150 @@ test('right wraparound connection intersects the map edge in normalized coordina
     'stroke-dasharray': '5,3',
     'stroke-linecap': 'round'
   });
+});
+
+test('cube bitmap covers Cape Town and boundary orbits through short-height pans, resize, and rerender', async t => {
+  const cities = JSON.parse(await readFile(new URL('../../public/cities.json', import.meta.url)));
+  const map = Object.fromEntries(['Cape Town', 'Santiago', 'Sydney'].map(name => [
+    name, { ...cities[name], cubes: 3 }
+  ]));
+  Object.assign(map, {
+    Northwest: { x: 0, y: 165, color: 'blue', cubes: 3 },
+    Southeast: { x: MAP_WIDTH, y: 465, color: 'red', cubes: 3 }
+  });
+  const originalGlobals = Object.fromEntries(
+    ['window', 'matchMedia', 'ResizeObserver', 'requestAnimationFrame', 'cancelAnimationFrame']
+      .map(name => [name, Object.getOwnPropertyDescriptor(globalThis, name)])
+  );
+  t.after(() => {
+    for (const [name, descriptor] of Object.entries(originalGlobals)) {
+      if (descriptor) Object.defineProperty(globalThis, name, descriptor);
+      else delete globalThis[name];
+    }
+  });
+
+  let resize;
+  let disconnected = 0;
+  let motionChanged;
+  const frames = new Map();
+  let frameId = 0;
+  const motionQuery = {
+    matches: true,
+    addEventListener: (_event, callback) => { motionChanged = callback; },
+    removeEventListener: () => { motionChanged = null; }
+  };
+  globalThis.window = { devicePixelRatio: 3 };
+  globalThis.matchMedia = () => motionQuery;
+  globalThis.ResizeObserver = class {
+    constructor(callback) { resize = callback; }
+    observe() {}
+    disconnect() { disconnected++; }
+  };
+  globalThis.requestAnimationFrame = callback => {
+    frames.set(++frameId, callback);
+    return frameId;
+  };
+  globalThis.cancelAnimationFrame = id => frames.delete(id);
+
+  t.mock.method(document, 'createElement', tagName => {
+    const element = new FakeElement(tagName);
+    if (tagName !== 'canvas') return element;
+    const context = {
+      centers: [],
+      corners: [],
+      save() {},
+      restore() {},
+      setTransform(...transform) { this.transform = transform; },
+      clearRect() { this.centers = []; this.corners = []; },
+      translate(x, y) { this.center = { x, y }; this.centers.push(this.center); },
+      rotate(angle) { this.angle = angle; },
+      fillRect(x, y, width, height) {
+        for (const dx of [x, x + width]) {
+          for (const dy of [y, y + height]) {
+            this.corners.push({
+              x: this.center.x + dx * Math.cos(this.angle) - dy * Math.sin(this.angle),
+              y: this.center.y + dx * Math.sin(this.angle) + dy * Math.cos(this.angle)
+            });
+          }
+        }
+      }
+    };
+    element.getContext = () => context;
+    return element;
+  });
+
+  const mapInner = new FakeElement('div');
+  mapInner.clientWidth = MAP_WIDTH * 3;
+  mapInner.clientHeight = 300;
+  let canvas = renderDiseaseCubeCanvas(mapInner, map);
+
+  function verifySurface() {
+    const context = canvas.getContext('2d');
+    const width = parseFloat(canvas.style.width);
+    const height = parseFloat(canvas.style.height);
+    const left = parseFloat(canvas.style.left);
+    const top = parseFloat(canvas.style.top);
+    const ratio = Math.min(window.devicePixelRatio, 2);
+    for (const { x, y } of context.corners) {
+      assert.ok(x >= 6 && x <= canvas.width / ratio - 6, 'rotated cube and shadow fit horizontally');
+      assert.ok(y >= 6 && y <= canvas.height / ratio - 6, 'rotated cube and shadow fit vertically');
+    }
+    assert.equal(canvas.width, Math.round(width * ratio));
+    assert.equal(canvas.height, Math.round(height * ratio));
+    assert.deepEqual(context.transform, [ratio, 0, 0, ratio, 0, 0]);
+    assert.equal(context.centers.length, Object.keys(map).length * 9);
+    assert.equal(canvas.getAttribute('aria-hidden'), 'true');
+    Object.values(map).forEach((city, cityIndex) => {
+      for (let panel = 0; panel < 3; panel++) {
+        const centers = context.centers.slice(cityIndex * 9 + panel * 3, cityIndex * 9 + panel * 3 + 3);
+        for (const [index, center] of centers.entries()) {
+          const x = center.x + left;
+          const y = center.y + top;
+          assert.ok(Math.abs(Math.hypot(x - city.x - panel * MAP_WIDTH, y - city.y + 165) - 18) < 1e-8);
+          const firstPanel = context.centers[cityIndex * 9 + index];
+          assert.ok(Math.abs(center.x - firstPanel.x - panel * MAP_WIDTH) < 1e-8);
+          assert.equal(center.y, firstPanel.y);
+          // Pan each city into both a short desktop and a mobile viewport.
+          for (const viewportWidth of [1000, 375]) {
+            const screenX = x + viewportWidth / 2 - city.x - panel * MAP_WIDTH;
+            const screenY = y + mapInner.clientHeight / 2 - (city.y - 165);
+            assert.ok(screenX > 0 && screenX < viewportWidth);
+            assert.ok(screenY > 0 && screenY < mapInner.clientHeight);
+          }
+        }
+      }
+    });
+    // The reported pan puts Cape Town at Y=165 with every cube still visible.
+    for (const center of context.centers.slice(0, 3)) {
+      assert.ok(center.y + top - 300 > 140 && center.y + top - 300 < 190);
+    }
+  }
+
+  verifySurface();
+  for (const height of [180, 700, 300]) {
+    mapInner.clientHeight = height;
+    window.devicePixelRatio = height === 700 ? 1.25 : 2;
+    resize();
+    verifySurface();
+  }
+  canvas = renderDiseaseCubeCanvas(mapInner, map);
+  assert.equal(disconnected, 1);
+  verifySurface();
+
+  motionQuery.matches = false;
+  motionChanged();
+  for (const elapsed of [0, 1000, 9000]) {
+    const [id, callback] = frames.entries().next().value;
+    frames.delete(id);
+    callback(elapsed);
+    verifySurface();
+  }
+  canvas = renderDiseaseCubeCanvas(mapInner, map);
+  assert.equal(frames.size, 1, 'rerender cancels the previous animation');
+  const [id, callback] = frames.entries().next().value;
+  frames.delete(id);
+  callback(9000);
+  verifySurface();
+  renderDiseaseCubeCanvas(mapInner, {});
+  assert.equal(frames.size, 0, 'empty maps stop animating');
 });

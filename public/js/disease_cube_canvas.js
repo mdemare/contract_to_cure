@@ -3,6 +3,8 @@ import { MAP_WIDTH } from './constants.js';
 const MAP_Y_OFFSET = 165;
 const ORBIT_RADIUS = 18;
 const CUBE_SIZE = 9;
+// Include the rotated outline and room for the blurred, offset shadow.
+const ORBIT_EXTENT = Math.ceil(ORBIT_RADIUS + (CUBE_SIZE + 2) / Math.SQRT2 + 6);
 const ORBIT_SPEED = 0.00035;
 const MAX_PIXEL_RATIO = 2;
 const FALLBACK_COLORS = {
@@ -35,13 +37,31 @@ function diseaseColor(color) {
   return value || FALLBACK_COLORS[color] || '#fff';
 }
 
-function resizeCanvas(canvas, mapInner) {
-  const width = mapInner.clientWidth || MAP_WIDTH * 3;
-  const height = mapInner.clientHeight || mapInner.parentElement?.clientHeight || 1;
+function orbitBounds(pandemicMap) {
+  const bounds = { left: 0, top: 0, right: MAP_WIDTH * 3, bottom: 1 };
+
+  for (const city of Object.values(pandemicMap)) {
+    bounds.left = Math.min(bounds.left, Math.floor(city.x - ORBIT_EXTENT));
+    bounds.top = Math.min(bounds.top, Math.floor(city.y - MAP_Y_OFFSET - ORBIT_EXTENT));
+    bounds.right = Math.max(bounds.right, Math.ceil(city.x + MAP_WIDTH * 2 + ORBIT_EXTENT));
+    bounds.bottom = Math.max(bounds.bottom, Math.ceil(city.y - MAP_Y_OFFSET + ORBIT_EXTENT));
+  }
+
+  return bounds;
+}
+
+function resizeCanvas(canvas, mapInner, bounds) {
+  const width = Math.max(bounds.right, mapInner.clientWidth || MAP_WIDTH * 3) - bounds.left;
+  const height = Math.max(bounds.bottom, mapInner.clientHeight || mapInner.parentElement?.clientHeight || 1) - bounds.top;
   const devicePixelRatio = typeof window === 'undefined' ? 1 : window.devicePixelRatio || 1;
   const pixelRatio = Math.min(devicePixelRatio, MAX_PIXEL_RATIO);
   const pixelWidth = Math.round(width * pixelRatio);
   const pixelHeight = Math.round(height * pixelRatio);
+
+  canvas.style.left = `${bounds.left}px`;
+  canvas.style.top = `${bounds.top}px`;
+  canvas.style.width = `${width}px`;
+  canvas.style.height = `${height}px`;
 
   if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
     canvas.width = pixelWidth;
@@ -69,8 +89,8 @@ function drawCube(context, x, y, angle, color) {
   context.restore();
 }
 
-function drawLayer(context, canvas, mapInner, cubeCities, elapsed) {
-  const { width, height, pixelRatio } = resizeCanvas(canvas, mapInner);
+function drawLayer(context, canvas, mapInner, bounds, cubeCities, elapsed) {
+  const { width, height, pixelRatio } = resizeCanvas(canvas, mapInner, bounds);
   context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
   context.clearRect(0, 0, width, height);
 
@@ -85,7 +105,7 @@ function drawLayer(context, canvas, mapInner, cubeCities, elapsed) {
         const angle = cityPhase + elapsed * ORBIT_SPEED + index * Math.PI * 2 / cubeCount;
         const x = cityX + Math.cos(angle) * ORBIT_RADIUS;
         const y = cityY + Math.sin(angle) * ORBIT_RADIUS;
-        drawCube(context, x, y, angle, color);
+        drawCube(context, x - bounds.left, y - bounds.top, angle, color);
       }
     }
   }
@@ -104,6 +124,7 @@ export function renderDiseaseCubeCanvas(mapInner, pandemicMap) {
   const context = canvas.getContext?.('2d');
   if (!context) return canvas;
 
+  const bounds = orbitBounds(pandemicMap);
   const cubeCities = Object.entries(pandemicMap).flatMap(([cityName, cityData]) => {
     const cubeCount = Number(cityData.cubes) || 0;
     if (cubeCount <= 0) return [];
@@ -122,10 +143,10 @@ export function renderDiseaseCubeCanvas(mapInner, pandemicMap) {
   let resizeObserver = null;
   let stopped = false;
 
-  const drawStaticLayer = () => drawLayer(context, canvas, mapInner, cubeCities, 0);
+  const drawStaticLayer = () => drawLayer(context, canvas, mapInner, bounds, cubeCities, 0);
   const animate = elapsed => {
     if (stopped || ('isConnected' in canvas && !canvas.isConnected)) return;
-    drawLayer(context, canvas, mapInner, cubeCities, elapsed);
+    drawLayer(context, canvas, mapInner, bounds, cubeCities, elapsed);
     animationFrame = requestAnimationFrame(animate);
   };
   const updateMotion = () => {
