@@ -3,11 +3,15 @@ import { getCurrentGameState } from './game_state.js';
 import { executeShareKnowledge } from './ordinary_player_actions.js';
 import { getCityColor } from './player_action_utils.js';
 import { createSimpleElement } from './dom.js';
+import { decorateGameCard } from './card_visuals.js';
 
 // State to track which players can share knowledge
 let applicableCards = [];
 let eligiblePlayers = [];
 let activeModalBackdrop = null;
+let shareModalId = 0;
+let shareModalTrigger = null;
+let shareModalKeydown = null;
 
 // Initialize the share knowledge functionality
 export function initShareKnowledge() {
@@ -164,10 +168,16 @@ function closeShareModal() {
     document.body.removeChild(activeModalBackdrop);
     activeModalBackdrop = null;
   }
+  if (shareModalKeydown) {
+    document.removeEventListener('keydown', shareModalKeydown);
+    shareModalKeydown = null;
+  }
+  if (shareModalTrigger?.focus) shareModalTrigger.focus();
 }
 
 // Create and show the share knowledge modal
 export function showShareKnowledgeModal(cards, players) {
+  shareModalTrigger = document.activeElement;
   // Create modal backdrop
   const modalBackdrop = createSimpleElement('div', 'modal-backdrop');
 
@@ -176,9 +186,14 @@ export function showShareKnowledgeModal(cards, players) {
 
   // Create modal content
   const modalContent = createSimpleElement('div', 'modal-content');
+  const modalId = ++shareModalId;
+  modalContent.setAttribute('role', 'dialog');
+  modalContent.setAttribute('aria-modal', 'true');
+  modalContent.setAttribute('aria-labelledby', `share-modal-title-${modalId}`);
 
   // Add title
   const modalTitle = createSimpleElement('h3', null, 'Share Knowledge');
+  modalTitle.id = `share-modal-title-${modalId}`;
   modalContent.appendChild(modalTitle);
 
   // Add cards list
@@ -229,6 +244,12 @@ export function showShareKnowledgeModal(cards, players) {
   // Add modal to page
   modalBackdrop.appendChild(modalContent);
   document.body.appendChild(modalBackdrop);
+  modalContent.querySelector('button')?.focus();
+
+  shareModalKeydown = event => {
+    if (event.key === 'Escape') closeShareModal();
+  };
+  document.addEventListener('keydown', shareModalKeydown);
 }
 
 async function shareKnowledge(cityName, otherPlayerIndex, action) {
@@ -277,9 +298,11 @@ function createCardElement(card, players) {
     cardElement.classList.add(cityColor);
   }
 
-  // Card name
-  const cardName = createSimpleElement('div', 'card-name',
-    card.fromResearcher ? `${card.cardName} (Researcher)` : card.cardName);
+  decorateGameCard(
+    cardElement,
+    { type: 'city', name: card.cardName, color: cityColor },
+    { name: card.fromResearcher ? `${card.cardName} (Researcher)` : card.cardName }
+  );
 
   // Card action
   const actionBadge = createSimpleElement('span', 'action-badge', card.action.toUpperCase());
@@ -306,8 +329,9 @@ function createCardElement(card, players) {
       playerList.style.display = 'none';
 
       players.forEach(player => {
-        const playerOption = createSimpleElement('div', 'player-option',
+        const playerOption = createSimpleElement('button', 'player-option',
           player.role || `Player ${player.index + 1}`);
+        playerOption.type = 'button';
         playerOption.addEventListener('click', async () => {
           await shareKnowledge(card.cardName, player.index, 'give');
           playerList.style.display = 'none';
@@ -338,7 +362,6 @@ function createCardElement(card, players) {
   }
 
   // Assemble card
-  cardElement.appendChild(cardName);
   cardElement.appendChild(actionBadge);
   cardElement.appendChild(shareButton);
 

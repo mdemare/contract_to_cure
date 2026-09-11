@@ -56,8 +56,9 @@ export function initActionCardsButton() {
   }
 
   // Create the button element as a card
-  const actionCardsBtn = createSimpleElement('div', ['action-btn', 'action-cards', 'special-action']);
+  const actionCardsBtn = createSimpleElement('button', ['action-btn', 'action-cards', 'special-action']);
   actionCardsBtn.id = 'action-cards-btn';
+  actionCardsBtn.type = 'button';
 
   // Create a card header
   const cardHeader = createSimpleElement('div', 'card-header', 'EVENT');

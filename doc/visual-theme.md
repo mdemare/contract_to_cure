@@ -21,6 +21,13 @@ layer without changing component layout or game behavior.
   rendering and keeps every tool visually related.
 - All interactive controls share the brass focus ring. Motion collapses when
   the operating system requests reduced motion.
+- Player and infection cards share a paper-card structure with visible type,
+  identity, and family labels. Disease accents reinforce those labels rather
+  than replacing them; selected and unavailable cards use shape, pattern, and
+  text-compatible states in addition to color.
+- The active hand stays inside a compact, horizontally scrollable tray. Cards
+  expand within the tray on hover, keyboard focus, or tap, keeping both the map
+  and the action controls unobstructed.
 
 ## Reference views
 

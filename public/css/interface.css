@@ -452,5 +452,9 @@
   grid-area: hand;
   min-width: 0;
   width: 100%;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr);
+  align-items: stretch;
+  gap: 8px;
   padding: 0;
 }
