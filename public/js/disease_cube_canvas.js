@@ -6,6 +6,8 @@ const CUBE_SIZE = 9;
 // Include the rotated outline and room for the blurred, offset shadow.
 const ORBIT_EXTENT = Math.ceil(ORBIT_RADIUS + (CUBE_SIZE + 2) / Math.SQRT2 + 6);
 const ORBIT_SPEED = 0.00035;
+// One additional turn around each cube's center every 40 seconds.
+const SPIN_SPEED = Math.PI * 2 / 40000;
 const MAX_PIXEL_RATIO = 2;
 const FALLBACK_COLORS = {
   blue: '#3b90ff',
@@ -106,7 +108,7 @@ function drawLayer(context, canvas, mapInner, bounds, cubeCities, elapsed) {
         const angle = cityPhase + elapsed * orbitSpeed + index * Math.PI * 2 / cubeCount;
         const x = cityX + Math.cos(angle) * ORBIT_RADIUS;
         const y = cityY + Math.sin(angle) * ORBIT_RADIUS;
-        drawCube(context, x - bounds.left, y - bounds.top, angle, color);
+        drawCube(context, x - bounds.left, y - bounds.top, angle + elapsed * SPIN_SPEED, color);
       }
     }
   }
