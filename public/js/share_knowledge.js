@@ -1,3 +1,5 @@
+import { reportNotification } from './error_reporting.js';
+
 // share_knowledge.js
 import { getCurrentGameState } from './game_state.js';
 import { executeShareKnowledge } from './ordinary_player_actions.js';
@@ -363,6 +365,8 @@ function showErrorMessage(message) {
 }
 
 function showNotification(message, type = 'info') {
+  reportNotification(message, type);
+
   // Create notification element
   const notification = createSimpleElement('div', ['share-notification', type], message);
 

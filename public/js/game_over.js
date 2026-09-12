@@ -1,3 +1,5 @@
+import { reportNotification } from './error_reporting.js';
+
 // game_over.js
 import { createSimpleElement } from './dom.js';
 
@@ -261,6 +263,8 @@ function createVictoryAnimation() {
 
 // Display a notification
 function showNotification(message, type = 'info') {
+  reportNotification(message, type);
+
   // Create notification element
   const notification = createSimpleElement('div', ['game-notification', type], message);
 
