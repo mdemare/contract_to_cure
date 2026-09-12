@@ -103,6 +103,8 @@ class GameState
           infection_rate_position: @infection_rate_marker,
           current_player_idx: @current_player_idx,
           quiet_night: @quiet_night,
+          forecast_active: @forecast_active,
+          forecast_cards: @forecast_cards,
           operations_expert_move_used: @operations_expert_move_used
         },
         disease_cubes: COLORS.each_with_object({}) do |color, hash|
