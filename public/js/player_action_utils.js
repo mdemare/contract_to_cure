@@ -1,3 +1,5 @@
+import { reportNotification } from './error_reporting.js';
+
 // player_action_utils.js
 
 import { loadGameState, CITIES } from './game_state.js';
@@ -134,6 +136,8 @@ export function getCityColor(cityName) {
 
 // Display a notification to the user
 function showNotification(message, type = 'info') {
+  reportNotification(message, type);
+
   // Create notification element
   const notification = document.createElement('div');
   notification.classList.add('game-notification', type);
