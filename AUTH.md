@@ -97,3 +97,42 @@ Some implementations may require specific roles:
 - Set appropriate token expiration
 - Cookie must be HTTP-only to prevent XSS
 - Consider implementing refresh tokens for long sessions
+
+## Pluggable authentication providers
+
+The default provider preserves the existing JWT cookie and environment variables.
+To enable several services simultaneously, configure an ordered hash in
+`config/initializers/authentication.rb`:
+
+```ruby
+require Rails.root.join('app/services/authentication').to_s
+require Rails.root.join('app/services/authentication/jwt_provider').to_s
+
+Rails.application.config.x.authentication.providers = {
+  'primary' => Authentication::JwtProvider.new,
+  'partner' => Authentication::JwtProvider.new(
+    cookie_name: 'partner_auth_token',
+    secret: ENV.fetch('PARTNER_JWT_SECRET'),
+    service_url: ENV.fetch('PARTNER_AUTH_SERVICE_URL'),
+    return_url: 'https://game.example.com',
+    cookie_domain: '.example.com'
+  )
+}
+```
+
+Use `/login?provider=partner` to choose a service; `/login` uses the first
+configured provider. Unknown provider names return HTTP 400. Every enabled
+provider is checked on authenticated requests, in insertion order. The first
+successful identity wins, even if an earlier provider rejected its credential.
+If none succeeds, a credential error prevents the session/development identity
+fallback, preserving the existing behavior. Logout clears every provider's
+credentials and the local session.
+
+Custom providers implement `authenticate(request)` (return `{uid:, email:, name:}`
+or nil when credentials are absent; raise `Authentication::InvalidCredentials`
+when credentials are rejected), `login_url`, and `logout(cookies)` (clear credentials through the supplied cookie jar). Register
+instances under string keys in the same hash. Provider classes belong in
+`app/services/authentication/`; when referencing them from an initializer, require
+their files explicitly before configuration because Rails does not autoload app
+classes during initialization. Use distinct cookies for independent services.
+Provider instances are shared across requests and must not store request state.

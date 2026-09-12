@@ -21,7 +21,7 @@ class ApplicationController < ActionController::Base
   def current_user
     return @current_user if defined?(@current_user)
 
-    @current_user = user_from_auth_token
+    @current_user, @authentication_error_message = Authentication.authenticate(request)
     @current_user ||= fallback_user unless @authentication_error_message
     @current_user
   end
@@ -35,36 +35,6 @@ class ApplicationController < ActionController::Base
     return if logged_in?
 
     render json: { status: 'error', message: authentication_error_message }, status: :unauthorized
-  end
-
-  def jwt_secret
-    ENV.fetch('JWT_SECRET') do
-      Rails.application.credentials.jwt_secret
-    end
-  end
-
-  def user_from_auth_token
-    token = request.cookies['auth_token']
-    return nil if token.blank?
-
-    decoded_token = JWT.decode(token, jwt_secret, true, algorithm: 'HS256')
-    user_data = decoded_token[0]['user']
-    if user_data.blank? || user_data['id'].blank?
-      @authentication_error_message = 'Invalid authentication token'
-      return nil
-    end
-
-    {
-      uid: user_data['id'].to_s,
-      email: user_data['email'],
-      name: user_data['name']
-    }
-  rescue JWT::ExpiredSignature
-    @authentication_error_message = 'Authentication token has expired'
-    nil
-  rescue JWT::DecodeError, NoMethodError
-    @authentication_error_message = 'Invalid authentication token'
-    nil
   end
 
   def fallback_user
