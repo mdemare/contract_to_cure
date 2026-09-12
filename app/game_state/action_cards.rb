@@ -68,9 +68,8 @@ module ActionCards
       return { status: 'error', message: 'Forecast is not active' }
     end
 
-    # Validate that the card order contains all the forecasted cards
-    unless card_order.size == @forecast_cards.size &&
-           card_order.all? { |card_name| @forecast_cards.include?(card_name) }
+    # Require an exact permutation, including the count of each forecasted card
+    unless card_order.is_a?(Array) && card_order.tally == @forecast_cards.tally
       return { status: 'error', message: 'Invalid card order provided' }
     end
 
