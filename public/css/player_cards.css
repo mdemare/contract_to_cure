@@ -179,13 +179,13 @@
   justify-content: space-between;
   font-size: 10px;
   line-height: 1.1;
-  white-space: nowrap;
+  min-width: 0;
+  white-space: normal;
   overflow-wrap: anywhere;
 }
 
 .hand-card-preview:hover {
-  transform: translateY(-3px);
-  z-index: 5;
+  transform: none;
 }
 
 .hand-card-preview.blue {

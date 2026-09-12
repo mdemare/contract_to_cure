@@ -27,7 +27,7 @@ class TestPlayerRoster < Minitest::Test
 
     refute_match(/max-height|overflow-y|display:\s*none/, hand_details)
     assert_match(/grid-template-columns:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/, hand_preview)
-    assert_match(/white-space:\s*nowrap/, card_preview)
+    assert_match(/white-space:\s*normal/, card_preview)
     refute_match(/overflow:\s*hidden|text-overflow/, card_preview)
     refute_match(/expandedPlayers/, javascript)
     assert_match(/\.player-panel-scroll-hint/, css)
