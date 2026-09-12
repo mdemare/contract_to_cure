@@ -659,23 +659,58 @@ class TestApiEndpoints < TestHelper
     assert_equal deck_size_after_first_draw, after_replay_attempt.player_deck.size
   end
 
-  def test_forecast_blocking_other_actions
-    create_game_with_custom_state do |state|
-      # Set forecast as active
-      state.instance_variable_set(:@forecast_active, true)
-    end
+  def test_forecast_persists_across_requests
+    state = GameState.new(4, :heroic)
+    state.current_player.hand = [Card.new(:action, 'Forecast')]
+    state.save_game_state
+    original_deck = state.infection_deck.map(&:name)
 
-    # Debug: Check that forecast is actually active in Redis
-    redis_data = @redis.get(@test_redis_key)
-    loaded_state = Marshal.load(redis_data)
-    assert loaded_state.instance_variable_get(:@forecast_active), "Forecast should be active in Redis"
+    post '/action_card', { card: 'Forecast' }.to_json,
+         { 'CONTENT_TYPE' => 'application/json' }
 
+    assert_successful_response(last_response)
+    assert_equal original_deck.first(6), parse_json_response(last_response)['cards'].map { |card| card['name'] }
+    assert @redis.get(@test_redis_key).start_with?('---'), 'State must use production YAML persistence'
+    loaded_state = GameState.load_from_redis(@test_redis_key)
+    assert loaded_state.forecast_active
+    assert_equal original_deck.first(6), loaded_state.instance_variable_get(:@forecast_cards)
+    refute_includes loaded_state.current_player.hand.map(&:name), 'Forecast'
+    assert_includes loaded_state.player_discard.map(&:name), 'Forecast'
+
+    saved_state = @redis.get(@test_redis_key)
     post '/move', {
       player_index: 0,
       destination: 'London'
     }.to_json, { 'CONTENT_TYPE' => 'application/json' }
 
     assert_error_response(last_response, 422, 'Cannot perform action while Forecast is active')
+    assert_equal saved_state, @redis.get(@test_redis_key)
+
+    reordered_cards = original_deck.first(6).reverse
+    post '/action_card', { card: 'Forecast', card_order: reordered_cards }.to_json,
+         { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_successful_response(last_response)
+    completed_state = GameState.load_from_redis(@test_redis_key)
+    refute completed_state.forecast_active
+    assert_nil completed_state.instance_variable_get(:@forecast_cards)
+    assert_equal reordered_cards + original_deck.drop(6), completed_state.infection_deck.map(&:name)
+
+    post '/pass'
+    assert_successful_response(last_response)
+  end
+
+  def test_older_yaml_saves_default_to_inactive_forecast
+    GameState.new(4, :heroic).save_game_state
+    saved_state = YAML.load(@redis.get(@test_redis_key), permitted_classes: [Symbol])
+    saved_state[:game_status].delete(:forecast_active)
+    saved_state[:game_status].delete(:forecast_cards)
+    @redis.set(@test_redis_key, YAML.dump(saved_state))
+
+    loaded_state = GameState.load_from_redis(@test_redis_key)
+    assert loaded_state
+    refute loaded_state.forecast_active
+    assert_nil loaded_state.instance_variable_get(:@forecast_cards)
   end
 
   def test_operations_expert_special_move_valid
