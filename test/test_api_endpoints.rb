@@ -906,5 +906,46 @@ class TestApiEndpoints < TestHelper
     player_hand = data['game_state']['players'][0]['hand']
     card_names = player_hand.map { |card| card['name'] }
     assert_includes card_names, 'Paris'
+
+    # A spent special move must not block direct, charter, or flight-choice requests.
+    [
+      [%w[Tokyo London], nil, 'direct flight', 'Tokyo'],
+      [%w[Wuhan London], nil, 'charter flight', 'Wuhan'],
+      [%w[Wuhan Tokyo London], 'Tokyo', 'direct flight', 'Tokyo'],
+      [%w[Wuhan Tokyo London], 'Wuhan', 'charter flight', 'Wuhan'],
+      [%w[Wuhan Tokyo London], nil, 'flight_choice', nil],
+      [%w[London], 'London', 'error', nil]
+    ].each do |cards, selected_card, expected, discarded|
+      state = create_game_with_custom_state do |game|
+        expert = game.players[game.current_player_idx]
+        expert.instance_variable_set(:@role, :operations_expert)
+        expert.location = 'Wuhan'
+        expert.hand = cards.map { |name| Card.new(:city, name, :blue) }
+        game.instance_variable_set(:@operations_expert_move_used, true)
+      end
+      post '/move', {
+        player_index: 0, destination: 'Tokyo', card_name: selected_card
+      }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+      result = parse_json_response(last_response)
+
+      if discarded
+        assert_successful_response(last_response)
+        assert_includes result['message'], expected
+        saved = GameState.load_from_redis(@test_redis_key)
+        assert_equal 'Tokyo', saved.current_player.location
+        assert_equal cards - [discarded], saved.current_player.hand.map(&:name)
+        assert_equal state.actions_remaining - 1, saved.actions_remaining
+        assert saved.operations_expert_move_used
+      else
+        assert_equal expected == 'error' ? 422 : 200, last_response.status
+        assert_equal expected == 'error' ? 'error' : 'card_required', result['status']
+        assert_equal 'flight_choice', result['movement_type'] unless expected == 'error'
+        saved = GameState.load_from_redis(@test_redis_key)
+        assert_equal 'Wuhan', saved.current_player.location
+        assert_equal cards, saved.current_player.hand.map(&:name)
+        assert_equal state.actions_remaining, saved.actions_remaining
+        assert saved.operations_expert_move_used
+      end
+    end
   end
 end
