@@ -9,6 +9,7 @@ const ORBIT_SPEED = 0.00035;
 // One additional turn around each cube's center every 40 seconds.
 const SPIN_SPEED = Math.PI * 2 / 40000;
 const MAX_PIXEL_RATIO = 2;
+const FRAME_INTERVAL = 1000 / 20;
 const FALLBACK_COLORS = {
   blue: '#3b90ff',
   yellow: '#ffd700',
@@ -91,13 +92,21 @@ function drawCube(context, x, y, angle, color) {
   context.restore();
 }
 
-function drawLayer(context, canvas, mapInner, bounds, cubeCities, elapsed) {
-  const { width, height, pixelRatio } = resizeCanvas(canvas, mapInner, bounds);
+function drawLayer(context, bounds, cubeCities, pixelRatio, elapsed) {
   context.setTransform(pixelRatio, 0, 0, pixelRatio, 0, 0);
-  context.clearRect(0, 0, width, height);
+  // Every moving piece stays inside its city's fixed orbital footprint. Clear
+  // all footprints before drawing, including those that overlap other cities.
+  for (const { cityData } of cubeCities) {
+    for (let panel = 0; panel < 3; panel++) {
+      context.clearRect(
+        cityData.x + panel * MAP_WIDTH - bounds.left - ORBIT_EXTENT,
+        cityData.y - MAP_Y_OFFSET - bounds.top - ORBIT_EXTENT,
+        ORBIT_EXTENT * 2, ORBIT_EXTENT * 2
+      );
+    }
+  }
 
-  for (const { cityName, cityData, cubeCount, color } of cubeCities) {
-    const cityPhase = stablePhase(cityName);
+  for (const { cityPhase, cityData, cubeCount, color } of cubeCities) {
     const orbitSpeed = ORBIT_SPEED * (1 + (cubeCount - 1) * 0.25);
 
     for (let panel = 0; panel < 3; panel++) {
@@ -133,7 +142,7 @@ export function renderDiseaseCubeCanvas(mapInner, pandemicMap) {
     if (cubeCount <= 0) return [];
 
     return [{
-      cityName,
+      cityPhase: stablePhase(cityName),
       cityData,
       cubeCount,
       color: diseaseColor(cityData.color)
@@ -146,16 +155,30 @@ export function renderDiseaseCubeCanvas(mapInner, pandemicMap) {
   let resizeObserver = null;
   let stopped = false;
 
-  const drawStaticLayer = () => drawLayer(context, canvas, mapInner, bounds, cubeCities, 0);
+  let { pixelRatio } = resizeCanvas(canvas, mapInner, bounds);
+  let lastDraw = null;
+  let lastElapsed = 0;
+  const draw = elapsed => {
+    lastElapsed = elapsed;
+    drawLayer(context, bounds, cubeCities, pixelRatio, elapsed);
+  };
+  const drawStaticLayer = () => draw(0);
   const animate = elapsed => {
     if (stopped || ('isConnected' in canvas && !canvas.isConnected)) return;
-    drawLayer(context, canvas, mapInner, bounds, cubeCities, elapsed);
+    if (lastDraw === null || elapsed - lastDraw >= FRAME_INTERVAL - 0.01) {
+      draw(elapsed);
+      // Keep the cadence stable even on displays whose refresh rate is not a
+      // multiple of 20 Hz. Positions always use the shared absolute timestamp.
+      lastDraw = lastDraw === null ? elapsed : lastDraw + Math.floor((elapsed - lastDraw + 0.01) / FRAME_INTERVAL) * FRAME_INTERVAL;
+    }
     animationFrame = requestAnimationFrame(animate);
   };
   const updateMotion = () => {
     if (animationFrame !== null) cancelAnimationFrame(animationFrame);
     animationFrame = null;
+    lastDraw = null;
 
+    if (document.hidden) return;
     if (cubeCities.length === 0 || motionQuery?.matches || typeof requestAnimationFrame !== 'function') {
       drawStaticLayer();
     } else {
@@ -163,7 +186,8 @@ export function renderDiseaseCubeCanvas(mapInner, pandemicMap) {
     }
   };
   const redraw = () => {
-    if (motionQuery?.matches || animationFrame === null) drawStaticLayer();
+    ({ pixelRatio } = resizeCanvas(canvas, mapInner, bounds));
+    draw(motionQuery?.matches ? 0 : lastElapsed);
   };
 
   if (typeof ResizeObserver === 'function') {
@@ -173,6 +197,7 @@ export function renderDiseaseCubeCanvas(mapInner, pandemicMap) {
     window.addEventListener('resize', redraw);
   }
   motionQuery?.addEventListener?.('change', updateMotion);
+  document.addEventListener?.('visibilitychange', updateMotion);
 
   stopActiveLayer = () => {
     stopped = true;
@@ -182,6 +207,7 @@ export function renderDiseaseCubeCanvas(mapInner, pandemicMap) {
       window.removeEventListener('resize', redraw);
     }
     motionQuery?.removeEventListener?.('change', updateMotion);
+    document.removeEventListener?.('visibilitychange', updateMotion);
     stopActiveLayer = null;
   };
 

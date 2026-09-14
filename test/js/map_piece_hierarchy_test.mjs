@@ -302,6 +302,14 @@ test('cube bitmap covers Cape Town and boundary orbits through short-height pans
     }
   });
 
+  let visibilityChanged;
+  document.addEventListener = (_event, callback) => { visibilityChanged = callback; };
+  document.removeEventListener = () => { visibilityChanged = null; };
+  t.after(() => {
+    delete document.addEventListener;
+    delete document.removeEventListener;
+    delete document.hidden;
+  });
   let resize;
   let disconnected = 0;
   let motionChanged;
@@ -329,12 +337,14 @@ test('cube bitmap covers Cape Town and boundary orbits through short-height pans
     const element = new FakeElement(tagName);
     if (tagName !== 'canvas') return element;
     const context = {
+      draws: 0,
+      clearedArea: 0,
       centers: [],
       corners: [],
       save() {},
       restore() {},
-      setTransform(...transform) { this.transform = transform; },
-      clearRect() { this.centers = []; this.corners = []; },
+      setTransform(...transform) { this.transform = transform; this.draws++; this.clearedArea = 0; },
+      clearRect(_x, _y, width, height) { this.clearedArea += width * height; this.centers = []; this.corners = []; },
       translate(x, y) { this.center = { x, y }; this.centers.push(this.center); },
       rotate(angle) { this.angle = angle; },
       fillRect(x, y, width, height) {
@@ -424,6 +434,46 @@ test('cube bitmap covers Cape Town and boundary orbits through short-height pans
   frames.delete(id);
   callback(9000);
   verifySurface();
+  const context = canvas.getContext('2d');
+  const initialDraws = context.draws;
+  const initialCenters = structuredClone(context.centers);
+  function tick(elapsed) {
+    const [id, callback] = frames.entries().next().value;
+    frames.delete(id);
+    callback(elapsed);
+  }
+  for (let frame = 1; frame <= 120; frame++) tick(9000 + frame * 1000 / 120);
+  assert.equal(context.draws - initialDraws, 20, '120 Hz displays still paint only 20 times per second');
+  for (const [start, refreshRate] of [[10000, 60], [11000, 144]]) {
+    const before = context.draws;
+    for (let frame = 1; frame <= refreshRate; frame++) tick(start + frame * 1000 / refreshRate);
+    assert.equal(context.draws - before, 20, `${refreshRate} Hz displays paint 20 times per second`);
+  }
+  assert.notDeepEqual(context.centers, initialCenters, 'cubes keep orbiting');
+  assert.ok(context.clearedArea < parseFloat(canvas.style.width) * parseFloat(canvas.style.height) / 10,
+    'only small orbital footprints are cleared, not the full three-panel bitmap');
+
+  document.hidden = true;
+  visibilityChanged();
+  assert.equal(frames.size, 0, 'hidden tabs have no animation scheduled');
+  document.hidden = false;
+  visibilityChanged();
+  tick(12000);
+  verifySurface();
+  const resumedCenters = structuredClone(context.centers);
+  canvas = renderDiseaseCubeCanvas(mapInner, map);
+  tick(12000);
+  assert.deepEqual(canvas.getContext('2d').centers, resumedCenters, 'rerenders retain absolute animation phase');
+
+  motionQuery.matches = true;
+  motionChanged();
+  assert.equal(frames.size, 0, 'reduced motion stops animation immediately');
+  const staticCenters = structuredClone(canvas.getContext('2d').centers);
+  resize();
+  assert.deepEqual(canvas.getContext('2d').centers, staticCenters);
+  motionQuery.matches = false;
+  motionChanged();
+  assert.equal(frames.size, 1);
   renderDiseaseCubeCanvas(mapInner, {});
   assert.equal(frames.size, 0, 'empty maps stop animating');
 });
