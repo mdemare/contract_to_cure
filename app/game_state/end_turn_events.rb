@@ -97,23 +97,17 @@ module EndTurnEvents
     city = @cities[city_name]
     color = city.color
     city.connections.each do |connected_city_name|
-      # Skip if connected city has quarantine specialist protection
-      next if has_quarantine_specialist_protection?(connected_city_name)
-
       connected_city = @cities[connected_city_name]
 
-      # Don't add if disease is eradicated
-      next if @cures[color] && @disease_cubes[color] == MAX_DISEASE_CUBES_PER_COLOR
-
-      # Early returns for protection cases
-      next if connected_city.color != color
-      next if has_quarantine_specialist_protection?(connected_city_name)
-      next if @cures[color] && @disease_cubes[color] == MAX_DISEASE_CUBES_PER_COLOR
+      # Outbreak spread intentionally does not use medic protection. This preserves
+      # the existing difference between spread and direct infection placement.
+      next if disease_placement_protected?(connected_city_name, color)
+      next unless connected_city.color == color
 
       # Check if adding cubes would cause game over
       if @disease_cubes[color] == 1
         # Adding all remaining cubes then game over
-        connected_city.disease_cubes = [3, connected_city.disease_cubes + 1].min
+        add_cubes_to_city(connected_city, 1)
         add_disease_cubes(connected_city_name, color, 1, events)
         @disease_cubes[color] = 0
       end
@@ -135,8 +129,8 @@ module EndTurnEvents
 
       outbreak = connected_city.disease_cubes == 3
       if connected_city.disease_cubes < 3
-        @disease_cubes[color] -= 1
-        connected_city.disease_cubes += 1
+        consume_disease_cubes(color, 1)
+        add_cubes_to_city(connected_city, 1)
       end
 
       next unless outbreak
@@ -150,33 +144,49 @@ module EndTurnEvents
   end
 
   def add_disease_cubes(city_name, color, count, events)
-    # Early returns for protection cases
-    return if has_quarantine_specialist_protection?(city_name)
-    # Don't add if eradicated
-    return if cures[color] && disease_cubes[color] == GameStateConfig::MAX_DISEASE_CUBES_PER_COLOR
-    # Don't add if cured and medic present
+    # Medic protection is intentionally direct-placement-only. Outbreak spread
+    # retains its historical behavior and does not apply this guard.
+    return if disease_placement_protected?(city_name, color)
     return if cures[color] && has_medic_at_location?(city_name)
 
     city = cities[city_name]
-    return if city.color != color
+    return unless city.color == color
 
     cubes_to_place = [count, 3 - city.disease_cubes].min
 
     if cubes_to_place > disease_cubes[color]
-      city.disease_cubes += disease_cubes[color]
+      add_cubes_to_city(city, disease_cubes[color])
       out_of_cubes(color)
       return { type: :game_over, reason: :no_cubes, color: color }
     end
 
-    disease_cubes[color] -= cubes_to_place
+    consume_disease_cubes(color, cubes_to_place)
     if city.disease_cubes + count > 3
-      city.disease_cubes = 3
+      add_cubes_to_city(city, 3 - city.disease_cubes)
       trigger_outbreak(city_name, events)
     else
       # Normal case - add cubes
-      city.disease_cubes += count
+      add_cubes_to_city(city, count)
       nil
     end
+  end
+
+  # Shared placement primitives keep city and supply mutations consistent while
+  # callers retain the distinct rules for direct infection and outbreak spread.
+  def add_cubes_to_city(city, count)
+    city.disease_cubes = [3, city.disease_cubes + count].min
+  end
+
+  def consume_disease_cubes(color, count)
+    @disease_cubes[color] -= count
+  end
+
+  def disease_placement_protected?(city_name, color)
+    has_quarantine_specialist_protection?(city_name) || eradicated?(color)
+  end
+
+  def eradicated?(color)
+    @cures[color] && @disease_cubes[color] == MAX_DISEASE_CUBES_PER_COLOR
   end
 
   # Helper method to check if a medic is present at the given location
