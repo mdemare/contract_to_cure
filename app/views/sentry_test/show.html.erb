@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="csrf-token" content="<%= form_authenticity_token %>">
+  <%= render 'application/sentry' %>
+  <title>Sentry test</title>
+</head>
+<body>
+  <main>
+    <h1>Sentry configuration test</h1>
+    <p>Use these controls to send one browser error and one Rails error to Sentry.</p>
+    <% unless ENV['SENTRY_DSN'].present? %>
+      <p role="alert">Sentry is not configured because SENTRY_DSN is not set.</p>
+    <% end %>
+    <button id="frontend-error" type="button">Simulate frontend error</button>
+    <button id="backend-error" type="button">Simulate backend error</button>
+    <p id="result" role="status"></p>
+  </main>
+  <script>
+    document.getElementById('frontend-error').addEventListener('click', () => {
+      throw new Error('Sentry frontend test error');
+    });
+    document.getElementById('backend-error').addEventListener('click', async () => {
+      const result = document.getElementById('result');
+
+      try {
+        const response = await fetch('/test-sentry/backend-error', {
+          method: 'POST', headers: { 'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]').content }
+        });
+        const body = await response.json();
+        result.textContent = body.sentry_event_id
+          ? `Backend error sent to Sentry. Event ID: ${body.sentry_event_id}`
+          : `Backend error was not sent to Sentry (HTTP ${response.status}).`;
+      } catch (error) {
+        result.textContent = `Backend test request failed: ${error.message}`;
+      }
+    });
+  </script>
+</body>
+</html>

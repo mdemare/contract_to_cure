@@ -3,6 +3,8 @@ Rails.application.routes.draw do
 
   # Redirect root to index.html
   root 'application#index'
+  get '/test-sentry', to: 'sentry_test#show'
+  post '/test-sentry/backend-error', to: 'sentry_test#backend_error'
 
   # Deployment health checks
   get '/up', to: 'rails/health#show', as: :rails_health_check

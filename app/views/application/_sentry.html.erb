@@ -1,0 +1,6 @@
+<% if ENV['SENTRY_DSN'].present? %>
+  <meta name="sentry-dsn" content="<%= ENV['SENTRY_DSN'] %>">
+  <meta name="sentry-environment" content="<%= Rails.env %>">
+  <script src="https://browser.sentry-cdn.com/10.45.0/bundle.min.js" crossorigin="anonymous"></script>
+  <script type="module" src="/js/error_reporting.js"></script>
+<% end %>

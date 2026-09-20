@@ -12,7 +12,8 @@ services:
     ports:
       - "1${EXPOSED_PORT:-3100}:2583"
     env_file:
-      - .env
+      - path: .env
+        required: false
     environment:
       PORT: "2583"
     restart: unless-stopped

@@ -261,6 +261,12 @@ GEM
     rerun (0.14.0)
       listen (~> 3.0)
     securerandom (0.4.1)
+    sentry-rails (5.28.1)
+      railties (>= 5.0)
+      sentry-ruby (~> 5.28.1)
+    sentry-ruby (5.28.1)
+      bigdecimal
+      concurrent-ruby (~> 1.0, >= 1.0.2)
     thor (1.5.0)
     timeout (0.6.1)
     tsort (0.2.0)
@@ -303,6 +309,7 @@ DEPENDENCIES
   rake
   redis (~> 5.0)
   rerun (~> 0.14.0)
+  sentry-rails (~> 5.22)
 
 BUNDLED WITH
    2.5.22
