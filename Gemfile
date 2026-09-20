@@ -15,6 +15,7 @@ gem 'connection_pool', '~> 2.5'
 
 # Server gems
 gem 'puma', '~> 7.2'
+gem 'sentry-rails', '~> 5.22'
 
 # Authentication gems
 gem 'jwt'
