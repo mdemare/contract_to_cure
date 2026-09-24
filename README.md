@@ -128,6 +128,19 @@ The game automatically saves state to `current_game.yaml` after each action, all
 
 ## Development
 
+### Automated checks
+
+Run `make check` with the Ruby bundle installed (`bundle install`), GNU Make,
+and Node.js 22 or newer available. It runs the full Ruby suite with
+`bundle exec rake test`, followed by the JavaScript suite with
+`node --test test/js/*.mjs`. The target stops and exits unsuccessfully if a
+suite fails, leaving its diagnostic output visible. Tests use mock Redis by
+default, so a running Redis server is not required.
+The target clears inherited Bundler settings, Ruby preloads, and gem path
+overrides before selecting this repository's Gemfile. Install the bundle for
+the selected Ruby using its standard gem location or this repository's local
+Bundler configuration; environment-only bundle path overrides are ignored.
+
 ### Architecture Highlights
 - **RESTful API**: Clean HTTP endpoints for all game actions
 - **Stateful Server**: Game state persisted server-side with YAML serialization
