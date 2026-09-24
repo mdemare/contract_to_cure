@@ -1,7 +1,10 @@
-.PHONY: all docker loc
+.PHONY: all docker loc check
 
 # Default target
 all: docker
+
+check:
+	BUNDLE_GEMFILE="$(CURDIR)/Gemfile" bundle exec rake test
 
 # Build Docker image
 docker:
