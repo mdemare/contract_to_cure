@@ -5,6 +5,7 @@ all: docker
 
 check:
 	BUNDLE_GEMFILE="$(CURDIR)/Gemfile" bundle exec rake test
+	node --experimental-default-type=module --test test/js/*.mjs
 
 # Build Docker image
 docker:
