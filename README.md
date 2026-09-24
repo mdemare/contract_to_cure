@@ -128,6 +128,14 @@ The game automatically saves state to `current_game.yaml` after each action, all
 
 ## Development
 
+### Automated Checks
+
+After installing the Ruby bundle, run `make check` from the repository root.
+This requires GNU Make and Node.js 22+ and runs the full Ruby suite followed by
+all JavaScript tests in `test/js/*.mjs`. A failed check stops the command with a
+nonzero exit status and prints the failing test details. Tests use mock Redis
+by default, so a running Redis server is not required.
+
 ### Architecture Highlights
 - **RESTful API**: Clean HTTP endpoints for all game actions
 - **Stateful Server**: Game state persisted server-side with YAML serialization
