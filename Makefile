@@ -1,7 +1,11 @@
-.PHONY: all docker loc
+.PHONY: all docker loc check
 
 # Default target
 all: docker
+
+check:
+	bundle exec rake test
+	node --test test/js/*.mjs
 
 # Build Docker image
 docker:
