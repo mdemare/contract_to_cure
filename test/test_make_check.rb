@@ -14,6 +14,9 @@ class MakeCheckTest < Minitest::Test
       File.write(path, <<~SH)
         #!/bin/sh
         echo "#{command} $*" >> commands.log
+        if [ "#{command}" = "bundle" ]; then
+          echo "$BUNDLE_GEMFILE" > gemfile.log
+        fi
         if [ "$FAIL_COMMAND" = "#{command}" ]; then
           echo "#{command}: simulated test failure" >&2
           exit 1
@@ -43,6 +46,14 @@ class MakeCheckTest < Minitest::Test
     assert_equal ['bundle exec rake test'], commands
   end
 
+  def test_uses_repository_gemfile_when_another_bundle_is_inherited
+    output, status = run_check(nil, 'BUNDLE_GEMFILE' => '/another/project/Gemfile')
+
+    assert status.success?, output
+    assert_equal File.join(@directory, 'Gemfile'),
+                 File.read(File.join(@directory, 'gemfile.log')).strip
+  end
+
   def test_javascript_failure_is_reported
     output, status = run_check('node')
 
@@ -53,10 +64,10 @@ class MakeCheckTest < Minitest::Test
 
   private
 
-  def run_check(failure = nil)
+  def run_check(failure = nil, environment = {})
     Open3.capture2e(
       { 'PATH' => "#{@directory}:#{ENV.fetch('PATH')}", 'FAIL_COMMAND' => failure,
-        'MAKEFLAGS' => nil, 'MFLAGS' => nil, 'MAKELEVEL' => nil },
+        'MAKEFLAGS' => nil, 'MFLAGS' => nil, 'MAKELEVEL' => nil }.merge(environment),
       'make', 'check', chdir: @directory
     )
   end
