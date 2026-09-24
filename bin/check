@@ -1,0 +1,10 @@
+# Invoked with RubyGems and RUBYOPT disabled so an inherited Bundler preload
+# cannot activate another application's bundle before we clear its environment.
+ENV.keys.each do |key|
+  ENV.delete(key) if key.start_with?('BUNDLE_', 'BUNDLER_') ||
+                     %w[GEM_HOME GEM_PATH RUBYOPT RUBYLIB RB_USER_INSTALL].include?(key)
+end
+
+ENV['BUNDLE_GEMFILE'] = File.expand_path('../Gemfile', __dir__)
+Dir.chdir(File.expand_path('..', __dir__))
+exec('bundle', 'exec', 'rake', 'test')

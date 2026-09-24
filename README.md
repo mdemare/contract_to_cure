@@ -136,8 +136,10 @@ and Node.js 22 or newer available. It runs the full Ruby suite with
 `node --test test/js/*.mjs`. The target stops and exits unsuccessfully if a
 suite fails, leaving its diagnostic output visible. Tests use mock Redis by
 default, so a running Redis server is not required.
-The target explicitly selects this repository's Gemfile even when invoked
-from a process running under another project's Bundler environment.
+The target clears inherited Bundler settings, Ruby preloads, and gem path
+overrides before selecting this repository's Gemfile. Install the bundle for
+the selected Ruby using its standard gem location or this repository's local
+Bundler configuration; environment-only bundle path overrides are ignored.
 
 ### Architecture Highlights
 - **RESTful API**: Clean HTTP endpoints for all game actions

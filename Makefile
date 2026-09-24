@@ -4,7 +4,7 @@
 all: docker
 
 check:
-	BUNDLE_GEMFILE="$(CURDIR)/Gemfile" bundle exec rake test
+	RUBYOPT= RUBYLIB= ruby --disable=gems bin/check
 	node --test test/js/*.mjs
 
 # Build Docker image
