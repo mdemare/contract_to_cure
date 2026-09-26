@@ -248,3 +248,19 @@ export function cleanupScrolling() {
     listenersInitialized = false;
   }
 }
+
+// Native keyboard focus must reveal its target without scrolling the clipped
+// container independently of our saved map transform.
+export function revealFocusedCity(city) {
+  const container = document.querySelector('.map-container');
+  if (!container) return;
+  container.scrollLeft = container.scrollTop = 0;
+  const bounds = container.getBoundingClientRect();
+  const target = city.getBoundingClientRect();
+  const margin = 6;
+  const correction = (start, end, min, max) =>
+    start < min + margin ? min + margin - start : end > max - margin ? max - margin - end : 0;
+  offsetX += correction(target.left, target.right, bounds.left, bounds.right);
+  offsetY += correction(target.top, target.bottom, bounds.top, bounds.bottom);
+  updateTransform();
+}

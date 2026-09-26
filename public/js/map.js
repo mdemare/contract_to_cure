@@ -1,4 +1,5 @@
 // map.js
+import { canonicalRouteId } from './route_context.js';
 import { MAP_WIDTH } from './constants.js';
 import { createSimpleElement } from './dom.js';
 import { renderDiseaseCubeCanvas } from './disease_cube_canvas.js';
@@ -50,6 +51,7 @@ function cityDescription(cityName, cityData) {
 export function createCityOnPanel(cityData, cityName, panel) {
   const city = createSimpleElement('button', ['city', cityData.color]);
   city.type = 'button';
+  city.tabIndex = panel === 1 ? 0 : -1;
 
   // Position the city div at the exact coordinate (dot will be centered)
   const xPos = cityData.x + panel * MAP_WIDTH;
@@ -58,6 +60,7 @@ export function createCityOnPanel(cityData, cityName, panel) {
 
   // Keep the coordinate and interaction target independent from the piece layout.
   city.dataset.cityName = cityName;
+  city.dataset.panel = String(panel);
   city.dataset.labelPosition = cityData.labelPosition ?? 'below';
   city.classList.add(`label-${city.dataset.labelPosition}`);
   city.setAttribute('aria-label', cityDescription(cityName, cityData));
@@ -112,6 +115,8 @@ export function saveCurrentTransform(translateX, translateY, scale) {
 // Updated render function preserving the current transform
 export function renderPandemicCities(pandemicMap) {
   const container = document.querySelector('.map-container');
+  const focusedCity = document.activeElement?.dataset?.cityName;
+  const focusedPanel = document.activeElement?.dataset?.panel;
 
   // Save current transform if it exists
   const currentMapInner = document.querySelector('.map-inner');
@@ -139,6 +144,8 @@ export function renderPandemicCities(pandemicMap) {
   // Add the SVG layer back
   const svgLayer = document.createElementNS("http://www.w3.org/2000/svg", "svg");
   svgLayer.classList.add('connections-layer');
+  svgLayer.setAttribute('aria-hidden', 'true');
+  mapInner.style.width = `${3 * MAP_WIDTH}px`;
   svgLayer.setAttribute('width', '100%');
   svgLayer.setAttribute('height', '100%');
   mapInner.appendChild(svgLayer);
@@ -172,6 +179,11 @@ export function renderPandemicCities(pandemicMap) {
   // Dispatch an event to notify that the map has been updated
   const mapUpdatedEvent = new CustomEvent('mapUpdated');
   document.dispatchEvent(mapUpdatedEvent);
+  if (focusedCity) {
+    const replacement = [...mapInner.querySelectorAll('.city')].find(city =>
+      city.dataset.cityName === focusedCity && city.dataset.panel === focusedPanel);
+    replacement?.focus({ preventScroll: true });
+  }
 }
 
 function estimatedLabelWidth(cityName) {
@@ -342,14 +354,15 @@ export function prepareMapWithGameState(rawMap, gameState) {
 }
 
 // Helper function to draw a styled line in the SVG
-function drawStyledLine(svg, x1, y1, x2, y2, isDashed = false) {
+function drawStyledLine(svg, x1, y1, x2, y2, isDashed = false, endpoints = []) {
   const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
   line.setAttribute('x1', x1);
   line.setAttribute('y1', y1);
   line.setAttribute('x2', x2);
   line.setAttribute('y2', y2);
-  line.setAttribute('stroke', '#aaa');
-  line.setAttribute('stroke-width', '2');
+  line.classList.add('board-route');
+  line.dataset.routeId = canonicalRouteId(...endpoints);
+  [line.dataset.routeFrom, line.dataset.routeTo] = endpoints;
 
   if (isDashed) {
     line.setAttribute('stroke-dasharray', '5,3');
@@ -371,7 +384,7 @@ function calculateEdgeIntersection(x1, y1, x2, y2, edgeX) {
   return y1 + (y2 - y1) / (x2 - x1) * (edgeX - x1);
 }
 
-export function renderConnection(svg, x1, y1, target) {
+export function renderConnection(svg, x1, y1, target, endpoints = []) {
   // Get the target's adjusted position
   // The target is target.x + k*MAP_WIDTH.
   // k is chosen so that 2 * Math.abs(x1 - target.x + k*MAP_WIDTH) < MAP_WIDTH
@@ -382,23 +395,25 @@ export function renderConnection(svg, x1, y1, target) {
   const targetY = target.y - MAP_Y_OFFSET;
 
   if (x2 >= 0 && x2 < 3*MAP_WIDTH) {
-    drawStyledLine(svg, x1, sourceY, x2, targetY);
+    drawStyledLine(svg, x1, sourceY, x2, targetY, false, endpoints);
   } else {
-    // Target connection is out of bounds. Only draw to the edge of the map
+    // Split the continuation across the two outer edges of the repeated map.
     if (x2 < 0) {
       // City is on left, target on right - draw to left edge
       const leftEdgeY = calculateEdgeIntersection(x1, sourceY, x2, targetY, 0);
-      drawStyledLine(svg, x1, sourceY, 0, leftEdgeY, true);
+      drawStyledLine(svg, x1, sourceY, 0, leftEdgeY, true, endpoints);
+      drawStyledLine(svg, 3 * MAP_WIDTH, leftEdgeY, x2 + 3 * MAP_WIDTH, targetY, true, endpoints);
     } else {
       // City is on right, target on left - draw to right edge
       const rightEdgeY = calculateEdgeIntersection(x1, sourceY, x2, targetY, 3*MAP_WIDTH);
-      drawStyledLine(svg, x1, sourceY, 3*MAP_WIDTH, rightEdgeY, true);
+      drawStyledLine(svg, x1, sourceY, 3*MAP_WIDTH, rightEdgeY, true, endpoints);
+      drawStyledLine(svg, 0, rightEdgeY, x2 - 3 * MAP_WIDTH, targetY, true, endpoints);
     }
   }
 }
 
 // Improved renderConnections function that handles wrap-around connections properly
-function renderConnections(map) {
+export function renderConnections(map) {
   const svg = document.querySelector('.connections-layer');
   if (!svg) {
     console.error('SVG layer not found');
@@ -410,21 +425,16 @@ function renderConnections(map) {
     svg.removeChild(svg.firstChild);
   }
 
-  // Modular arithmetic helper function that doesn't return negative values
+  const rendered = new Set();
   for (const [cityName, data] of Object.entries(map)) {
-    const { connections } = data;
-    if (!connections) continue;
-
-    // Get the current adjusted position with modular arithmetic
-    const x1 = data.x;
-    const y1 = data.y;
-    connections.forEach(connectedCityName => {
-    // Avoid duplicate connections by only drawing from one direction
-    if(cityName < connectedCityName) {
-        renderConnection(svg, x1, y1, map[connectedCityName]);
-        renderConnection(svg, x1+1300, y1, map[connectedCityName]);
-        renderConnection(svg, x1+2600, y1, map[connectedCityName]);
+    for (const connectedName of data.connections ?? []) {
+      const id = canonicalRouteId(cityName, connectedName);
+      if (rendered.has(id) || !map[connectedName]) continue;
+      rendered.add(id);
+      for (let panel = 0; panel < 3; panel++) {
+        renderConnection(svg, data.x + panel * MAP_WIDTH, data.y,
+          map[connectedName], [cityName, connectedName]);
       }
-    });
+    }
   }
 }

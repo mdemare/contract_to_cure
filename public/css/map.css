@@ -242,3 +242,81 @@
 .dragging {
   cursor: grabbing !important;
 }
+
+/* Route context lives inside map-inner, so pan/zoom never changes its state. */
+.map-inner {
+  --route-rest: #9babb8;
+  --route-dim: #75899c;
+  --route-active: #fff3bd;
+  --route-outline: #172033;
+}
+.board-route {
+  stroke: var(--route-rest);
+  stroke-width: 1;
+  opacity: 0.55;
+  pointer-events: none;
+  transition: stroke-width 120ms ease, opacity 120ms ease;
+}
+.board-route.route-dimmed { stroke: var(--route-dim); opacity: 0.28; }
+.board-route.route-adjacent {
+  stroke: var(--route-active);
+  stroke-width: 3;
+  opacity: 1;
+  filter: drop-shadow(0 1px 0 var(--route-outline)) drop-shadow(0 -1px 0 var(--route-outline));
+}
+.board-route.route-hovered { stroke-width: 5; }
+.board-route.route-focused { stroke: #fff; stroke-width: 6; }
+.map-inner .city.move-source .dot::after {
+  content: '';
+  position: absolute;
+  inset: -9px;
+  border: 5px double #fff3bd;
+  border-radius: 50%;
+  box-shadow: 0 0 0 1px #172033;
+}
+.map-inner .city.move-valid .dot::after {
+  content: '';
+  position: absolute;
+  inset: -6px;
+  border: 2px solid #fff3bd;
+  border-radius: inherit;
+  box-shadow: 0 0 0 1px #172033;
+}
+.map-inner .city.move-invalid .dot { opacity: 0.65; }
+.map-inner .city.move-invalid .dot::before {
+  content: '';
+  position: absolute;
+  width: 22px;
+  height: 3px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%) rotate(-45deg);
+  background: #fff;
+  box-shadow: 0 0 0 1px #172033;
+}
+.map-inner .city.move-hovered .dot,
+.map-inner .city.move-focused .dot { transform: translate(-50%, -50%) scale(1.25); }
+.map-inner .city:hover,
+.map-inner .city:focus-visible,
+.map-inner .city.move-hovered,
+.map-inner .city.move-focused { z-index: 45; }
+.map-inner .city:focus-visible,
+.map-inner .city.move-focused {
+  outline: 3px solid #fff;
+  outline-offset: -3px;
+  border-radius: 3px;
+  box-shadow: inset 0 0 0 5px #172033;
+}
+.map-inner .city.move-hovered .city-label { box-shadow: 0 3px 5px #172033; }
+.route-announcement {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+@media (prefers-reduced-motion: reduce) {
+  .board-route, .map-inner .city, .map-inner .city * { transition: none !important; }
+}
