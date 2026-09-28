@@ -1,4 +1,5 @@
 class SentryTestController < ApplicationController
+  skip_around_action :atomically_update_game_state
   skip_before_action :load_game_state
   skip_before_action :check_forecast_active
 

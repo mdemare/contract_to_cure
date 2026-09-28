@@ -9,6 +9,7 @@ require_relative 'game_state/setup'
 require_relative 'game_state/city'
 require_relative 'game_state/player'
 require_relative 'game_state/card'
+require_relative 'game_state/atomic_update'
 require_relative 'services/game_redis_pool'
 
 class GameState
@@ -18,6 +19,15 @@ class GameState
   include EndTurnEvents
   include JsonGenerator
   include Setup
+
+  DEFAULT_REDIS_KEY = 'contract-to-cure/current-game'
+
+  # Raised when an atomic update was based on a snapshot that is no longer current.
+  class ConflictError < StandardError
+    def initialize(message = 'Game state was changed by another request')
+      super
+    end
+  end
 
   attr_reader :cities, :players, :current_player_idx, :infection_deck, :infection_discard,
               :player_deck, :player_discard, :research_stations, :disease_cubes, :cures,
@@ -31,14 +41,28 @@ class GameState
     reset_game(difficulty_level)
   end
 
+  def self.current_redis_key
+    # Use thread-local key if set (for testing), otherwise use default
+    Thread.current[:game_redis_key] || DEFAULT_REDIS_KEY
+  end
+
+  # Runs one read-modify-write of the shared game atomically. Loads and saves
+  # inside the block share one baseline; saves are written once at the end, and
+  # only if no other update has been committed since the load. Raises
+  # ConflictError, without writing, when the baseline is stale.
+  def self.atomic_update(redis_key = nil, &block)
+    GameStateAtomicUpdate.run(redis_key || current_redis_key, &block)
+  end
+
   # Load game state from Redis if it exists
   def self.load_from_redis(redis_key = nil)
     require 'yaml'
 
-    # Use thread-local key if set (for testing), otherwise use default
-    redis_key ||= Thread.current[:game_redis_key] || 'contract-to-cure/current-game'
+    redis_key ||= current_redis_key
 
     saved_data = GameRedisPool.with { |redis| redis.get(redis_key) }
+    update = GameStateAtomicUpdate.current
+    update.record_snapshot(saved_data) if update&.covers?(redis_key)
 
     return nil unless saved_data
 
@@ -83,73 +107,77 @@ class GameState
     { status: 'error', message: 'No more actions allowed' }
   end
 
-  # Public method to save game state to Redis
+  # Public method to save game state to Redis. Inside GameState.atomic_update
+  # the write is deferred to the update's single conditional commit.
   def save_game_state(redis_key = nil)
-    # Use thread-local key if set (for testing), otherwise use default
-    redis_key ||= Thread.current[:game_redis_key] || 'contract-to-cure/current-game'
+    redis_key ||= self.class.current_redis_key
+
+    update = GameStateAtomicUpdate.current
+    return update.defer_save(self) if update&.covers?(redis_key)
 
     begin
-      # Create a hash with all game state, including hidden information like decks
-      game_state = {
-        game_status: {
-          actions_remaining: @actions_remaining,
-          phase: @phase,
-          pending_hand_limit: @pending_hand_limit,
-          turn: @turn,
-          game_over: @game_over,
-          game_over_reason: @game_over_reason,
-          outbreaks: @outbreak_count,
-          infection_rate: @infection_rate,
-          infection_rate_position: @infection_rate_marker,
-          current_player_idx: @current_player_idx,
-          quiet_night: @quiet_night,
-          forecast_active: @forecast_active,
-          forecast_cards: @forecast_cards,
-          operations_expert_move_used: @operations_expert_move_used
-        },
-        disease_cubes: COLORS.each_with_object({}) do |color, hash|
-          hash[color] = {
-            cured: @cures[color],
-            eradicated: @cures[color] && @disease_cubes[color] == MAX_DISEASE_CUBES_PER_COLOR,
-            in_supply: @disease_cubes[color]
-          }
-        end,
-        cities: @cities.transform_values do |city|
-          {
-            name: city.name,
-            color: city.color,
-            connections: city.connections,
-            disease_cubes: city.disease_cubes,
-            has_research_station: city.has_research_station
-          }
-        end,
-        research_stations: {
-          available: MAX_RESEARCH_STATIONS - @research_stations.size,
-          locations: @research_stations
-        },
-        players: @players.map do |player|
-          {
-            role: player.role,
-            index: player.index,
-            location: player.location,
-            hand: player.hand.map { |card| card_to_hash(card) }
-          }
-        end,
-        decks: {
-          player_deck: @player_deck.map { |card| card_to_hash(card) },
-          player_discard: @player_discard.map { |card| card_to_hash(card) },
-          infection_deck: @infection_deck.map { |card| card_to_hash(card) },
-          infection_discard: @infection_discard.map { |card| card_to_hash(card) }
-        }
-      }
-
-      # Save to Redis
-      GameRedisPool.with { |redis| redis.set(redis_key, game_state.to_yaml) }
+      GameRedisPool.with { |redis| redis.set(redis_key, serialized_state) }
     rescue Redis::BaseError => e
       puts "Redis connection error while saving: #{e.message}"
     rescue => e
       puts "Error saving game state to Redis: #{e.message}"
     end
+  end
+
+  # YAML persisted for this game, including hidden information like decks
+  def serialized_state
+    {
+      game_status: {
+        actions_remaining: @actions_remaining,
+        phase: @phase,
+        pending_hand_limit: @pending_hand_limit,
+        turn: @turn,
+        game_over: @game_over,
+        game_over_reason: @game_over_reason,
+        outbreaks: @outbreak_count,
+        infection_rate: @infection_rate,
+        infection_rate_position: @infection_rate_marker,
+        current_player_idx: @current_player_idx,
+        quiet_night: @quiet_night,
+        forecast_active: @forecast_active,
+        forecast_cards: @forecast_cards,
+        operations_expert_move_used: @operations_expert_move_used
+      },
+      disease_cubes: COLORS.each_with_object({}) do |color, hash|
+        hash[color] = {
+          cured: @cures[color],
+          eradicated: @cures[color] && @disease_cubes[color] == MAX_DISEASE_CUBES_PER_COLOR,
+          in_supply: @disease_cubes[color]
+        }
+      end,
+      cities: @cities.transform_values do |city|
+        {
+          name: city.name,
+          color: city.color,
+          connections: city.connections,
+          disease_cubes: city.disease_cubes,
+          has_research_station: city.has_research_station
+        }
+      end,
+      research_stations: {
+        available: MAX_RESEARCH_STATIONS - @research_stations.size,
+        locations: @research_stations
+      },
+      players: @players.map do |player|
+        {
+          role: player.role,
+          index: player.index,
+          location: player.location,
+          hand: player.hand.map { |card| card_to_hash(card) }
+        }
+      end,
+      decks: {
+        player_deck: @player_deck.map { |card| card_to_hash(card) },
+        player_discard: @player_discard.map { |card| card_to_hash(card) },
+        infection_deck: @infection_deck.map { |card| card_to_hash(card) },
+        infection_discard: @infection_discard.map { |card| card_to_hash(card) }
+      }
+    }.to_yaml
   end
 
   # Reset the game to its initial state
