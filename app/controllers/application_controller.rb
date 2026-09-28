@@ -3,6 +3,7 @@ class ApplicationController < ActionController::Base
 
   protect_from_forgery with: :exception
 
+  around_action :atomically_update_game_state
   before_action :load_game_state
   before_action :check_forecast_active, except: [:index, :state, :action_card]
 
@@ -91,6 +92,37 @@ class ApplicationController < ActionController::Base
 
   def authentication_error_message
     @authentication_error_message || 'Authentication required'
+  end
+
+  # Every request loads, mutates, and saves the shared game as one atomic unit.
+  # If another request committed first, this request's changes are discarded
+  # and the client receives the current state with HTTP 409 instead.
+  def atomically_update_game_state
+    GameState.atomic_update { yield }
+  rescue GameState::ConflictError => e
+    # Commits happen before rendering, so a conflict never follows a response.
+    raise if performed?
+
+    Rails.logger.info "Rejected stale game update: #{e.message}"
+    render_game_conflict
+  end
+
+  # Commit pending game changes before responding, so a rendered result is
+  # only ever sent for a write that was actually persisted.
+  def render(*, **, &)
+    GameStateAtomicUpdate.current&.commit!
+    super
+  end
+
+  def render_game_conflict
+    body = {
+      success: false,
+      status: 'conflict',
+      message: 'The game was changed by another request. No changes were made; please retry.'
+    }
+    current_state = GameState.load_from_redis
+    body[:game_state] = current_state.to_json_state if current_state
+    render json: body, status: :conflict
   end
 
   def load_game_state
