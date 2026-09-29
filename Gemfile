@@ -11,11 +11,11 @@ gem 'awesome_print'
 gem 'json', '~> 3.0'
 gem 'like_1999'
 gem 'redis', '~> 5.0'
-gem 'connection_pool', '~> 2.5'
+gem 'connection_pool', '~> 3.0'
 
 # Server gems
-gem 'puma', '~> 7.2'
-gem 'sentry-rails', '~> 5.22'
+gem 'puma', '~> 8.0'
+gem 'sentry-rails', '~> 7.0'
 
 # Authentication gems
 gem 'jwt'
@@ -30,5 +30,5 @@ group :test do
   gem 'minitest'
   gem 'rack-test'
   gem 'rake'
-  gem 'mock_redis', '~> 0.53.0'
+  gem 'mock_redis', '~> 0.55.0'
 end
