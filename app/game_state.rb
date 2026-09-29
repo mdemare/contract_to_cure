@@ -141,7 +141,8 @@ class GameState
         quiet_night: @quiet_night,
         forecast_active: @forecast_active,
         forecast_cards: @forecast_cards,
-        operations_expert_move_used: @operations_expert_move_used
+        operations_expert_move_used: @operations_expert_move_used,
+        difficulty_level: @difficulty_level.to_s
       },
       disease_cubes: COLORS.each_with_object({}) do |color, hash|
         hash[color] = {
@@ -182,12 +183,13 @@ class GameState
 
   # Reset the game to its initial state
   def reset_game(difficulty_level)
-    @difficulty_level = difficulty_level || @difficulty_level
     raise ArgumentError, 'Player count must be 2-4' unless (2..4).include?(@players_count)
 
-    if difficulty_level && !%i[introductory normal heroic].include?(difficulty_level)
+    if difficulty_level && !DIFFICULTY_LEVELS.include?(difficulty_level)
       raise ArgumentError, 'Difficulty must be :introductory, :normal, :heroic'
     end
+
+    @difficulty_level = difficulty_level || @difficulty_level
 
     @forecast_active = false
     @forecast_cards = nil
@@ -423,8 +425,14 @@ class GameState
 
     # Determine player count and difficulty level
     @players_count = @players.size
-    # We don't have the difficulty level stored, so we'll default to normal
-    @difficulty_level = :normal
+    # Saves from before difficulty was persisted fall back to the configured default
+    saved_difficulty = state[:game_status][:difficulty_level]&.to_sym
+    @difficulty_level = DIFFICULTY_LEVELS.include?(saved_difficulty) ? saved_difficulty : default_difficulty_level
+  end
+
+  def default_difficulty_level
+    configured = Rails.application.config.default_difficulty if defined?(Rails.application) && Rails.application
+    DIFFICULTY_LEVELS.include?(configured) ? configured : :heroic
   end
 
   # Helper method for medic ability
