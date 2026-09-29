@@ -18,7 +18,7 @@ RUN useradd -m -u 1000 rails
 WORKDIR /app
 
 # Copy Gemfile first for better caching
-COPY .ruby-version Gemfile Gemfile.lock ./
+COPY Gemfile Gemfile.lock .ruby-version ./
 
 # Install gems
 RUN bundle config set --local without 'development test' && \

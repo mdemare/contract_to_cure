@@ -6,11 +6,15 @@ class TestRubyVersion < Minitest::Test
   ROOT = File.expand_path('..', __dir__)
 
   def ruby_version
-    @ruby_version ||= File.read(File.join(ROOT, '.ruby-version')).strip
+    @ruby_version ||= read('.ruby-version').strip
   end
 
   def read(path)
     File.read(File.join(ROOT, path))
+  end
+
+  def test_ruby_version_file_pins_an_exact_release
+    assert_match(/\A\d+\.\d+\.\d+\n\z/, read('.ruby-version'))
   end
 
   def test_running_ruby_matches_ruby_version_file
@@ -36,8 +40,15 @@ class TestRubyVersion < Minitest::Test
   end
 
   def test_dockerfile_uses_ruby_version
+    base_images = read('Dockerfile').scan(/^FROM\s+(\S+)/).flatten
+    refute_empty base_images
+    base_images.each do |image|
+      assert_equal "ruby:#{ruby_version}-slim-bookworm", image
+    end
+  end
+
+  def test_dockerfile_copies_ruby_version_before_bundle_install
     dockerfile = read('Dockerfile')
-    assert_match(/^FROM ruby:#{Regexp.escape(ruby_version)}-slim-bookworm$/, dockerfile)
     ruby_version_copy = dockerfile.index(/^COPY .*\.ruby-version/)
     bundle_install = dockerfile.index('bundle install')
     assert ruby_version_copy, 'Dockerfile must copy .ruby-version'
@@ -45,6 +56,8 @@ class TestRubyVersion < Minitest::Test
   end
 
   def test_ci_uses_ruby_version
-    assert_match(/ruby-version: ['"]#{Regexp.escape(ruby_version)}['"]/, read('.github/workflows/test.yml'))
+    versions = read('.github/workflows/test.yml').scan(/ruby-version:\s*['"]([^'"]+)['"]/).flatten
+    refute_empty versions
+    assert_equal [ruby_version], versions.uniq
   end
 end

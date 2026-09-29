@@ -77,7 +77,7 @@ public/
 ## Installation & Setup
 
 ### Prerequisites
-- Ruby 3.0+
+- Ruby 4.0.7 (see `.ruby-version`)
 - Bundler gem
 
 ### Installation
