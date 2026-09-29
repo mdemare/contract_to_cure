@@ -33,4 +33,8 @@ module GameRequestSchemas
     optional(:player_index).maybe(:integer)
     optional(:card_order).filled(:array).each(:string)
   end
+
+  RESTART_GAME = Dry::Schema.Params do
+    optional(:difficulty_level).maybe(:string, included_in?: GameStateConfig::DIFFICULTY_LEVELS.map(&:to_s))
+  end
 end
