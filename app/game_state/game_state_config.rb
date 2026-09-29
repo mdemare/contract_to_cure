@@ -8,5 +8,6 @@ module GameStateConfig
   CARDS_PER_PLAYER = { 2 => 4, 3 => 3, 4 => 2 }.freeze
   INITIAL_RESEARCH_STATIONS = 1
   MAX_RESEARCH_STATIONS = 6
+  DIFFICULTY_LEVELS = %i[introductory normal heroic].freeze
   CARDS_NEEDED_FOR_CURE = { scientist: 4, default: 5 }.freeze
 end

@@ -181,8 +181,11 @@ class GameController < ApplicationController
 
   # Restart game endpoint
   def restart_game
-    # Extract difficulty level from request if provided, otherwise use current difficulty
-    difficulty_level = params[:difficulty_level]&.to_sym
+    validated = validate_request(GameRequestSchemas::RESTART_GAME, [:difficulty_level])
+    return if performed?
+
+    # Use the requested difficulty level if provided, otherwise keep the current difficulty
+    difficulty_level = validated[:difficulty_level]&.to_sym
 
     # Restart the game and return result
     result = game_state.reset_game(difficulty_level)
