@@ -9,7 +9,7 @@ require_relative 'game_state/setup'
 require_relative 'game_state/city'
 require_relative 'game_state/player'
 require_relative 'game_state/card'
-require_relative 'game_state/atomic_update'
+require_relative 'game_state/game_state_atomic_update'
 require_relative 'services/game_redis_pool'
 
 class GameState
