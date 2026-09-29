@@ -1,5 +1,7 @@
 source 'https://rubygems.org'
 
+ruby file: '.ruby-version'
+
 # Rails
 gem 'rails', '~> 8.0'
 
