@@ -1,5 +1,5 @@
 # Single-stage production build
-FROM ruby:3.4-slim-bookworm
+FROM ruby:4.0.7-slim-bookworm
 
 # Install dependencies
 RUN apt-get update -qq && apt-get install -y \
@@ -18,7 +18,7 @@ RUN useradd -m -u 1000 rails
 WORKDIR /app
 
 # Copy Gemfile first for better caching
-COPY Gemfile Gemfile.lock ./
+COPY Gemfile Gemfile.lock .ruby-version ./
 
 # Install gems
 RUN bundle config set --local without 'development test' && \
