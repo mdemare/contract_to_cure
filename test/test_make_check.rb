@@ -12,6 +12,19 @@ class TestMakeCheck < Minitest::Test
     assert_match(/1 runs, 1 assertions, 0 failures, 0 errors/, stdout)
   end
 
+  def test_check_ignores_a_foreign_lockfile
+    lockfile = File.expand_path('../Gemfile.lock', __dir__)
+    application_lock = File.read(lockfile)
+
+    stdout, stderr, status, foreign_lock_before, foreign_lock_after = run_check(
+      "assert_equal #{lockfile.inspect}, ENV['BUNDLE_LOCKFILE']"
+    )
+
+    assert_equal foreign_lock_before, foreign_lock_after
+    assert_equal application_lock, File.read(lockfile)
+    assert status.success?, [stdout, stderr].join("\n")
+  end
+
   def test_check_propagates_test_failures
     stdout, stderr, status = run_check('flunk "check failure sentinel"')
 
@@ -58,11 +71,13 @@ class TestMakeCheck < Minitest::Test
     end
   end
 
+  # Also returns the foreign lockfile contents before and after make check.
   def run_check(assertion)
     root = File.expand_path('..', __dir__)
     Dir.mktmpdir('foreign-bundle') do |directory|
       gemfile = File.join(directory, 'Gemfile')
-      File.write(gemfile, "source 'https://rubygems.org'\ngem 'rake'\n")
+      foreign_lockfile = File.join(directory, 'Gemfile.lock')
+      File.write(gemfile, "source 'https://rubygems.org'\ngem 'rake', '#{Gem::Specification.find_by_name('rake').version}'\n")
       # Run a real Rails test without recursively invoking this test suite.
       probe = File.join(directory, 'check_probe.rb')
       File.write(probe, <<~RUBY)
@@ -75,11 +90,18 @@ class TestMakeCheck < Minitest::Test
       RUBY
 
       Bundler.with_unbundled_env do
-        Open3.capture3(
-          { 'BUNDLE_GEMFILE' => gemfile, 'TEST' => probe },
+        foreign_env = { 'BUNDLE_GEMFILE' => gemfile, 'BUNDLE_LOCKFILE' => foreign_lockfile }
+        _, stderr, status = Open3.capture3(foreign_env, 'bundle', 'lock', '--local', chdir: directory)
+        raise "could not lock foreign bundle: #{stderr}" unless status.success?
+
+        foreign_lock = File.read(foreign_lockfile)
+        # Newer Bundlers export BUNDLE_LOCKFILE themselves; set it explicitly for older ones.
+        stdout, stderr, status = Open3.capture3(
+          foreign_env.merge('TEST' => probe),
           'bundle', 'exec', RbConfig.ruby, '-e', 'exec "make", "check"',
           chdir: root
         )
+        [stdout, stderr, status, foreign_lock, File.read(foreign_lockfile)]
       end
     end
   end
