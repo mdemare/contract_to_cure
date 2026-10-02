@@ -2,6 +2,7 @@ import { reportNotification } from './error_reporting.js';
 
 // game_over.js
 import { createSimpleElement } from './dom.js';
+import { handleGameConflict, isGameConflict } from './player_action_utils.js';
 
 // Initialize game over functionality
 export function initGameOver() {
@@ -94,33 +95,38 @@ function setupGameOverButtons() {
 }
 
 // Restart the game
-function restartGame() {
+export async function restartGame() {
   // Hide the game over dialog
   hideGameOverDialog();
 
-  // Make API call to restart the game
-  fetch('/restart_game', {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+  try {
+    // Make API call to restart the game
+    const response = await fetch('/restart_game', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+      }
+    });
+
+    if (isGameConflict(response)) {
+      // Nothing was restarted; restore the dialog if the refreshed game is still over.
+      checkGameOver(await handleGameConflict(response));
+      return;
     }
-  })
-  .then(response => {
+
     if (!response.ok) {
       throw new Error('Failed to restart game');
     }
-    return response.json();
-  })
-  .then(data => {
+    await response.json();
+
     // Reload the page to refresh the game state
     window.location.reload();
-  })
-  .catch(error => {
+  } catch (error) {
     console.error('Error restarting game:', error);
     // Show an error message
     showNotification('Failed to restart game: ' + error.message, 'error');
-  });
+  }
 }
 
 // Check if the game is over and show dialog if needed

@@ -2,8 +2,21 @@ import assert from 'node:assert/strict';
 import test from 'node:test';
 
 const gameOverDialog = { style: { display: 'flex' } };
+const notifications = [];
 
 globalThis.document = {
+  body: {
+    appendChild(element) {
+      notifications.push(element);
+    }
+  },
+  createElement() {
+    const classes = [];
+    return {
+      textContent: '',
+      classList: { add: (...names) => classes.push(...names), contains: name => classes.includes(name) }
+    };
+  },
   addEventListener() {},
   querySelector(selector) {
     if (selector === 'meta[name="csrf-token"]') return { content: 'csrf-token' };
@@ -47,4 +60,35 @@ test('successful menu restart reloads state once and dismisses the game-over dia
       credentials: 'same-origin'
     }
   });
+});
+
+test('menu restart conflict refreshes from the conflict state and keeps the game', async () => {
+  const persistedState = { gameStatus: { phase: 'player_actions', gameOver: true } };
+  const loadedStates = [];
+  gameOverDialog.style.display = 'flex';
+  notifications.length = 0;
+  globalThis.setTimeout = () => 0;
+  console.warn = () => {};
+
+  globalThis.fetch = async () => ({
+    ok: false,
+    status: 409,
+    async json() {
+      return { success: false, status: 'conflict', message: 'Game changed', game_state: persistedState };
+    }
+  });
+
+  await assert.rejects(
+    restartGame(async gameState => {
+      loadedStates.push(gameState);
+      return gameState;
+    }),
+    { name: 'GameConflictError' }
+  );
+
+  assert.deepEqual(loadedStates, [persistedState]);
+  assert.equal(gameOverDialog.style.display, 'flex');
+  assert.equal(notifications.length, 1);
+  assert.equal(notifications[0].classList.contains('warning'), true);
+  assert.match(notifications[0].textContent, /game changed/i);
 });

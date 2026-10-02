@@ -3,6 +3,9 @@
 import { loadGameState } from './game_state.js';
 import { clearActionCardSource, getActionCardSource } from './action_card_state.js';
 import {
+  GameConflictError,
+  handleGameConflict,
+  isGameConflict,
   processAPIRequest,
   showErrorMessage,
   showSuccessMessage
@@ -17,6 +20,11 @@ export async function actionCardRequest(payload, fallbackErrorMessage) {
     },
     body: JSON.stringify(payload)
   });
+
+  if (isGameConflict(response)) {
+    await handleGameConflict(response);
+    throw new GameConflictError();
+  }
 
   const data = await response.json();
   if (!response.ok || data.status === 'error') {
@@ -43,6 +51,7 @@ export async function completeForecast(cardOrder) {
       showErrorMessage(data.message || 'Failed to apply Forecast card order');
     }
   } catch (error) {
+    if (error instanceof GameConflictError) return false;
     console.error('Error applying Forecast card order:', error);
     showErrorMessage(error.message || 'Error applying Forecast card order. Please try again.');
   }
@@ -56,7 +65,7 @@ export async function useResilientPopulation(cityName) {
       return;
     }
 
-    await useActionCard('Resilient Population', { city: cityName });
+    if (!(await useActionCard('Resilient Population', { city: cityName }))) return;
     showSuccessMessage(`Removed ${cityName} from the infection discard pile`);
   } catch (error) {
     showErrorMessage(`Error using Resilient Population: ${error.message}`);
@@ -70,7 +79,7 @@ export async function useAirlift(cityName, playerIndex) {
       return;
     }
 
-    await useActionCard('Airlift', { city: cityName, player_index: playerIndex });
+    if (!(await useActionCard('Airlift', { city: cityName, player_index: playerIndex }))) return;
     showSuccessMessage(`Airlift to ${cityName} performed`);
   } catch (error) {
     showErrorMessage(`Error using Airlift: ${error.message}`);
@@ -79,7 +88,7 @@ export async function useAirlift(cityName, playerIndex) {
 
 export async function useQuietNight() {
   try {
-    await useActionCard('One Quiet Night');
+    if (!(await useActionCard('One Quiet Night'))) return;
     showSuccessMessage('Tonight everything is quiet');
   } catch (error) {
     showErrorMessage(`Error using One Quiet Night: ${error.message}`);
@@ -93,7 +102,7 @@ export async function useGovernmentGrant(cityName) {
       return;
     }
 
-    await useActionCard('Government Grant', { city: cityName });
+    if (!(await useActionCard('Government Grant', { city: cityName }))) return;
     showSuccessMessage(`Built a research station in ${cityName} using Government Grant`);
 
     document.getElementById('action-notification')?.remove();
@@ -102,9 +111,10 @@ export async function useGovernmentGrant(cityName) {
   }
 }
 
+// Resolves true only when the server applied the card.
 export async function useActionCard(cardName, actionCardData = {}) {
   try {
-    await processAPIRequest(
+    return await processAPIRequest(
       '/action_card',
       { ...actionCardData, card: cardName },
       `Used ${cardName}`,
@@ -112,5 +122,6 @@ export async function useActionCard(cardName, actionCardData = {}) {
     );
   } catch (error) {
     console.error('Error using action card:', error);
+    return false;
   }
 }

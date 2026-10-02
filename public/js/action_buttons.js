@@ -5,7 +5,13 @@ import { cureDisease, pass, treatDisease } from './ordinary_player_actions.js';
 import { initShareKnowledge, updateShareKnowledgeButtonState } from './share_knowledge.js';
 import { initActionCardsButton, updateActionCardsButtonState } from './action_cards.js';
 import { initRetrieveCard, updateRetrieveButtonState } from './retrieve_card.js';
-import { processAPIRequest, showSuccessMessage, showErrorMessage } from './player_action_utils.js';
+import {
+  handleGameConflict,
+  isGameConflict,
+  processAPIRequest,
+  showSuccessMessage,
+  showErrorMessage
+} from './player_action_utils.js';
 import { handleEndOfTurnEvents } from './end_turn_events.js';
 
 let actionBarResizeObserver;
@@ -202,7 +208,9 @@ async function handleInfectCitiesAction() {
       body: JSON.stringify({})
     });
 
-    if (response.ok) {
+    if (isGameConflict(response)) {
+      await handleGameConflict(response);
+    } else if (response.ok) {
       const result = await response.json();
 
       if (result.status === 'success') {

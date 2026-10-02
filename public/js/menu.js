@@ -70,9 +70,9 @@ function closeMenu() {
   menuToggle.setAttribute('aria-expanded', 'false');
 }
 
-export async function restartGame(loadState = async () => {
+export async function restartGame(loadState = async gameState => {
   const { loadGameState } = await import('./game_state.js');
-  return loadGameState();
+  return loadGameState(gameState);
 }) {
   const response = await fetch('/restart_game', {
     method: 'POST',
@@ -82,6 +82,12 @@ export async function restartGame(loadState = async () => {
     },
     credentials: 'same-origin'
   });
+
+  if (response.status === 409) {
+    const { GameConflictError, handleGameConflict } = await import('./player_action_utils.js');
+    await handleGameConflict(response, { loadState });
+    throw new GameConflictError();
+  }
 
   if (!response.ok) {
     throw new Error('Failed to restart game');
@@ -111,6 +117,8 @@ function handleNewGame() {
         }
       })
       .catch(error => {
+        // Conflicts are already reported with the refreshed game state.
+        if (error.name === 'GameConflictError') return;
         console.error('Error restarting game:', error);
         alert('An error occurred while starting a new game.');
       });

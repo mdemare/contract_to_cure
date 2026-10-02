@@ -3,6 +3,7 @@ import { getCurrentGameState, loadGameState } from './game_state.js';
 import { createSimpleElement } from './dom.js';
 import { completeForecast } from './action_card_requests.js';
 import { registerHandLimitHandler } from './hand_limit_prompt.js';
+import { GameConflictError, handleGameConflict, isGameConflict } from './player_action_utils.js';
 import { decorateGameCard } from './card_visuals.js';
 import { openCardModal } from './modal_focus.js';
 
@@ -378,43 +379,52 @@ export function handleHandLimitCheck(playerIndex, discardCount, completionCallba
     
     // Make API call to discard the selected cards
     try {
-      const response = await fetch('/discard_cards', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-        },
-        body: JSON.stringify({
-          player_index: playerIndex,
-          card_names: selectedCardNames
-        })
-      });
+      await submitHandLimitDiscard(playerIndex, selectedCardNames);
 
-      if (!response.ok) throw new Error('Unable to discard cards.');
-      if (response.ok) {
-        // Refresh game state after discard
-        await loadGameState();
+      // Show success message
+      const notification = createSimpleElement('div', ['game-notification', 'success'],
+        `${playerName} discarded ${discardCount} card${discardCount > 1 ? 's' : ''}`);
+      document.body.appendChild(notification);
 
-        // Show success message
-        const notification = createSimpleElement('div', ['game-notification', 'success'],
-          `${playerName} discarded ${discardCount} card${discardCount > 1 ? 's' : ''}`);
-        document.body.appendChild(notification);
-
+      setTimeout(() => {
+        notification.classList.add('fade-out');
         setTimeout(() => {
-          notification.classList.add('fade-out');
-          setTimeout(() => {
-            notification.remove();
-          }, 500);
-        }, 3000);
-      }
+          notification.remove();
+        }, 500);
+      }, 3000);
     } catch (error) {
-      console.error('Error discarding cards:', error);
+      if (!(error instanceof GameConflictError)) console.error('Error discarding cards:', error);
       throw error;
     }
 
     // Call completion callback
     if (completionCallback) completionCallback();
   }, {customTitle, playerIndex, hideCancel: true});
+}
+
+// Throws when the discard was not applied. Mandatory discard stays open on
+// any failure, so after a 409 the player can retry against the refreshed hand.
+export async function submitHandLimitDiscard(playerIndex, cardNames) {
+  const response = await fetch('/discard_cards', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
+    },
+    body: JSON.stringify({
+      player_index: playerIndex,
+      card_names: cardNames
+    })
+  });
+
+  if (isGameConflict(response)) {
+    await handleGameConflict(response);
+    throw new GameConflictError('The game changed before your discard was applied.');
+  }
+  if (!response.ok) throw new Error('Unable to discard cards.');
+
+  // Refresh game state after discard
+  await loadGameState();
 }
 
 registerHandLimitHandler((playerIndex, discardCount) => new Promise(resolve => {
