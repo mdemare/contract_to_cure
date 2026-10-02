@@ -16,7 +16,7 @@ import {
 } from './action_card_state.js';
 import { createSimpleElement } from './dom.js';
 import { showPlayerSelectionPanel, getSelectedPlayerIndex } from './player_selection.js';
-import { showErrorMessage } from './player_action_utils.js'
+import { GameConflictError, showErrorMessage } from './player_action_utils.js'
 
 export { completeForecast } from './action_card_requests.js';
 export { getActionCardSource } from './action_card_state.js';
@@ -164,6 +164,7 @@ function handleForecast(cardSource) {
     }
   })
   .catch(error => {
+    if (error instanceof GameConflictError) return;
     console.error('Error using Forecast card:', error);
     showErrorMessage(error.message || "Error using Forecast card. Please try again.");
   });

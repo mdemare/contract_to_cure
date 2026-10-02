@@ -7,6 +7,40 @@ import { promptHandLimit } from './hand_limit_prompt.js';
 
 let endTurnEventsModule = null;
 
+export const GAME_CONFLICT_MESSAGE = 'The game changed before your action was applied. Please retry.';
+
+// Thrown by request helpers whose callers must stop after a 409 has already
+// been reported and the game state refreshed.
+export class GameConflictError extends Error {
+  constructor(message = GAME_CONFLICT_MESSAGE) {
+    super(message);
+    this.name = 'GameConflictError';
+  }
+}
+
+export function isGameConflict(response) {
+  return response?.status === 409;
+}
+
+async function parseConflictBody(response) {
+  try {
+    return (await response.json()) || {};
+  } catch {
+    return {};
+  }
+}
+
+// A 409 means another request committed first and nothing was written. The
+// response carries the persisted game_state, which replaces the stale local
+// state; no other local state changes. Pass the already parsed body when the
+// caller has consumed the response. Resolves to the refreshed game state.
+export async function handleGameConflict(response, { result, loadState = loadGameState } = {}) {
+  const conflict = result ?? await parseConflictBody(response);
+  const gameState = await loadState(conflict.game_state || null);
+  showInvalidActionMessage(GAME_CONFLICT_MESSAGE);
+  return gameState;
+}
+
 // Function to initialize modules (call this at startup)
 export async function initializeModules() {
   endTurnEventsModule = await import('./end_turn_events.js');
@@ -64,7 +98,8 @@ async function handleSuccessfulAPIRequest(result, successMessage, eventData) {
   showSuccessMessage(result.message || successMessage);
 }
 
-// Generic handler for API requests and responses
+// Generic handler for API requests and responses. Resolves true only when the
+// request succeeded.
 export async function processAPIRequest(endpoint, requestData, successMessage, failurePrefix, eventData = null) {
   try {
     // Get CSRF token from meta tag
@@ -81,12 +116,17 @@ export async function processAPIRequest(endpoint, requestData, successMessage, f
     });
 
     // Process the response
+    if (isGameConflict(response)) {
+      await handleGameConflict(response);
+      return false;
+    }
     if (response.ok) {
       // Try to parse JSON
       const result = await response.json();
       if(!result) { throw new Error("no result")}
       if (result.status === 'success') {
         await handleSuccessfulAPIRequest(result, successMessage, eventData)
+        return true;
       } else if (result.status === 'action_unavailable') {
         // Action was not available, reload game state to ensure UI is in sync
         if (result.game_state) {
@@ -112,6 +152,7 @@ export async function processAPIRequest(endpoint, requestData, successMessage, f
   } catch (error) {
     showErrorMessage(`Network error: ${error.message}`);
   }
+  return false;
 }
 
 function dispatchMovementCardRequired(movementType, requestData) {
