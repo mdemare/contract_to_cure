@@ -393,8 +393,19 @@ export function handleHandLimitCheck(playerIndex, discardCount, completionCallba
         }, 500);
       }, 3000);
     } catch (error) {
-      if (!(error instanceof GameConflictError)) console.error('Error discarding cards:', error);
-      throw error;
+      if (!(error instanceof GameConflictError)) {
+        console.error('Error discarding cards:', error);
+        throw error;
+      }
+
+      // The refreshed state is authoritative: another request may already have
+      // resolved or changed this discard, so never retry against the stale hand.
+      const pending = pendingHandLimitFor(getCurrentGameState(), playerIndex);
+      if (pending) {
+        // Open the replacement before this dialog closes so it inherits the return focus.
+        handleHandLimitCheck(playerIndex, pending.discard_count, completionCallback);
+        return;
+      }
     }
 
     // Call completion callback
@@ -402,8 +413,14 @@ export function handleHandLimitCheck(playerIndex, discardCount, completionCallba
   }, {customTitle, playerIndex, hideCancel: true});
 }
 
+function pendingHandLimitFor(gameState, playerIndex) {
+  const pending = gameState?.gameStatus?.pending_hand_limit;
+  if (gameState?.gameStatus?.phase !== 'pending_discard' || pending?.player_index !== playerIndex) return null;
+  return pending;
+}
+
 // Throws when the discard was not applied. Mandatory discard stays open on
-// any failure, so after a 409 the player can retry against the refreshed hand.
+// other failures; after a 409 handleHandLimitCheck rebuilds or closes it.
 export async function submitHandLimitDiscard(playerIndex, cardNames) {
   const response = await fetch('/discard_cards', {
     method: 'POST',
@@ -418,7 +435,10 @@ export async function submitHandLimitDiscard(playerIndex, cardNames) {
   });
 
   if (isGameConflict(response)) {
-    await handleGameConflict(response);
+    // The open dialog reconciles itself with the refreshed pending discard.
+    await handleGameConflict(response, {
+      loadState: state => loadGameState(state, { promptPendingHandLimit: false })
+    });
     throw new GameConflictError('The game changed before your discard was applied.');
   }
   if (!response.ok) throw new Error('Unable to discard cards.');
