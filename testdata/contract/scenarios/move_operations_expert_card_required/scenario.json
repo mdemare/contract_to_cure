@@ -1,0 +1,27 @@
+{
+  "name": "move_operations_expert_card_required",
+  "description": "Operations Expert special move needs a card: card_required",
+  "save_before": "states/operations_expert_at_station.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/move",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "player_index": 3,
+      "destination": "Lima"
+    }
+  },
+  "response": {
+    "status": 200,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "success": false,
+      "status": "card_required",
+      "message": "Operations Expert requires a city card to move from a research station to any city",
+      "movement_type": "operations_expert_special"
+    }
+  },
+  "save_after": "unchanged"
+}

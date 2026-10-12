@@ -1,0 +1,20 @@
+{
+  "name": "treat_out_of_phase",
+  "description": "check_action error",
+  "save_before": "states/infect_phase.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/treat",
+    "headers": {},
+    "body": null
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "status": "error",
+      "message": "No more actions allowed"
+    }
+  },
+  "save_after": "unchanged"
+}

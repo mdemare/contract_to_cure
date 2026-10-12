@@ -1,0 +1,51 @@
+{
+  "name": "action_card_forecast",
+  "description": "Forecast, step 1: shows the first six cards of the infection deck array (the bottom of the draw pile)",
+  "save_before": "states/event_cards.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/action_card",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "card": "Forecast"
+    }
+  },
+  "response": {
+    "status": 200,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "status": "success",
+      "type": "forecast_view",
+      "message": "Choose the order for the infection cards",
+      "cards": [
+        {
+          "name": "Montreal",
+          "color": "blue"
+        },
+        {
+          "name": "Chicago",
+          "color": "blue"
+        },
+        {
+          "name": "Houston",
+          "color": "blue"
+        },
+        {
+          "name": "Tehran",
+          "color": "black"
+        },
+        {
+          "name": "Kabul",
+          "color": "black"
+        },
+        {
+          "name": "Mumbai",
+          "color": "black"
+        }
+      ]
+    }
+  },
+  "save_after": "scenarios/action_card_forecast/after.yaml"
+}

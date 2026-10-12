@@ -1,0 +1,27 @@
+{
+  "name": "move_card_mismatch",
+  "description": "Card name matches neither city",
+  "save_before": "states/base.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/move",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "player_index": 0,
+      "destination": "Paris",
+      "card_name": "Seoul"
+    }
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "success": false,
+      "status": "error",
+      "message": "Selected card does not match either the current location or destination"
+    }
+  },
+  "save_after": "unchanged"
+}

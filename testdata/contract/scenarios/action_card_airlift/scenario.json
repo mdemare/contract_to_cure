@@ -1,0 +1,241 @@
+{
+  "name": "action_card_airlift",
+  "description": "Airlift another player",
+  "save_before": "states/event_cards.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/action_card",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "card": "Airlift",
+      "player_index": 1,
+      "city": "Paris"
+    }
+  },
+  "response": {
+    "status": 200,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "success": true,
+      "status": "success",
+      "message": "Successfully Airlifted medic from Wuhan to Paris",
+      "game_state": {
+        "gameStatus": {
+          "actions_remaining": 4,
+          "phase": "player_actions",
+          "pending_hand_limit": null,
+          "turn": 1,
+          "gameOver": false,
+          "outbreaks": 0,
+          "infectionRate": 2,
+          "infectionRatePosition": 0,
+          "currentPlayerIndex": 0,
+          "forecast_active": false,
+          "forecast_cards": null,
+          "operations_expert_move_used": false
+        },
+        "diseaseCubes": {
+          "blue": {
+            "cured": false,
+            "eradicated": false,
+            "inSupply": 21,
+            "onBoard": {
+              "Paris": 3
+            }
+          },
+          "yellow": {
+            "cured": false,
+            "eradicated": false,
+            "inSupply": 23,
+            "onBoard": {
+              "Lagos": 1
+            }
+          },
+          "black": {
+            "cured": false,
+            "eradicated": false,
+            "inSupply": 22,
+            "onBoard": {
+              "Cairo": 2
+            }
+          },
+          "red": {
+            "cured": false,
+            "eradicated": false,
+            "inSupply": 21,
+            "onBoard": {
+              "Bangkok": 1,
+              "Wuhan": 2
+            }
+          }
+        },
+        "researchStations": {
+          "available": 5,
+          "locations": [
+            "Wuhan"
+          ]
+        },
+        "players": [
+          {
+            "role": "scientist",
+            "index": 0,
+            "location": "Wuhan",
+            "hand": [
+              {
+                "type": "action",
+                "name": "Forecast",
+                "index": 0
+              },
+              {
+                "type": "city",
+                "name": "Paris",
+                "color": "blue",
+                "index": 1
+              },
+              {
+                "type": "city",
+                "name": "Wuhan",
+                "color": "red",
+                "index": 2
+              },
+              {
+                "type": "city",
+                "name": "Beijing",
+                "color": "red",
+                "index": 3
+              },
+              {
+                "type": "city",
+                "name": "Shanghai",
+                "color": "red",
+                "index": 4
+              },
+              {
+                "type": "city",
+                "name": "Seoul",
+                "color": "red",
+                "index": 5
+              }
+            ]
+          },
+          {
+            "role": "medic",
+            "index": 1,
+            "location": "Paris",
+            "hand": [
+              {
+                "type": "action",
+                "name": "Government Grant",
+                "index": 0
+              },
+              {
+                "type": "action",
+                "name": "One Quiet Night",
+                "index": 1
+              },
+              {
+                "type": "city",
+                "name": "Cairo",
+                "color": "black",
+                "index": 2
+              },
+              {
+                "type": "city",
+                "name": "Lagos",
+                "color": "yellow",
+                "index": 3
+              }
+            ]
+          },
+          {
+            "role": "dispatcher",
+            "index": 2,
+            "location": "London",
+            "hand": [
+              {
+                "type": "action",
+                "name": "Resilient Population",
+                "index": 0
+              },
+              {
+                "type": "city",
+                "name": "London",
+                "color": "blue",
+                "index": 1
+              },
+              {
+                "type": "city",
+                "name": "Lima",
+                "color": "yellow",
+                "index": 2
+              }
+            ]
+          },
+          {
+            "role": "operations_expert",
+            "index": 3,
+            "location": "Paris",
+            "hand": [
+              {
+                "type": "city",
+                "name": "Kyiv",
+                "color": "black",
+                "index": 0
+              },
+              {
+                "type": "city",
+                "name": "Tokyo",
+                "color": "red",
+                "index": 1
+              }
+            ]
+          }
+        ],
+        "decks": {
+          "playerDeck": 7,
+          "discardPile": [
+            {
+              "type": "city",
+              "name": "Havana",
+              "color": "yellow"
+            },
+            {
+              "type": "action",
+              "name": "Airlift"
+            }
+          ],
+          "infectionDiscardPile": [
+            {
+              "type": "city",
+              "name": "Wuhan",
+              "color": "red"
+            },
+            {
+              "type": "city",
+              "name": "Bangkok",
+              "color": "red"
+            },
+            {
+              "type": "city",
+              "name": "Paris",
+              "color": "blue"
+            },
+            {
+              "type": "city",
+              "name": "Lagos",
+              "color": "yellow"
+            },
+            {
+              "type": "city",
+              "name": "Cairo",
+              "color": "black"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "save_after": "scenarios/action_card_airlift/after.yaml"
+}

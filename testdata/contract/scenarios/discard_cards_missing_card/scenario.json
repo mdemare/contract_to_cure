@@ -1,0 +1,28 @@
+{
+  "name": "discard_cards_missing_card",
+  "description": "Card not in hand",
+  "save_before": "states/pending_discard.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/discard_cards",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "player_index": 1,
+      "card_names": [
+        "Tokyo"
+      ]
+    }
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "success": false,
+      "status": "error",
+      "message": "Player does not have the Tokyo card"
+    }
+  },
+  "save_after": "unchanged"
+}

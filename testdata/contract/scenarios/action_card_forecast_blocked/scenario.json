@@ -1,0 +1,26 @@
+{
+  "name": "action_card_forecast_blocked",
+  "description": "Other event cards during Forecast: error with HTTP 200",
+  "save_before": "states/forecast_active.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/action_card",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "card": "Airlift",
+      "player_index": 0,
+      "city": "Paris"
+    }
+  },
+  "response": {
+    "status": 200,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "status": "error",
+      "message": "Cannot perform action while Forecast is active. Please complete the Forecast action first."
+    }
+  },
+  "save_after": "unchanged"
+}

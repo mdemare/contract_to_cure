@@ -1,0 +1,25 @@
+{
+  "name": "retrieve_city_card",
+  "description": "Only event cards can be retrieved",
+  "save_before": "states/contingency_planner.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/retrieve",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "action_card_name": "Havana"
+    }
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "success": false,
+      "status": "error",
+      "message": "Card 'Havana' is not an action card"
+    }
+  },
+  "save_after": "unchanged"
+}

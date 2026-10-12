@@ -1,0 +1,28 @@
+{
+  "name": "discard_cards_not_pending",
+  "description": "No discard is pending",
+  "save_before": "states/base.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/discard_cards",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "player_index": 0,
+      "card_names": [
+        "Wuhan"
+      ]
+    }
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "success": false,
+      "status": "error",
+      "message": "No hand-limit discard is pending"
+    }
+  },
+  "save_after": "unchanged"
+}

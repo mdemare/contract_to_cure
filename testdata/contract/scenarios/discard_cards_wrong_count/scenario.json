@@ -1,0 +1,29 @@
+{
+  "name": "discard_cards_wrong_count",
+  "description": "Must discard exactly the excess",
+  "save_before": "states/pending_discard.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/discard_cards",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "player_index": 1,
+      "card_names": [
+        "Riyadh",
+        "Baghdad"
+      ]
+    }
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "success": false,
+      "status": "error",
+      "message": "Must discard exactly 1 card(s) to resolve hand limit"
+    }
+  },
+  "save_after": "unchanged"
+}

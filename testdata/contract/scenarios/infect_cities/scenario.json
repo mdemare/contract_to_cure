@@ -1,0 +1,243 @@
+{
+  "name": "infect_cities",
+  "description": "Infect two cities and start the next turn",
+  "save_before": "states/infect_phase.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/infect_cities",
+    "headers": {},
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "success": true,
+      "status": "success",
+      "message": null,
+      "end_turn": true,
+      "end_turn_events": {
+        "game_over": false,
+        "events": [
+          {
+            "type": "infect_city",
+            "city": "Stockholm",
+            "color": "blue"
+          },
+          {
+            "type": "infect_city",
+            "city": "Nairobi",
+            "color": "yellow"
+          },
+          {
+            "message": "TURN START: Medic",
+            "type": "header"
+          }
+        ]
+      },
+      "game_state": {
+        "gameStatus": {
+          "actions_remaining": 4,
+          "phase": "player_actions",
+          "pending_hand_limit": null,
+          "turn": 2,
+          "gameOver": false,
+          "outbreaks": 0,
+          "infectionRate": 2,
+          "infectionRatePosition": 0,
+          "currentPlayerIndex": 1,
+          "forecast_active": false,
+          "forecast_cards": null,
+          "operations_expert_move_used": false
+        },
+        "diseaseCubes": {
+          "blue": {
+            "cured": false,
+            "eradicated": false,
+            "inSupply": 20,
+            "onBoard": {
+              "Paris": 3,
+              "Stockholm": 1
+            }
+          },
+          "yellow": {
+            "cured": false,
+            "eradicated": false,
+            "inSupply": 22,
+            "onBoard": {
+              "Lagos": 1,
+              "Nairobi": 1
+            }
+          },
+          "black": {
+            "cured": false,
+            "eradicated": false,
+            "inSupply": 22,
+            "onBoard": {
+              "Cairo": 2
+            }
+          },
+          "red": {
+            "cured": false,
+            "eradicated": false,
+            "inSupply": 21,
+            "onBoard": {
+              "Bangkok": 1,
+              "Wuhan": 2
+            }
+          }
+        },
+        "researchStations": {
+          "available": 5,
+          "locations": [
+            "Wuhan"
+          ]
+        },
+        "players": [
+          {
+            "role": "scientist",
+            "index": 0,
+            "location": "Wuhan",
+            "hand": [
+              {
+                "type": "city",
+                "name": "Paris",
+                "color": "blue",
+                "index": 0
+              },
+              {
+                "type": "city",
+                "name": "Wuhan",
+                "color": "red",
+                "index": 1
+              },
+              {
+                "type": "city",
+                "name": "Beijing",
+                "color": "red",
+                "index": 2
+              },
+              {
+                "type": "city",
+                "name": "Shanghai",
+                "color": "red",
+                "index": 3
+              },
+              {
+                "type": "city",
+                "name": "Seoul",
+                "color": "red",
+                "index": 4
+              }
+            ]
+          },
+          {
+            "role": "medic",
+            "index": 1,
+            "location": "Wuhan",
+            "hand": [
+              {
+                "type": "city",
+                "name": "Cairo",
+                "color": "black",
+                "index": 0
+              },
+              {
+                "type": "city",
+                "name": "Lagos",
+                "color": "yellow",
+                "index": 1
+              }
+            ]
+          },
+          {
+            "role": "dispatcher",
+            "index": 2,
+            "location": "London",
+            "hand": [
+              {
+                "type": "city",
+                "name": "London",
+                "color": "blue",
+                "index": 0
+              },
+              {
+                "type": "city",
+                "name": "Lima",
+                "color": "yellow",
+                "index": 1
+              }
+            ]
+          },
+          {
+            "role": "operations_expert",
+            "index": 3,
+            "location": "Paris",
+            "hand": [
+              {
+                "type": "city",
+                "name": "Kyiv",
+                "color": "black",
+                "index": 0
+              },
+              {
+                "type": "city",
+                "name": "Tokyo",
+                "color": "red",
+                "index": 1
+              }
+            ]
+          }
+        ],
+        "decks": {
+          "playerDeck": 7,
+          "discardPile": [
+            {
+              "type": "city",
+              "name": "Havana",
+              "color": "yellow"
+            }
+          ],
+          "infectionDiscardPile": [
+            {
+              "type": "city",
+              "name": "Wuhan",
+              "color": "red"
+            },
+            {
+              "type": "city",
+              "name": "Bangkok",
+              "color": "red"
+            },
+            {
+              "type": "city",
+              "name": "Paris",
+              "color": "blue"
+            },
+            {
+              "type": "city",
+              "name": "Lagos",
+              "color": "yellow"
+            },
+            {
+              "type": "city",
+              "name": "Cairo",
+              "color": "black"
+            },
+            {
+              "type": "city",
+              "name": "Stockholm",
+              "color": "blue"
+            },
+            {
+              "type": "city",
+              "name": "Nairobi",
+              "color": "yellow"
+            }
+          ]
+        }
+      }
+    }
+  },
+  "save_after": "scenarios/infect_cities/after.yaml"
+}
