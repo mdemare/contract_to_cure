@@ -46,6 +46,36 @@ class TestMakeCheck < Minitest::Test
     assert_includes stdout, 'JavaScript failure sentinel'
   end
 
+  def test_check_propagates_go_failures
+    root = File.expand_path('..', __dir__)
+    Dir.mktmpdir('make-check') do |directory|
+      FileUtils.cp(File.join(root, 'Makefile'), directory)
+      FileUtils.cp(File.join(root, 'go.mod'), directory)
+      # Isolate the Go stage; Ruby and JavaScript are covered above.
+      FileUtils.mkdir_p(File.join(directory, 'bin'))
+      %w[bundle node].each do |command|
+        stub = File.join(directory, 'bin', command)
+        File.write(stub, "#!/bin/sh\nexit 0\n")
+        File.chmod(0755, stub)
+      end
+      FileUtils.mkdir_p(File.join(directory, 'src'))
+      File.write(File.join(directory, 'src/probe_test.go'), <<~GO)
+        package probe
+
+        import "testing"
+
+        func TestProbe(t *testing.T) { t.Fatal("Go failure sentinel") }
+      GO
+      stdout, stderr, status = Open3.capture3(
+        { 'PATH' => "#{directory}/bin:#{ENV.fetch('PATH')}" },
+        'make', 'check', chdir: directory
+      )
+
+      refute status.success?, [stdout, stderr].join("\n")
+      assert_includes stdout, 'Go failure sentinel'
+    end
+  end
+
   private
 
   def run_javascript_check(assertion)
@@ -54,10 +84,12 @@ class TestMakeCheck < Minitest::Test
       FileUtils.cp(File.join(root, 'Makefile'), directory)
       FileUtils.mkdir_p(File.join(directory, 'test/js'))
       FileUtils.mkdir_p(File.join(directory, 'bin'))
-      # Isolate the JavaScript stage; Ruby execution is covered by run_check.
-      bundle = File.join(directory, 'bin/bundle')
-      File.write(bundle, "#!/bin/sh\nexit 0\n")
-      File.chmod(0755, bundle)
+      # Isolate the JavaScript stage; Ruby and Go execution are covered elsewhere.
+      %w[bundle go].each do |command|
+        stub = File.join(directory, 'bin', command)
+        File.write(stub, "#!/bin/sh\nexit 0\n")
+        File.chmod(0755, stub)
+      end
       File.write(File.join(directory, 'check'), '')
       File.write(File.join(directory, 'test/js/probe.mjs'), <<~JS)
         import test from 'node:test';

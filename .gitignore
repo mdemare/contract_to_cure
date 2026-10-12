@@ -72,3 +72,6 @@ yarn-debug.log*
 !/storage/.keep
 /public/uploads
 .version
+
+# Go binary (make go-build)
+/main
