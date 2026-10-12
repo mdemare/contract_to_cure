@@ -32,4 +32,15 @@ class TestCiWorkflow < Minitest::Test
     node_version = steps[node_index].fetch('with', {})['node-version'].to_s
     assert_operator node_version[/\A\d+/].to_i, :>=, 22
   end
+
+  # make check also runs the Go suite while both backends exist (cc-370).
+  def test_ci_sets_up_go_from_go_mod_before_make_check
+    go_index = steps.index { it['uses'].to_s.start_with?('actions/setup-go@') }
+    check_index = steps.index { it['run'].to_s.lines.map(&:strip).include?('make check') }
+    assert go_index, 'CI must set up Go'
+    assert go_index < check_index, 'Go must be set up before make check'
+
+    go_mod = File.read(File.expand_path('../go.mod', __dir__))
+    assert_equal go_mod[/^go (\S+)$/, 1], steps[go_index].fetch('with', {})['go-version'].to_s
+  end
 end
