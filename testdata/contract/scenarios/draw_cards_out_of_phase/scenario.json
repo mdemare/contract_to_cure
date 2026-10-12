@@ -1,0 +1,20 @@
+{
+  "name": "draw_cards_out_of_phase",
+  "description": "Wrong phase",
+  "save_before": "states/base.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/draw_cards",
+    "headers": {},
+    "body": null
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "status": "error",
+      "message": "Cannot perform this action unless game phase is draw_cards"
+    }
+  },
+  "save_after": "unchanged"
+}

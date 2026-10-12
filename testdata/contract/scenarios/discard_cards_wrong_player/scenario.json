@@ -1,0 +1,28 @@
+{
+  "name": "discard_cards_wrong_player",
+  "description": "Only the player over the limit may discard",
+  "save_before": "states/pending_discard.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/discard_cards",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "player_index": 0,
+      "card_names": [
+        "Wuhan"
+      ]
+    }
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "success": false,
+      "status": "error",
+      "message": "Only the player over the hand limit may discard"
+    }
+  },
+  "save_after": "unchanged"
+}

@@ -1,0 +1,22 @@
+{
+  "name": "retrieve_missing_parameters",
+  "description": "Schema failure",
+  "save_before": "states/contingency_planner.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/retrieve",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {}
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "status": "error",
+      "message": "Missing required parameters"
+    }
+  },
+  "save_after": "unchanged"
+}

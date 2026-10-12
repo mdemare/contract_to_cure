@@ -1,0 +1,22 @@
+{
+  "name": "restart_game_forecast_active",
+  "description": "Even restart is blocked by an unfinished Forecast",
+  "save_before": "states/forecast_active.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/restart_game",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {}
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "status": "error",
+      "message": "Cannot perform action while Forecast is active. Please complete the Forecast action first."
+    }
+  },
+  "save_after": "unchanged"
+}

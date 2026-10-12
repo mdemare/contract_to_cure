@@ -1,0 +1,26 @@
+{
+  "name": "action_card_resilient_population_not_in_discard",
+  "description": "City not in the infection discard pile",
+  "save_before": "states/event_cards.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/action_card",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "card": "Resilient Population",
+      "city": "Tokyo"
+    }
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "success": false,
+      "status": "error",
+      "message": "City 'Tokyo' not found in infection discard pile"
+    }
+  },
+  "save_after": "unchanged"
+}

@@ -1,0 +1,25 @@
+{
+  "name": "move_forecast_active",
+  "description": "Blocked by an unfinished Forecast",
+  "save_before": "states/forecast_active.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/move",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "player_index": 0,
+      "destination": "Bangkok"
+    }
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "status": "error",
+      "message": "Cannot perform action while Forecast is active. Please complete the Forecast action first."
+    }
+  },
+  "save_after": "unchanged"
+}

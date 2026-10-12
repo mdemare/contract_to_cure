@@ -1,0 +1,27 @@
+{
+  "name": "action_card_forecast_invalid_order",
+  "description": "Not a permutation: error with HTTP 200",
+  "save_before": "states/forecast_active.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/action_card",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "card": "Forecast",
+      "card_order": [
+        "Paris"
+      ]
+    }
+  },
+  "response": {
+    "status": 200,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "status": "error",
+      "message": "Invalid card order provided"
+    }
+  },
+  "save_after": "unchanged"
+}

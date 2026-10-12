@@ -1,0 +1,26 @@
+{
+  "name": "move_dispatcher_other_pawn_rejected",
+  "description": "A non-dispatcher cannot move another pawn",
+  "save_before": "states/base.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/move",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "player_index": 1,
+      "destination": "Bangkok"
+    }
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "success": false,
+      "status": "error",
+      "message": "Current player cannot move another player's pawn unless they are the Dispatcher"
+    }
+  },
+  "save_after": "unchanged"
+}

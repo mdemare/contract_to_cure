@@ -1,0 +1,25 @@
+{
+  "name": "move_out_of_phase",
+  "description": "check_action error (no success key)",
+  "save_before": "states/draw_phase.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/move",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "player_index": 0,
+      "destination": "Bangkok"
+    }
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "status": "error",
+      "message": "No more actions allowed"
+    }
+  },
+  "save_after": "unchanged"
+}

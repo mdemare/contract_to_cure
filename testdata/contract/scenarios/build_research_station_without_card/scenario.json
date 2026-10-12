@@ -1,0 +1,21 @@
+{
+  "name": "build_research_station_without_card",
+  "description": "Missing city card",
+  "save_before": "states/scientist_in_bangkok.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/build_research_station",
+    "headers": {},
+    "body": null
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "success": false,
+      "status": "error",
+      "message": "Player does not have the Bangkok city card"
+    }
+  },
+  "save_after": "unchanged"
+}

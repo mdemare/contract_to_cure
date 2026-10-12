@@ -1,0 +1,27 @@
+{
+  "name": "action_card_not_held",
+  "description": "Nobody holds the card",
+  "save_before": "states/base.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/action_card",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "card": "Airlift",
+      "player_index": 0,
+      "city": "Paris"
+    }
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "success": false,
+      "status": "error",
+      "message": "No player has the Airlift card"
+    }
+  },
+  "save_after": "unchanged"
+}

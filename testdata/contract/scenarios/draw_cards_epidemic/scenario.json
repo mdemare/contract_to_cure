@@ -1,0 +1,246 @@
+{
+  "name": "draw_cards_epidemic",
+  "description": "Epidemic: infection rate, bottom card with outbreak, intensify",
+  "save_before": "states/draw_phase_epidemic.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/draw_cards",
+    "headers": {},
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "success": true,
+      "status": "success",
+      "message": null,
+      "end_turn": true,
+      "end_turn_events": {
+        "game_over": false,
+        "events": [
+          {
+            "type": "draw_card",
+            "player": 0,
+            "card": {
+              "type": "epidemic",
+              "name": "Event:Epidemic"
+            }
+          },
+          {
+            "type": "increase_infection_rate",
+            "new_rate": 2
+          },
+          {
+            "type": "outbreak",
+            "city": "Bangkok",
+            "color": "red",
+            "outbreak_chain": [
+              "Bangkok"
+            ]
+          },
+          {
+            "type": "outbreak",
+            "city": "Bangkok",
+            "color": "red",
+            "outbreak_chain": [
+              "Bangkok"
+            ]
+          },
+          {
+            "type": "infect_new_city",
+            "city": "Bangkok",
+            "color": "red",
+            "count": 3,
+            "epidemic": true
+          },
+          {
+            "type": "draw_card",
+            "player": 0,
+            "card": {
+              "type": "city",
+              "name": "Istanbul",
+              "color": "black"
+            }
+          },
+          {
+            "type": "wait_infect_cities"
+          }
+        ]
+      },
+      "game_state": {
+        "gameStatus": {
+          "actions_remaining": 0,
+          "phase": "infect_cities",
+          "pending_hand_limit": null,
+          "turn": 1,
+          "gameOver": false,
+          "outbreaks": 1,
+          "infectionRate": 2,
+          "infectionRatePosition": 1,
+          "currentPlayerIndex": 0,
+          "forecast_active": false,
+          "forecast_cards": null,
+          "operations_expert_move_used": false
+        },
+        "diseaseCubes": {
+          "blue": {
+            "cured": false,
+            "eradicated": false,
+            "inSupply": 21,
+            "onBoard": {
+              "Paris": 3
+            }
+          },
+          "yellow": {
+            "cured": false,
+            "eradicated": false,
+            "inSupply": 23,
+            "onBoard": {
+              "Lagos": 1
+            }
+          },
+          "black": {
+            "cured": false,
+            "eradicated": false,
+            "inSupply": 22,
+            "onBoard": {
+              "Cairo": 2
+            }
+          },
+          "red": {
+            "cured": false,
+            "eradicated": false,
+            "inSupply": 16,
+            "onBoard": {
+              "Bangkok": 3,
+              "Jakarta": 1,
+              "Hong Kong": 1,
+              "Wuhan": 3
+            }
+          }
+        },
+        "researchStations": {
+          "available": 5,
+          "locations": [
+            "Wuhan"
+          ]
+        },
+        "players": [
+          {
+            "role": "scientist",
+            "index": 0,
+            "location": "Wuhan",
+            "hand": [
+              {
+                "type": "city",
+                "name": "Istanbul",
+                "color": "black",
+                "index": 0
+              },
+              {
+                "type": "city",
+                "name": "Paris",
+                "color": "blue",
+                "index": 1
+              },
+              {
+                "type": "city",
+                "name": "Wuhan",
+                "color": "red",
+                "index": 2
+              },
+              {
+                "type": "city",
+                "name": "Beijing",
+                "color": "red",
+                "index": 3
+              },
+              {
+                "type": "city",
+                "name": "Shanghai",
+                "color": "red",
+                "index": 4
+              },
+              {
+                "type": "city",
+                "name": "Seoul",
+                "color": "red",
+                "index": 5
+              }
+            ]
+          },
+          {
+            "role": "medic",
+            "index": 1,
+            "location": "Wuhan",
+            "hand": [
+              {
+                "type": "city",
+                "name": "Cairo",
+                "color": "black",
+                "index": 0
+              },
+              {
+                "type": "city",
+                "name": "Lagos",
+                "color": "yellow",
+                "index": 1
+              }
+            ]
+          },
+          {
+            "role": "dispatcher",
+            "index": 2,
+            "location": "London",
+            "hand": [
+              {
+                "type": "city",
+                "name": "London",
+                "color": "blue",
+                "index": 0
+              },
+              {
+                "type": "city",
+                "name": "Lima",
+                "color": "yellow",
+                "index": 1
+              }
+            ]
+          },
+          {
+            "role": "operations_expert",
+            "index": 3,
+            "location": "Paris",
+            "hand": [
+              {
+                "type": "city",
+                "name": "Kyiv",
+                "color": "black",
+                "index": 0
+              },
+              {
+                "type": "city",
+                "name": "Tokyo",
+                "color": "red",
+                "index": 1
+              }
+            ]
+          }
+        ],
+        "decks": {
+          "playerDeck": 6,
+          "discardPile": [
+            {
+              "type": "city",
+              "name": "Havana",
+              "color": "yellow"
+            }
+          ],
+          "infectionDiscardPile": []
+        }
+      }
+    }
+  },
+  "save_after": "scenarios/draw_cards_epidemic/after.yaml"
+}

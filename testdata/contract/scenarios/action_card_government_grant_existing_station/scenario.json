@@ -1,0 +1,26 @@
+{
+  "name": "action_card_government_grant_existing_station",
+  "description": "Station already exists",
+  "save_before": "states/event_cards.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/action_card",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "card": "Government Grant",
+      "city": "Wuhan"
+    }
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "success": false,
+      "status": "error",
+      "message": "Research station already exists in Wuhan"
+    }
+  },
+  "save_after": "unchanged"
+}

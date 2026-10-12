@@ -1,0 +1,20 @@
+{
+  "name": "infect_cities_out_of_phase",
+  "description": "Wrong phase",
+  "save_before": "states/draw_phase.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/infect_cities",
+    "headers": {},
+    "body": null
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "status": "error",
+      "message": "Cannot perform this action unless game phase is infect_cities"
+    }
+  },
+  "save_after": "unchanged"
+}

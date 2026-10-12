@@ -1,0 +1,22 @@
+{
+  "name": "move_missing_parameters",
+  "description": "Schema failure: Missing required parameters",
+  "save_before": "states/base.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/move",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {}
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "status": "error",
+      "message": "Missing required parameters"
+    }
+  },
+  "save_after": "unchanged"
+}

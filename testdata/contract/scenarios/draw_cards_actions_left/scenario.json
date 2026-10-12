@@ -1,0 +1,19 @@
+{
+  "name": "draw_cards_actions_left",
+  "description": "Draw phase with actions left: bare success, nothing changes",
+  "save_before": "states/draw_phase_actions_left.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/draw_cards",
+    "headers": {},
+    "body": null
+  },
+  "response": {
+    "status": 200,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "status": "success"
+    }
+  },
+  "save_after": "unchanged"
+}

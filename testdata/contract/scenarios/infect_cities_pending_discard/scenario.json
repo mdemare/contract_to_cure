@@ -1,0 +1,20 @@
+{
+  "name": "infect_cities_pending_discard",
+  "description": "Pending hand-limit discard",
+  "save_before": "states/pending_discard.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/infect_cities",
+    "headers": {},
+    "body": null
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "status": "error",
+      "message": "Must resolve pending hand-limit discard before continuing"
+    }
+  },
+  "save_after": "unchanged"
+}
