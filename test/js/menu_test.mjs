@@ -26,7 +26,7 @@ globalThis.document = {
 };
 globalThis.window = {};
 
-const { restartGame } = await import('../../public/js/menu.js');
+const { restartGame, handleLogin } = await import('../../public/js/menu.js');
 
 test('successful menu restart reloads state once and dismisses the game-over dialog', async () => {
   let stateReloads = 0;
@@ -91,4 +91,17 @@ test('menu restart conflict refreshes from the conflict state and keeps the game
   assert.equal(notifications.length, 1);
   assert.equal(notifications[0].classList.contains('warning'), true);
   assert.match(notifications[0].textContent, /game changed/i);
+});
+
+test('menu login navigates to GET /login instead of posting a form', () => {
+  const menuToggle = { classList: { remove() {} }, setAttribute() {} };
+  const dropdownMenu = { classList: { remove() {} } };
+  document.getElementById = id => ({ 'menu-toggle': menuToggle, 'dropdown-menu': dropdownMenu })[id] || null;
+  window.location = '/';
+  notifications.length = 0;
+
+  handleLogin();
+
+  assert.equal(window.location, '/login');
+  assert.equal(notifications.length, 0);
 });

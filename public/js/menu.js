@@ -125,24 +125,9 @@ function handleNewGame() {
   }
 }
 
-function handleLogin() {
+export function handleLogin() {
   closeMenu();
-  
-  const form = document.createElement('form');
-  form.method = 'POST';
-  form.action = '/auth/google_oauth2';
-  
-  const csrfToken = document.querySelector('meta[name="csrf-token"]')?.content;
-  if (csrfToken) {
-    const csrfInput = document.createElement('input');
-    csrfInput.type = 'hidden';
-    csrfInput.name = 'authenticity_token';
-    csrfInput.value = csrfToken;
-    form.appendChild(csrfInput);
-  }
-  
-  document.body.appendChild(form);
-  form.submit();
+  window.location = '/login';
 }
 
 function handleLogout() {
