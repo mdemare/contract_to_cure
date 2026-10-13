@@ -133,7 +133,7 @@ The game automatically saves state to `current_game.yaml` after each action, all
 After installing the Ruby bundle, run `make check` from the repository root.
 This requires GNU Make, Node.js 22+ and Go (the version in `go.mod`) and runs the
 full Ruby suite, all JavaScript tests in `test/js/*.mjs`, and then `go vet` and
-`go test` for the Go port under `src/` (`make go-vet go-test`; `make go-build`
+`go test` for the Go port under `src/` (`make go-vet go-test`; `make build`
 builds `./main`). A failed check stops the command with a
 nonzero exit status and prints the failing test details. Tests use mock Redis
 by default, so a running Redis server is not required.

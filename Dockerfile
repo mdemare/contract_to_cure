@@ -1,39 +1,21 @@
-# Single-stage production build
-FROM ruby:4.0.7-slim-bookworm
+# Runtime image for the Go binary. `make` builds ./main on the host
+# (CGO_ENABLED=0, so it is static) before docker compose builds this image.
+FROM alpine:3.24
 
-# Install dependencies
-RUN apt-get update -qq && apt-get install -y \
-  build-essential \
-  libpq-dev \
-  libyaml-dev \
-  curl \
-  redis-tools \
-  sqlite3 \
-  libsqlite3-dev \
-  && rm -rf /var/lib/apt/lists/*
-
-# Create non-root user
-RUN useradd -m -u 1000 rails
+ARG UID=1000
+ARG GID=1000
+RUN addgroup -g "$GID" app && adduser -u "$UID" -G app -s /bin/sh -D app
 
 WORKDIR /app
 
-# Copy Gemfile first for better caching
-COPY Gemfile Gemfile.lock .ruby-version ./
+# .version (the deployed commit count) is written by the deploy scripts; the
+# glob keeps a local build working without it.
+COPY main .versio[n] ./
+# public/cities.json is read at runtime; nginx serves the rest of public/
+# from the checkout.
+COPY public ./public
 
-# Install gems
-RUN bundle config set --local without 'development test' && \
-    bundle install --jobs 4
-
-# Change ownership to rails user
-RUN chown -R rails:rails /usr/local/bundle
-
-# Copy the rest of the application
-COPY . .
-
-# Change ownership to rails user
-RUN chown -R rails:rails /app
-
-# Switch to non-root user
-USER rails
+USER app
 
 EXPOSE 2583
+CMD ["./main"]

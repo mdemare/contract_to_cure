@@ -1,0 +1,6 @@
+# The image only needs the binary, .version and public/ (see Dockerfile).
+# Everything else, including .env and .git, stays out of the build context.
+*
+!main
+!.version
+!public

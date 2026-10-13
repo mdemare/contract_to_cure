@@ -1,5 +1,6 @@
-// Command main is the Go port of the Rails backend (epic cc-368). It is built
-// and tested next to Rails but not deployed until the cutover ticket.
+// Command main is the Go port of the Rails backend (epic cc-368). `make`
+// builds it and the Docker image runs it (cc-425); the Rails code stays in the
+// repository until the cutover is verified.
 package main
 
 import (

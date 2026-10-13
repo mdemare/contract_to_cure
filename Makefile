@@ -1,7 +1,7 @@
-.PHONY: all docker loc check go-build go-test go-vet
+.PHONY: all build docker loc check go-test go-vet
 
-# Default target
-all: docker
+# Default target (push.sh, staging.sh): build the binary, then the image
+all: build docker
 
 check:
 	BUNDLE_GEMFILE="$(CURDIR)/Gemfile" BUNDLE_LOCKFILE="$(CURDIR)/Gemfile.lock" \
@@ -9,8 +9,8 @@ check:
 	node --experimental-default-type=module --test test/js/*.mjs
 	@$(MAKE) --no-print-directory go-vet go-test
 
-# Go port (epic cc-368); not deployed until cutover
-go-build:
+# Static binary that the Docker image copies
+build:
 	CGO_ENABLED=0 go build -o main ./src
 
 go-test:
@@ -19,7 +19,7 @@ go-test:
 go-vet:
 	go vet ./...
 
-# Build Docker image
+# Build Docker image (needs ./main from build)
 docker:
 	@echo "Building Docker image..."
 	docker compose -f $(COMPOSE_FILE) build

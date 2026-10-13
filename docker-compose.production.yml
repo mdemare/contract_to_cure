@@ -17,9 +17,9 @@ services:
     environment:
       PORT: "2583"
     restart: unless-stopped
-    command: ["bundle", "exec", "puma", "-C", "config/puma.rb"]
+    command: ["./main"]
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:2583/up"]
+      test: ["CMD", "wget", "-q", "-O", "/dev/null", "http://localhost:2583/up"]
       interval: 30s
       timeout: 10s
       retries: 3
