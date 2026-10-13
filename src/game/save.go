@@ -46,7 +46,8 @@ func Load(ctx context.Context, st *store.Store, m *Map, playersCount int, diffic
 // values Rails derives on load, players_count and current_player, are
 // methods here (PlayersCount, CurrentPlayer), so they always follow Players
 // and CurrentPlayerIdx. Like Rails, enum values are taken as saved; only a
-// city's cube count and the current player index are checked.
+// city's cube count and the current and pending-discard player indexes are
+// checked.
 func FromSave(s *store.Save) (*GameState, error) {
 	st := s.Status
 	g := &GameState{
@@ -95,6 +96,10 @@ func FromSave(s *store.Save) (*GameState, error) {
 	// CurrentPlayer indexes Players directly (cc-439).
 	if g.CurrentPlayerIdx < 0 || g.CurrentPlayerIdx >= len(g.Players) {
 		return nil, fmt.Errorf("current_player_idx %d is not one of %d players", g.CurrentPlayerIdx, len(g.Players))
+	}
+	// So does the pending discard's player (cc-444).
+	if p := g.PendingHandLimit; p != nil && (p.PlayerIndex < 0 || p.PlayerIndex >= len(g.Players)) {
+		return nil, fmt.Errorf("pending_hand_limit player_index %d is not one of %d players", p.PlayerIndex, len(g.Players))
 	}
 	return g, nil
 }

@@ -152,6 +152,7 @@ func TestDerivedValuesAreRecomputed(t *testing.T) {
 
 func TestUndecodableSavesAreErrors(t *testing.T) {
 	base := string(readFixture(t, "states/base.yaml"))
+	pending := string(readFixture(t, "states/pending_discard.yaml"))
 	cases := map[string]string{
 		"not yaml":         "---\n:game_status: [\n",
 		"marshal":          "\x04\bo:\x0eGameState\x00",
@@ -162,6 +163,9 @@ func TestUndecodableSavesAreErrors(t *testing.T) {
 		// Rails left current_player nil or wrapped it (cc-439).
 		"current player past the end": strings.Replace(base, ":current_player_idx: 0", ":current_player_idx: 4", 1),
 		"negative current player":     strings.Replace(base, ":current_player_idx: 0", ":current_player_idx: -1", 1),
+		// Rails indexed @players with it and failed later (cc-444).
+		"pending discard player past the end": strings.Replace(pending, ":player_index: 1", ":player_index: 4", 1),
+		"negative pending discard player":     strings.Replace(pending, ":player_index: 1", ":player_index: -1", 1),
 	}
 	for name, data := range cases {
 		if _, err := DecodeSave([]byte(data), "heroic"); err == nil {

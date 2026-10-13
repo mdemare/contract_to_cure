@@ -1040,6 +1040,25 @@ class TestApiEndpoints < TestHelper
     end
   end
 
+  # cc-444: a pending_hand_limit player_index outside the players used to
+  # load, and @players[player_index] then gave nil (a later 500) or, for -1,
+  # the last player. It is now an undecodable save, like cc-439.
+  def test_save_with_out_of_range_pending_hand_limit_player_starts_new_game
+    [4, -1].each do |idx|
+      GameState.new(4, :heroic).save_game_state
+      saved_state = YAML.load(@redis.get(@test_redis_key), permitted_classes: [Symbol])
+      saved_state[:game_status][:phase] = 'pending_discard'
+      saved_state[:game_status][:pending_hand_limit] = { player_index: idx, discard_count: 1, return_phase: 'player_actions' }
+      @redis.set(@test_redis_key, YAML.dump(saved_state))
+
+      assert_nil GameState.load_from_redis(@test_redis_key), "pending player_index #{idx}"
+
+      get '/game_state.json'
+      assert_successful_response(last_response)
+      assert_nil JSON.parse(last_response.body)['gameStatus']['pending_hand_limit'], "pending player_index #{idx}"
+    end
+  end
+
   def test_operations_expert_special_move_valid
     create_game_with_custom_state do |state|
       # Set first player as Operations Expert

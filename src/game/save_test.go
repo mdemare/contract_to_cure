@@ -159,15 +159,32 @@ func TestFromSaveRejectsOutOfRangeCurrentPlayer(t *testing.T) {
 	}
 }
 
+// The pending discard's player is indexed the same way (cc-444).
+func TestFromSaveRejectsOutOfRangePendingHandLimitPlayer(t *testing.T) {
+	for _, idx := range []int{-1, 4} {
+		save, err := store.DecodeSave(readFixture(t, "states/pending_discard.yaml"), "heroic")
+		if err != nil {
+			t.Fatal(err)
+		}
+		save.Status.PendingHandLimit.PlayerIndex = idx
+		if _, err := game.FromSave(save); err == nil {
+			t.Errorf("pending_hand_limit player_index %d of 4 players must not load", idx)
+		}
+	}
+}
+
 // With no save, or one that cannot be decoded, Load deals a new game with the
 // configured players and difficulty, logs it and saves it at commit.
 func TestLoadStartsNewGame(t *testing.T) {
 	badPlayer := strings.Replace(string(readFixture(t, "states/base.yaml")),
 		":current_player_idx: 0", ":current_player_idx: 4", 1)
+	badPending := strings.Replace(string(readFixture(t, "states/pending_discard.yaml")),
+		":player_index: 1", ":player_index: 4", 1)
 	for name, save := range map[string][]byte{
 		"no save":                     nil,
 		"corrupt save":                []byte("--- [\n"),
-		"current player out of range": []byte(badPlayer), // cc-439
+		"current player out of range": []byte(badPlayer),  // cc-439
+		"pending player out of range": []byte(badPending), // cc-444
 	} {
 		t.Run(name, func(t *testing.T) {
 			st, mr := newTestStore(t, save)
