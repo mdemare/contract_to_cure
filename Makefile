@@ -9,9 +9,11 @@ check:
 	node --experimental-default-type=module --test test/js/*.mjs
 	@$(MAKE) --no-print-directory go-vet go-test
 
-# Static binary that the Docker image copies
+# Static binary that the Docker image copies. gitHash is the short SHA of the
+# checked-out commit (the deploy scripts reset to the deployed SHA first);
+# without git it is empty and ./main falls back to the release in .version.
 build:
-	CGO_ENABLED=0 go build -o main ./src
+	CGO_ENABLED=0 go build -ldflags "-X main.gitHash=$(shell git rev-parse --short=6 HEAD 2>/dev/null)" -o main ./src
 
 go-test:
 	go test ./...
