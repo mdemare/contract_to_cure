@@ -30,6 +30,16 @@ async function parseConflictBody(response) {
   }
 }
 
+async function parseRejectionBody(response) {
+  if (response.status !== 422) return null;
+  try {
+    const body = await response.json();
+    return body?.message ? body : null;
+  } catch {
+    return null;
+  }
+}
+
 // A 409 means another request committed first and nothing was written. The
 // response carries the persisted game_state, which replaces the stale local
 // state; no other local state changes. Pass the already parsed body when the
@@ -117,10 +127,10 @@ export async function processAPIRequest(endpoint, requestData, successMessage, f
       await handleGameConflict(response);
       return false;
     }
-    if (response.ok) {
-      // Try to parse JSON
-      const result = await response.json();
-      if(!result) { throw new Error("no result")}
+    // Rule rejections (e.g. action_unavailable, out of phase) arrive as 422
+    // with a JSON body, so read it like a 200 instead of a generic failure.
+    const result = response.ok ? await response.json() : await parseRejectionBody(response);
+    if (result) {
       if (result.status === 'success') {
         await handleSuccessfulAPIRequest(result, successMessage, eventData)
         return true;
@@ -143,6 +153,8 @@ export async function processAPIRequest(endpoint, requestData, successMessage, f
       } else {
         showErrorMessage(result.message);
       }
+    } else if (response.ok) {
+      throw new Error("no result");
     } else {
       showErrorMessage(`${failurePrefix} (${response.status}). The backend might not be implemented yet.`);
     }
