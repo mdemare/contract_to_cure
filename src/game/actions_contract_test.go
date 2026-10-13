@@ -42,7 +42,11 @@ func decodeFixture(t *testing.T, data []byte) *game.GameState {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return fromSave(t, s)
+	g, err := game.FromSave(s)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return g
 }
 
 // actionRequest holds the parameters of every player-action endpoint.

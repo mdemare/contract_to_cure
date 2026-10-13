@@ -1,25 +1,59 @@
-package game_test
+package game
 
 import (
-	"testing"
+	"context"
 
-	"github.com/mdemare/contract_to_cure/src/game"
+	"github.com/mdemare/contract_to_cure/src/observe"
 	"github.com/mdemare/contract_to_cure/src/store"
 )
 
-// fromSave and toSave map between store.Save and game.GameState so tests can
-// start from the contract fixture saves and compare with their after.yaml.
-// The real mapping belongs to the store wiring (cc-421).
+// The defaults from config/application.rb for a game started when there is
+// no saved one.
+const (
+	DefaultPlayers    = 4
+	DefaultDifficulty = Heroic
+)
 
-func fromSave(t *testing.T, s *store.Save) *game.GameState {
-	t.Helper()
+// Load returns the saved game (load_from_redis and load_game_state). When
+// there is no save, or it cannot be decoded, it deals a new game with
+// playersCount and difficulty and saves it, like GameState.new. Inside an
+// atomic update that save is written at commit, so a request that only reads
+// still stores the new game. Redis errors are returned.
+//
+// Loading never writes by itself: an older save gets its defaults (Q13-cc)
+// in memory, and they reach Redis with the next save.
+func Load(ctx context.Context, st *store.Store, m *Map, playersCount int, difficulty Difficulty, rng Shuffler) (*GameState, error) {
+	save, err := st.Load(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if save != nil {
+		return FromSave(save)
+	}
+	observe.LogNewGame(ctx, string(difficulty))
+	g, err := New(m, playersCount, difficulty, rng)
+	if err != nil {
+		return nil, err
+	}
+	if err := st.Save(ctx, g); err != nil {
+		return nil, err
+	}
+	return g, nil
+}
+
+// FromSave builds the game from a decoded save (load_state_from_hash). The
+// values Rails derives on load, players_count and current_player, are
+// methods here (PlayersCount, CurrentPlayer), so they always follow Players
+// and CurrentPlayerIdx. Like Rails, enum values are taken as saved; only a
+// city's cube count is checked.
+func FromSave(s *store.Save) (*GameState, error) {
 	st := s.Status
-	g := &game.GameState{
+	g := &GameState{
 		ActionsRemaining:         st.ActionsRemaining,
-		Phase:                    game.Phase(st.Phase),
+		Phase:                    Phase(st.Phase),
 		Turn:                     st.Turn,
 		GameOver:                 st.GameOver,
-		GameOverReason:           game.GameOverReason(st.GameOverReason),
+		GameOverReason:           GameOverReason(st.GameOverReason),
 		Outbreaks:                st.Outbreaks,
 		InfectionRate:            st.InfectionRate,
 		InfectionRatePosition:    st.InfectionRatePosition,
@@ -28,9 +62,9 @@ func fromSave(t *testing.T, s *store.Save) *game.GameState {
 		ForecastActive:           st.ForecastActive,
 		ForecastCards:            st.ForecastCards,
 		OperationsExpertMoveUsed: st.OperationsExpertMoveUsed,
-		DifficultyLevel:          game.Difficulty(st.DifficultyLevel),
+		DifficultyLevel:          Difficulty(st.DifficultyLevel),
 		ResearchStations:         s.ResearchStations,
-		Decks: game.Decks{
+		Decks: Decks{
 			PlayerDeck:       cardsFromSave(s.Decks.PlayerDeck),
 			PlayerDiscard:    cardsFromSave(s.Decks.PlayerDiscard),
 			InfectionDeck:    cardsFromSave(s.Decks.InfectionDeck),
@@ -38,37 +72,38 @@ func fromSave(t *testing.T, s *store.Save) *game.GameState {
 		},
 	}
 	if p := st.PendingHandLimit; p != nil {
-		g.PendingHandLimit = &game.PendingHandLimit{
-			PlayerIndex: p.PlayerIndex, DiscardCount: p.DiscardCount, ReturnPhase: game.Phase(p.ReturnPhase),
+		g.PendingHandLimit = &PendingHandLimit{
+			PlayerIndex: p.PlayerIndex, DiscardCount: p.DiscardCount, ReturnPhase: Phase(p.ReturnPhase),
 		}
 	}
 	for _, d := range s.DiseaseCubes {
-		g.DiseaseCubes = append(g.DiseaseCubes, game.DiseaseCubes{Color: game.Color(d.Color), Cured: d.Cured, InSupply: d.InSupply})
+		g.DiseaseCubes = append(g.DiseaseCubes, DiseaseCubes{Color: Color(d.Color), Cured: d.Cured, InSupply: d.InSupply})
 	}
 	for _, c := range s.Cities {
-		city := game.City{Key: c.Key, Name: c.Name, Color: game.Color(c.Color), Connections: c.Connections,
+		city := City{Key: c.Key, Name: c.Name, Color: Color(c.Color), Connections: c.Connections,
 			HasResearchStation: c.HasResearchStation}
 		if err := city.SetDiseaseCubes(c.DiseaseCubes); err != nil {
-			t.Fatal(err)
+			return nil, err
 		}
 		g.Cities = append(g.Cities, city)
 	}
 	for _, p := range s.Players {
-		g.Players = append(g.Players, game.Player{Role: game.Role(p.Role), Index: p.Index, Location: p.Location,
+		g.Players = append(g.Players, Player{Role: Role(p.Role), Index: p.Index, Location: p.Location,
 			Hand: cardsFromSave(p.Hand)})
 	}
-	return g
+	return g, nil
 }
 
-func cardsFromSave(cards []store.Card) []game.Card {
-	out := make([]game.Card, len(cards))
+func cardsFromSave(cards []store.Card) []Card {
+	out := make([]Card, len(cards))
 	for i, c := range cards {
-		out[i] = game.Card{Type: game.CardType(c.Type), Name: c.Name, Color: game.Color(c.Color), Retrieved: c.Retrieved}
+		out[i] = Card{Type: CardType(c.Type), Name: c.Name, Color: Color(c.Color), Retrieved: c.Retrieved}
 	}
 	return out
 }
 
-func toSave(g *game.GameState) *store.Save {
+// ToSave is the inverse of FromSave (serialized_state).
+func (g *GameState) ToSave() *store.Save {
 	s := &store.Save{
 		Status: store.Status{
 			ActionsRemaining:         g.ActionsRemaining,
@@ -114,7 +149,7 @@ func toSave(g *game.GameState) *store.Save {
 	return s
 }
 
-func cardsToSave(cards []game.Card) []store.Card {
+func cardsToSave(cards []Card) []store.Card {
 	out := make([]store.Card, len(cards))
 	for i, c := range cards {
 		out[i] = store.Card{Type: string(c.Type), Name: c.Name, Color: string(c.Color), Retrieved: c.Retrieved}
@@ -122,25 +157,10 @@ func cardsToSave(cards []game.Card) []store.Card {
 	return out
 }
 
-func encode(t *testing.T, g *game.GameState) []byte {
-	t.Helper()
-	data, err := toSave(g).EncodeSave()
-	if err != nil {
-		t.Fatal(err)
-	}
-	return data
-}
+var _ store.Persistable = (*GameState)(nil)
 
-// TestSaveMappingRoundTrips checks the test mapping itself: every fixture
-// state survives save -> GameState -> save byte for byte.
-func TestSaveMappingRoundTrips(t *testing.T) {
-	for _, name := range fixtureStates(t) {
-		data := readFixture(t, name)
-		if name == "states/legacy_save.yaml" {
-			continue // gains the defaulted fields when written
-		}
-		if got := encode(t, decodeFixture(t, data)); string(got) != string(data) {
-			t.Errorf("%s does not round-trip", name)
-		}
-	}
+// EncodeSave makes GameState a store.Persistable: Store.Save inside an
+// update encodes it at commit, so later changes are saved too, as in Rails.
+func (g *GameState) EncodeSave() ([]byte, error) {
+	return g.ToSave().EncodeSave()
 }
