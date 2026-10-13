@@ -23,8 +23,8 @@ import (
 )
 
 // gitHash is shown on the index page in production. Set it at build time with
-// -ldflags "-X main.gitHash=<hash>"; without it the release from .version is
-// shown.
+// -ldflags "-X main.gitHash=<hash>" (make build passes the short SHA of HEAD);
+// without it the release from .version is shown.
 var gitHash string
 
 // shutdownTimeout bounds how long requests in flight may finish after

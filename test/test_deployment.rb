@@ -14,8 +14,19 @@ class TestDeployment < Minitest::Test
   def test_default_make_target_builds_the_binary_then_the_image
     makefile = read('Makefile')
     assert_match(/^all: build docker$/, makefile)
-    assert_match(/^build:\n\tCGO_ENABLED=0 go build -o main \.\/src$/, makefile)
+    assert_match(/^build:\n\tCGO_ENABLED=0 go build .*-o main \.\/src$/, makefile)
     assert_match(/^docker:\n(?:\t.*\n)*\tdocker compose -f \$\(COMPOSE_FILE\) build$/, makefile)
+  end
+
+  # cc-457: the drawer shows body[data-git-hash]. Rails used the first six
+  # characters of the commit; without -ldflags the Go binary falls back to the
+  # commit count from .version.
+  def test_build_stamps_the_short_commit_sha_as_git_hash
+    sha = `git -C #{ROOT} rev-parse --short=6 HEAD`.strip
+    refute_empty sha
+    commands = `make -s -n -C #{ROOT} build`
+    assert $?.success?, commands
+    assert_includes commands, %(-ldflags "-X main.gitHash=#{sha}")
   end
 
   def test_dockerfile_runs_the_binary_as_non_root_on_port_2583
