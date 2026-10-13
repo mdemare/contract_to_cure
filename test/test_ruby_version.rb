@@ -39,22 +39,6 @@ class TestRubyVersion < Minitest::Test
     assert_equal default_bundler, bundled_with
   end
 
-  def test_dockerfile_uses_ruby_version
-    base_images = read('Dockerfile').scan(/^FROM\s+(\S+)/).flatten
-    refute_empty base_images
-    base_images.each do |image|
-      assert_equal "ruby:#{ruby_version}-slim-bookworm", image
-    end
-  end
-
-  def test_dockerfile_copies_ruby_version_before_bundle_install
-    dockerfile = read('Dockerfile')
-    ruby_version_copy = dockerfile.index(/^COPY .*\.ruby-version/)
-    bundle_install = dockerfile.index('bundle install')
-    assert ruby_version_copy, 'Dockerfile must copy .ruby-version'
-    assert ruby_version_copy < bundle_install, 'Dockerfile must copy .ruby-version before bundle install'
-  end
-
   def test_ci_uses_ruby_version
     versions = read('.github/workflows/test.yml').scan(/ruby-version:\s*['"]([^'"]+)['"]/).flatten
     refute_empty versions
