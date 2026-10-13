@@ -35,6 +35,20 @@ class TestApiEndpoints < TestHelper
     assert data["gameStatus"].key?('actions_remaining')
   end
 
+  def test_game_state_json_includes_saved_game_over_reason
+    create_game_with_custom_state do |state|
+      state.instance_variable_set(:@game_over, true)
+      state.instance_variable_set(:@game_over_reason, :too_many_outbreaks)
+    end
+
+    get '/game_state.json'
+    assert_successful_response(last_response)
+
+    game_status = parse_json_response(last_response)['gameStatus']
+    assert_equal true, game_status['gameOver']
+    assert_equal 'too_many_outbreaks', game_status['gameOverReason']
+  end
+
   def test_move_endpoint_valid_request
     game_state = create_test_game_state
 

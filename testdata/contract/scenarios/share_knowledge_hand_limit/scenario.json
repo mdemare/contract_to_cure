@@ -33,6 +33,7 @@
           },
           "turn": 1,
           "gameOver": false,
+          "gameOverReason": null,
           "outbreaks": 0,
           "infectionRate": 2,
           "infectionRatePosition": 0,

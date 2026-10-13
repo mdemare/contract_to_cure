@@ -1,6 +1,7 @@
 // game_state.js
 import { updateAuthUI } from './auth.js';
 import { promptHandLimit } from './hand_limit_prompt.js';
+import { checkGameOver } from './game_over.js';
 
 export { getCurrentMode, resetMode, toggleMode } from './action_mode.js';
 
@@ -79,8 +80,9 @@ export async function promptPendingHandLimitIfNeeded(gameState = currentGameStat
   }
 }
 
-// Then update the loadGameState function to add game over check
-export async function loadGameState(providedGameState = null, { promptPendingHandLimit = true } = {}) {
+// Callers that still have end-turn events to animate pass showGameOver: false;
+// handleEndOfTurnEvents shows the overlay once the animations have played.
+export async function loadGameState(providedGameState = null, { promptPendingHandLimit = true, showGameOver = true } = {}) {
   try {
     let gameState;
 
@@ -115,6 +117,10 @@ export async function loadGameState(providedGameState = null, { promptPendingHan
       promptPendingHandLimitIfNeeded(gameState).catch(error => {
         console.error('Error prompting pending hand-limit discard:', error);
       });
+    }
+
+    if (showGameOver) {
+      checkGameOver(gameState, gameState.gameStatus?.gameOverReason);
     }
 
     return gameState;

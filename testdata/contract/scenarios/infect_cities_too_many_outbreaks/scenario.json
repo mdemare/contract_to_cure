@@ -42,6 +42,7 @@
           "pending_hand_limit": null,
           "turn": 1,
           "gameOver": true,
+          "gameOverReason": "too_many_outbreaks",
           "outbreaks": 8,
           "infectionRate": 2,
           "infectionRatePosition": 0,

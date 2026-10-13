@@ -11,6 +11,7 @@ module JsonGenerator
         pending_hand_limit: @pending_hand_limit,
         turn: @turn,
         gameOver: @game_over,
+        gameOverReason: @game_over_reason,
         outbreaks: @outbreak_count,
         infectionRate: @infection_rate,
         infectionRatePosition: @infection_rate_marker,
