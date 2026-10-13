@@ -252,3 +252,41 @@ test('game-over restart conflict refreshes state and restores the dialog without
   assert.equal(overlay.style.display, 'flex');
   assert.deepEqual(notifications, [{ type: 'warning', message: utils.GAME_CONFLICT_MESSAGE }]);
 });
+
+test('a 422 action_unavailable from /treat shows the backend message and refreshes state (cc-471)', async () => {
+  await reset();
+  mockFetch({
+    '/treat': () => jsonResponse(422, {
+      success: false,
+      status: 'action_unavailable',
+      message: 'No red disease cubes to treat in Wuhan',
+      game_state: persistedState
+    })
+  });
+
+  const succeeded = await utils.processAPIRequest('/treat', {}, 'Treated', 'Treatment failed');
+
+  assert.equal(succeeded, false);
+  assert.deepEqual(gameState.getCurrentGameState(), persistedState);
+  assert.deepEqual(notifications, [{ type: 'warning', message: 'No red disease cubes to treat in Wuhan' }]);
+});
+
+test('a 422 check_action rejection shows the backend message, not the generic failure', async () => {
+  await reset();
+  mockFetch({ '/treat': () => jsonResponse(422, { status: 'error', message: 'No more actions allowed' }) });
+
+  const succeeded = await utils.processAPIRequest('/treat', {}, 'Treated', 'Treatment failed');
+
+  assert.equal(succeeded, false);
+  assert.deepEqual(gameState.getCurrentGameState(), staleState);
+  assert.deepEqual(notifications, [{ type: 'error', message: 'Action failed: No more actions allowed' }]);
+});
+
+test('a 422 without a usable body keeps the generic message', async () => {
+  await reset();
+  mockFetch({ '/treat': () => jsonResponse(422, new SyntaxError('Unexpected token <')) });
+
+  assert.equal(await utils.processAPIRequest('/treat', {}, 'Treated', 'Treatment failed'), false);
+  assert.equal(notifications.length, 1);
+  assert.match(notifications[0].message, /Treatment failed \(422\)/);
+});
