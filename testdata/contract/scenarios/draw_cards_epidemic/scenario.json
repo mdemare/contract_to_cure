@@ -40,14 +40,6 @@
             ]
           },
           {
-            "type": "outbreak",
-            "city": "Bangkok",
-            "color": "red",
-            "outbreak_chain": [
-              "Bangkok"
-            ]
-          },
-          {
             "type": "infect_new_city",
             "city": "Bangkok",
             "color": "red",

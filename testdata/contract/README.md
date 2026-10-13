@@ -77,9 +77,8 @@ Responses
 - Every JSON response has `Content-Type: application/json; charset=utf-8`.
 
 Game logic
-- An epidemic that outbreaks emits the `outbreak` event twice: once from
-  `trigger_outbreak`, and once more because `handle_epidemic` appends what
-  `add_disease_cubes` returns (`draw_cards_epidemic`).
+- An epidemic that outbreaks emits one `outbreak` event per city in the chain,
+  before its `infect_new_city` event (`draw_cards_epidemic`).
 - When the game ends during `/draw_cards` or `/infect_cities`, `end_turn_events`
   is `{game_over: true, reason, events}` with the events up to the game over, and
   the phase stays where it was (`draw_cards_player_deck_runs_out`). `reason` is
