@@ -18,19 +18,25 @@ var sentryTestPage = template.Must(template.ParseFS(views, "views/*.tmpl"))
 // backendTestError is the message of the error /test-sentry/backend-error reports.
 const backendTestError = "Sentry backend test error"
 
+// CSRF fills the page's csrf-token meta tag and verifies the POST, as
+// protect_from_forgery does for SentryTestController. *auth.CSRF implements it.
+type CSRF interface {
+	Token(w http.ResponseWriter, r *http.Request) string
+	Protect(next http.Handler) http.Handler
+}
+
 // SentryTestRoutes adds the Sentry smoke test page and its backend error. Like
 // SentryTestController, they skip authentication and the atomic game update,
 // so register them on a mux outside those wrappers.
-func SentryTestRoutes(mux *http.ServeMux, cfg Config) {
+func SentryTestRoutes(mux *http.ServeMux, cfg Config, csrf CSRF) {
 	mux.HandleFunc("GET /test-sentry", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "text/html; charset=utf-8")
-		// The CSRF token stays empty until the HTTP layer (cc-377) adds one.
-		data := map[string]any{"Sentry": cfg, "CSRFToken": ""}
+		data := map[string]any{"Sentry": cfg, "CSRFToken": csrf.Token(w, r)}
 		if err := sentryTestPage.ExecuteTemplate(w, "sentry_test.tmpl", data); err != nil {
 			slog.ErrorContext(r.Context(), "rendering /test-sentry", "error", err)
 		}
 	})
-	mux.HandleFunc("POST /test-sentry/backend-error", backendError)
+	mux.Handle("POST /test-sentry/backend-error", csrf.Protect(http.HandlerFunc(backendError)))
 }
 
 // backendError reports an error to Sentry and answers 500 with the event ID,

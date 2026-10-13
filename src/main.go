@@ -9,6 +9,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 
+	"github.com/mdemare/contract_to_cure/src/auth"
 	"github.com/mdemare/contract_to_cure/src/observe"
 )
 
@@ -25,11 +26,18 @@ func main() {
 		slog.Error("initializing Sentry", "error", err)
 	}
 
+	authConfig, err := auth.ConfigFromEnv(os.Getenv)
+	if err != nil {
+		slog.Error("configuring authentication", "error", err)
+		os.Exit(1)
+	}
+
 	mux := http.NewServeMux()
 	mux.HandleFunc("GET /up", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 	})
-	observe.SentryTestRoutes(mux, sentryConfig)
+	auth.SessionRoutes(mux, authConfig)
+	observe.SentryTestRoutes(mux, sentryConfig, auth.NewCSRF(authConfig))
 
 	handler := observe.LogRequests(observe.Recover(sentry.CurrentHub(), mux))
 	slog.Info("listening", "port", port, "environment", sentryConfig.Environment, "release", sentryConfig.Release)

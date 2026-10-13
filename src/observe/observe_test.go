@@ -52,9 +52,16 @@ func newHub(t *testing.T, cfg Config) (*sentry.Hub, *recordingTransport) {
 	return sentry.NewHub(client, sentry.NewScope()), transport
 }
 
+// fixedCSRF renders a fixed token and verifies nothing, like the test
+// environment's CSRF.
+type fixedCSRF struct{}
+
+func (fixedCSRF) Token(http.ResponseWriter, *http.Request) string { return "test-csrf-token" }
+func (fixedCSRF) Protect(next http.Handler) http.Handler          { return next }
+
 func server(hub *sentry.Hub, cfg Config) http.Handler {
 	mux := http.NewServeMux()
-	SentryTestRoutes(mux, cfg)
+	SentryTestRoutes(mux, cfg, fixedCSRF{})
 	mux.HandleFunc("GET /panic", func(http.ResponseWriter, *http.Request) { panic("boom") })
 	return LogRequests(Recover(hub, mux))
 }
@@ -105,6 +112,7 @@ func TestSmokeTestPageHasBothErrorControls(t *testing.T) {
 		"Simulate frontend error",
 		"Simulate backend error",
 		"Sentry is not configured because SENTRY_DSN is not set.",
+		`<meta name="csrf-token" content="test-csrf-token">`,
 	} {
 		if !strings.Contains(body, want) {
 			t.Errorf("page lacks %q", want)
