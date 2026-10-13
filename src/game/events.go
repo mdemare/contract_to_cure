@@ -1,7 +1,6 @@
 package game
 
 import (
-	"errors"
 	"fmt"
 	"net/http"
 	"slices"
@@ -70,37 +69,29 @@ type ForecastCard struct {
 	Color Color  `json:"color"`
 }
 
-// ErrNoSuchPlayer stands for the NoMethodError or TypeError Rails raises
-// (a 500) when an Airlift names no player.
-var ErrNoSuchPlayer = errors.New("no such player")
-
 // PlayEventCard plays the event card named in req (GameController#action_card).
 // Any player's card may be played in any phase, and it costs no action.
 // While a Forecast is active, only its card_order is accepted. A played card
 // that brings a pending hand-limit discard back within the limit resolves
-// it. The caller runs CheckGameOver and parameter validation first. An error
-// stands for an exception in Rails, a 500.
-func (g *GameState) PlayEventCard(req EventCardRequest) (EventCardResponse, error) {
+// it. The caller runs CheckGameOver and parameter validation first.
+func (g *GameState) PlayEventCard(req EventCardRequest) EventCardResponse {
 	if g.ForecastActive {
 		if req.Card == Forecast && req.CardOrder != nil {
 			if rej := g.ApplyForecast(req.CardOrder); rej != nil {
-				return EventCardResponse{Body: rej, HTTPStatus: http.StatusOK}, nil
+				return EventCardResponse{Body: rej, HTTPStatus: http.StatusOK}
 			}
-			return EventCardResponse{Body: g, HTTPStatus: http.StatusOK, Changed: true}, nil
+			return EventCardResponse{Body: g, HTTPStatus: http.StatusOK, Changed: true}
 		}
 		return EventCardResponse{
 			Body:       &Rejection{Status: StatusError, Message: forecastActiveMessage},
 			HTTPStatus: http.StatusOK,
-		}, nil
+		}
 	}
 
 	var res Result
 	switch req.Card {
 	case Airlift:
-		var err error
-		if res, err = g.Airlift(req.PlayerIndex, req.City); err != nil {
-			return EventCardResponse{}, err
-		}
+		res = g.Airlift(req.PlayerIndex, req.City)
 	case OneQuietNight:
 		res = g.PlayOneQuietNight()
 	case ResilientPopulation:
@@ -110,27 +101,27 @@ func (g *GameState) PlayEventCard(req EventCardRequest) (EventCardResponse, erro
 	case Forecast:
 		view, failed := g.Forecast()
 		if failed != nil {
-			return EventCardResponse{Body: *failed, HTTPStatus: http.StatusUnprocessableEntity}, nil
+			return EventCardResponse{Body: *failed, HTTPStatus: http.StatusUnprocessableEntity}
 		}
 		if g.PendingHandLimit != nil {
 			g.resolvePendingHandLimit()
 			view.GameState = g
 		}
-		return EventCardResponse{Body: view, HTTPStatus: http.StatusOK, Changed: true}, nil
+		return EventCardResponse{Body: view, HTTPStatus: http.StatusOK, Changed: true}
 	default:
 		return EventCardResponse{
 			Body:       &Rejection{Status: StatusError, Message: "Unknown action card: " + req.Card},
 			HTTPStatus: http.StatusInternalServerError,
-		}, nil
+		}
 	}
 
 	if !res.Success {
-		return EventCardResponse{Body: res, HTTPStatus: http.StatusUnprocessableEntity}, nil
+		return EventCardResponse{Body: res, HTTPStatus: http.StatusUnprocessableEntity}
 	}
 	if g.PendingHandLimit != nil {
 		g.resolvePendingHandLimit()
 	}
-	return EventCardResponse{Body: res, HTTPStatus: http.StatusOK, Changed: true}, nil
+	return EventCardResponse{Body: res, HTTPStatus: http.StatusOK, Changed: true}
 }
 
 // eventCardHolder returns the first player holding the event card, and the
@@ -160,30 +151,28 @@ func eventSuccess(g *GameState, message string) Result {
 }
 
 // Airlift moves any player's pawn to any city (use_airlift); a Medic then
-// clears cured colors there. A nil or out-of-range playerIndex (Ruby
-// indexing, so -1 is the last player) is ErrNoSuchPlayer once the card and
-// city have been checked, where Rails raises.
-func (g *GameState) Airlift(playerIndex *int, city string) (Result, error) {
+// clears cured colors there. playerIndex must be given and lie in
+// 0..len(Players)-1; it is checked after the card and the city (cc-435).
+func (g *GameState) Airlift(playerIndex *int, city string) Result {
 	holder, card, failed := g.eventCardHolder(Airlift)
 	if failed != nil {
-		return *failed, nil
+		return *failed
 	}
-	if g.City(city) == nil {
-		return actionError(fmt.Sprintf("City '%s' does not exist", city)), nil
+	switch {
+	case g.City(city) == nil:
+		return actionError(fmt.Sprintf("City '%s' does not exist", city))
+	case playerIndex == nil:
+		return actionError("No player given for Airlift")
+	case *playerIndex < 0 || *playerIndex >= len(g.Players):
+		return actionError(fmt.Sprintf("Unknown player %d", *playerIndex))
 	}
-	var p *Player
-	if playerIndex != nil {
-		p = g.player(*playerIndex)
-	}
-	if p == nil {
-		return Result{}, fmt.Errorf("airlift: %w", ErrNoSuchPlayer)
-	}
+	p := &g.Players[*playerIndex]
 
 	g.spendEventCard(holder, card)
 	from := p.Location
 	p.Location = city
 	g.medicAbility(p, city)
-	return eventSuccess(g, fmt.Sprintf("Successfully Airlifted %s from %s to %s", p.Role, from, city)), nil
+	return eventSuccess(g, fmt.Sprintf("Successfully Airlifted %s from %s to %s", p.Role, from, city))
 }
 
 // GovernmentGrant builds a research station in any city without a city card

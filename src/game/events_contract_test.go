@@ -91,10 +91,7 @@ func TestEventCardScenarios(t *testing.T) {
 				if err := json.Unmarshal(sc.Request.Body, &req); err != nil {
 					t.Fatal(err)
 				}
-				resp, err := g.PlayEventCard(game.EventCardRequest(req))
-				if err != nil {
-					t.Fatal(err)
-				}
+				resp := g.PlayEventCard(game.EventCardRequest(req))
 				gotStatus, body, changed = resp.HTTPStatus, resp.Body, resp.Changed
 			}
 

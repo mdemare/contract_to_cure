@@ -1,0 +1,27 @@
+{
+  "name": "action_card_airlift_unknown_player",
+  "description": "Airlift with player_index outside 0..players-1: 422 (cc-435)",
+  "save_before": "states/event_cards.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/action_card",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "card": "Airlift",
+      "player_index": -1,
+      "city": "Paris"
+    }
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "success": false,
+      "status": "error",
+      "message": "Unknown player -1"
+    }
+  },
+  "save_after": "unchanged"
+}

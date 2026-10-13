@@ -161,10 +161,12 @@ module ActionCards
     # Try to use the Airlift card with validation
     result = use_action_card('Airlift') do |_|
       # Check if city exists
-      if @cities[city_name]
-        nil # Continue with the action
-      else
+      if !@cities[city_name]
         { success: false, status: 'error', message: "City '#{city_name}' does not exist" }
+      elsif player_index.nil?
+        { success: false, status: 'error', message: 'No player given for Airlift' }
+      elsif !player_index.between?(0, @players.size - 1)
+        { success: false, status: 'error', message: "Unknown player #{player_index}" }
       end
     end
 
