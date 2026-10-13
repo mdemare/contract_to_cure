@@ -40,6 +40,8 @@ func fixtureSaves(t *testing.T) map[string][]byte {
 	return saves
 }
 
+// game's TestFixtureSavesRoundTripThroughGameState repeats this through the
+// game model (cc-421).
 func TestFixtureSavesRoundTripByteForByte(t *testing.T) {
 	for name, data := range fixtureSaves(t) {
 		if name == "states/legacy_save.yaml" {

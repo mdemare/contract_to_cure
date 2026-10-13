@@ -1,7 +1,7 @@
 // Package game is the Go port of the Rails game model (cc-416): the state
-// held by GameState, its value types, and the setup of a new game. Actions,
-// persistence and HTTP live elsewhere. The model's fields match store.Save
-// one for one, so loading and saving is a plain mapping.
+// held by GameState, its value types, and the setup of a new game. The
+// model's fields match store.Save one for one, so loading and saving is a
+// plain mapping (save.go, cc-421). HTTP lives elsewhere.
 package game
 
 // Constants from GameStateConfig.
