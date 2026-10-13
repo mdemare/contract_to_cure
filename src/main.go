@@ -66,15 +66,13 @@ func main() {
 	if gitHash == "" {
 		gitHash = sentryConfig.Release
 	}
-	server := web.New(web.Config{
+	handler := newHandler(authConfig, web.Config{
 		Store:   st,
 		Map:     board,
 		Sentry:  sentryConfig,
 		GitHash: gitHash,
-		CSRF:    auth.NewCSRF(authConfig),
-	})
-	sessionRoutes := func(mux *http.ServeMux) { auth.SessionRoutes(mux, authConfig) }
-	srv := &http.Server{Addr: ":" + port, Handler: server.Handler(sentry.CurrentHub(), sessionRoutes)}
+	}, sentry.CurrentHub())
+	srv := &http.Server{Addr: ":" + port, Handler: handler}
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, os.Interrupt)
 	defer stop()
@@ -96,4 +94,22 @@ func main() {
 		os.Exit(1)
 	}
 	<-stopped
+}
+
+// newHandler is the app as main serves it: cfg with authentication and CSRF
+// from authConfig, plus the session routes. The game endpoints get
+// authenticate_request! and current_user; their JSON POSTs skip CSRF, as
+// GameController skips verify_authenticity_token (cc-456).
+func newHandler(authConfig auth.Config, cfg web.Config, hub *sentry.Hub) http.Handler {
+	a := auth.New(authConfig)
+	cfg.Authenticate = a.Require
+	cfg.CurrentUser = func(r *http.Request) any {
+		if user, _ := a.CurrentUser(r); user != nil {
+			return user
+		}
+		return nil
+	}
+	cfg.CSRF = auth.NewCSRF(authConfig)
+	sessionRoutes := func(mux *http.ServeMux) { auth.SessionRoutes(mux, authConfig) }
+	return web.New(cfg).Handler(hub, sessionRoutes)
 }
