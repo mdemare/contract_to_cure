@@ -38,7 +38,8 @@ type Config struct {
 	GitHash string
 
 	// Authenticate guards the game endpoints (authenticate_request!). It
-	// wraps the atomic update. Default: no authentication, until cc-423.
+	// wraps the atomic update. Default: no authentication; main sets
+	// auth.New(cfg).Require (cc-456).
 	Authenticate func(http.Handler) http.Handler
 	// CurrentUser is game_state.json's current_user; nil renders null.
 	// Default: nil.
