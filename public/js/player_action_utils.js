@@ -55,13 +55,10 @@ function resultIncludesHandLimitPrompt(result) {
 
 async function handleSuccessfulAPIRequest(result, successMessage, eventData) {
   const promptPendingHandLimit = !resultIncludesHandLimitPrompt(result);
+  const showGameOver = !(result.end_turn && result.end_turn_events);
 
   // Update game state FIRST
-  if (result.game_state) {
-    await loadGameState(result.game_state, { promptPendingHandLimit });
-  } else {
-    await loadGameState(null, { promptPendingHandLimit });
-  }
+  await loadGameState(result.game_state || null, { promptPendingHandLimit, showGameOver });
 
   // THEN handle hand limit with updated state
   if (result.exceeded_hand_limit) {

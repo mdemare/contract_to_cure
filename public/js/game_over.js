@@ -110,8 +110,8 @@ export async function restartGame() {
     });
 
     if (isGameConflict(response)) {
-      // Nothing was restarted; restore the dialog if the refreshed game is still over.
-      checkGameOver(await handleGameConflict(response));
+      // Nothing was restarted; loading the refreshed game restores the dialog if it is still over.
+      await handleGameConflict(response);
       return;
     }
 

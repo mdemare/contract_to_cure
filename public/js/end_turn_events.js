@@ -106,7 +106,7 @@ async function checkGameOverAfterEvents(reason) {
     if (currentGameState && currentGameState.gameStatus && currentGameState.gameStatus.gameOver === true) {
       // Brief pause before showing dialog
       await delay(300);
-      gameOverModule.checkGameOver(currentGameState, reason);
+      gameOverModule.checkGameOver(currentGameState, reason ?? currentGameState.gameStatus.gameOverReason);
     }
   } catch (error) {
     console.error('Failed to check game over after events:', error);

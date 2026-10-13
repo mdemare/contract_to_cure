@@ -38,6 +38,7 @@
           "pending_hand_limit": null,
           "turn": 1,
           "gameOver": true,
+          "gameOverReason": "no_player_cards",
           "outbreaks": 0,
           "infectionRate": 2,
           "infectionRatePosition": 0,
