@@ -80,8 +80,10 @@ Game logic
 - An epidemic that outbreaks emits the `outbreak` event twice: once from
   `trigger_outbreak`, and once more because `handle_epidemic` appends what
   `add_disease_cubes` returns (`draw_cards_epidemic`).
-- When the game ends during `/draw_cards`, `end_turn_events` is `null` and the
-  phase stays `draw_cards` (`draw_cards_player_deck_runs_out`).
+- When the game ends during `/draw_cards` or `/infect_cities`, `end_turn_events`
+  is `{game_over: true, reason, events}` with the events up to the game over, and
+  the phase stays where it was (`draw_cards_player_deck_runs_out`). `reason` is
+  `no_player_cards`, `too_many_outbreaks` or `no_cubes`.
 - Draws pop from the *end* of each deck array, and an epidemic takes the *first*
   infection card. Forecast also looks at, and reorders, the *first* six cards of
   the infection deck array, which is the bottom of the draw pile. Reordered cards are
@@ -195,7 +197,7 @@ JSON view and saves
 | `draw_cards` | `draw_phase` | Draw two city cards |
 | `draw_cards_epidemic` | `draw_phase_epidemic` | Epidemic: infection rate, bottom card with outbreak, intensify |
 | `draw_cards_hand_limit` | `draw_phase_hand_limit` | The second draw goes over the hand limit: pending discard |
-| `draw_cards_player_deck_runs_out` | `draw_phase_last_player_card` | Game over (no player cards): end_turn_events is null and the phase stays draw_cards |
+| `draw_cards_player_deck_runs_out` | `draw_phase_last_player_card` | Game over (no player cards): end_turn_events has game_over, reason no_player_cards and the draw event; the phase stays draw_cards |
 | `draw_cards_actions_left` | `draw_phase_actions_left` | Draw phase with actions left: bare success, nothing changes |
 | `draw_cards_out_of_phase` | `base` | Wrong phase |
 | `draw_cards_pending_discard` | `pending_discard` | Pending hand-limit discard |

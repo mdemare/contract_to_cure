@@ -191,7 +191,7 @@ module ContractFixtures
     ['draw_cards_hand_limit', 'draw_phase_hand_limit', 'POST', '/draw_cards', nil,
      'The second draw goes over the hand limit: pending discard'],
     ['draw_cards_player_deck_runs_out', 'draw_phase_last_player_card', 'POST', '/draw_cards', nil,
-     'Game over (no player cards): end_turn_events is null and the phase stays draw_cards'],
+     'Game over (no player cards): end_turn_events has game_over, reason no_player_cards and the draw event; the phase stays draw_cards'],
     ['draw_cards_actions_left', 'draw_phase_actions_left', 'POST', '/draw_cards', nil,
      'Draw phase with actions left: bare success, nothing changes'],
     ['draw_cards_out_of_phase', 'base', 'POST', '/draw_cards', nil, 'Wrong phase'],

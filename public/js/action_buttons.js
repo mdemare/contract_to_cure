@@ -214,15 +214,16 @@ async function handleInfectCitiesAction() {
       const result = await response.json();
 
       if (result.status === 'success') {
-        await handleEndOfTurnEvents(result.end_turn_events)
-
         const gameStateModule = await import('./game_state.js');
-        // Update game state
+        // Update game state first, so the animation sees the new phase and
+        // can show the game-over dialog once the events have played
         if (result.game_state) {
           await gameStateModule.loadGameState(result.game_state);
         } else {
           await gameStateModule.loadGameState();
         }
+
+        await handleEndOfTurnEvents(result.end_turn_events)
 
         showSuccessMessage(result.message || 'Cities infected');
       } else {

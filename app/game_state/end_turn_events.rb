@@ -7,7 +7,7 @@ module EndTurnEvents
     end_turn = EndTurn.new(self)
     2.times do |i|
       end_turn.draw_player_card(i)
-      return if game_over
+      return game_over_events(end_turn) if game_over
     end
 
     end_turn.events << { type: :wait_infect_cities }
@@ -26,7 +26,7 @@ module EndTurnEvents
     else
       @infection_rate.times do
         end_turn.infect_city
-        return if game_over
+        return game_over_events(end_turn) if game_over
       end
     end
 
@@ -44,6 +44,11 @@ module EndTurnEvents
     end_turn.events << { message: "TURN START: #{@current_player.role_name}", type: 'header' }
 
     { game_over: false, events: end_turn.events } # Return events if game is not over
+  end
+
+  # Keep the events that led to the game over so the UI can animate them
+  def game_over_events(end_turn)
+    { game_over: true, reason: game_over_reason, events: end_turn.events }
   end
 
   # Helper method to convert a card to a hash
