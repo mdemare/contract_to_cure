@@ -49,7 +49,7 @@ export async function initializeModules() {
 function resultIncludesHandLimitPrompt(result) {
   return Boolean(
     result.exceeded_hand_limit ||
-    result.end_turn_events?.some(event => event.exceeded_hand_limit)
+    result.end_turn_events?.events?.some(event => event.exceeded_hand_limit)
   );
 }
 
