@@ -35,7 +35,7 @@ scenario here before it replaces Rails.
    saves (cc-376), compare the YAML exactly. If the save format changes later,
    compare the decoded values instead.
 
-The Rails test seeds Ruby's RNG with `20261013` before each request. Only the two
+The Rails test seeds Ruby's RNG with `20261013` before each request. Only the three
 `restart_game` scenarios with a 200 response depend on it: they deal a new random
 game, so for those compare the shape of `after.yaml` (deck sizes, epidemic count
 for the difficulty, 9 infected cities, 4 players with hands), not its contents.
@@ -56,6 +56,12 @@ Responses
 - Every other endpoint except `GET /game_state.json` is blocked with HTTP 422 while a
   Forecast is active, including `/restart_game` and `/draw_cards`
   (`*_forecast_active`).
+- Once `game_over` is saved as true, every endpoint except `GET /game_state.json`
+  and `/restart_game` returns HTTP 422 `{status: "error", message: "The game is
+  over"}` (no `success` key) and changes nothing. This check runs before parameter
+  validation and the phase checks, because a finished game keeps the phase it ended
+  in (`*_game_over`, `move_game_over_missing_parameters`). The Forecast check still
+  comes first (cc-404).
 - `card_required` is `success: false` but HTTP 200, with `movement_type` and,
   for a flight choice, `options` (`move_card_required_flight_choice`,
   `move_operations_expert_card_required`).
@@ -126,6 +132,7 @@ JSON view and saves
 |---|---|---|
 | `state` | `base` | Read the client JSON view |
 | `state_legacy_save` | `legacy_save` | Read an older save; read-only requests never write the filled-in defaults |
+| `state_game_over` | `game_over_victory` | A finished game can still be read |
 
 ### `POST /move`
 
@@ -147,6 +154,8 @@ JSON view and saves
 | `move_conflict` | `base` (concurrent: `base_after_concurrent_move`) | Another request commits first: 409 with the current game state |
 | `move_operations_expert_card_required` | `operations_expert_at_station` | Operations Expert special move needs a card: card_required |
 | `move_operations_expert_special` | `operations_expert_at_station` | Operations Expert special move |
+| `move_game_over` | `game_over_victory` | Game over (victory, phase still player_actions): 422 {status, message}, nothing changes |
+| `move_game_over_missing_parameters` | `game_over_victory` | The game-over check comes before parameter validation |
 
 ### `POST /treat`
 
@@ -155,6 +164,7 @@ JSON view and saves
 | `treat` | `base` | Treat one cube |
 | `treat_no_cubes` | `no_cubes_here` | action_unavailable with HTTP 422 |
 | `treat_out_of_phase` | `infect_phase` | check_action error |
+| `treat_game_over` | `game_over_victory` | Game over |
 
 ### `POST /cure_disease`
 
@@ -163,6 +173,7 @@ JSON view and saves
 | `cure_disease` | `base` | Scientist cures with four cards |
 | `cure_disease_wrong_cards` | `base` | Cards do not match the color |
 | `cure_disease_missing_parameters` | `base` | Schema failure |
+| `cure_disease_game_over` | `game_over_victory` | Game over |
 
 ### `POST /retrieve`
 
@@ -173,6 +184,7 @@ JSON view and saves
 | `retrieve_city_card` | `contingency_planner` | Only event cards can be retrieved |
 | `retrieve_not_contingency_planner` | `base` | Only the Contingency Planner can retrieve |
 | `retrieve_missing_parameters` | `contingency_planner` | Schema failure |
+| `retrieve_game_over` | `game_over_victory` | Game over |
 
 ### `POST /share_knowledge`
 
@@ -182,6 +194,7 @@ JSON view and saves
 | `share_knowledge_hand_limit` | `share_hand_limit` | The receiver goes over seven cards: pending discard |
 | `share_knowledge_not_same_city` | `base` | Players are in different cities |
 | `share_knowledge_missing_parameters` | `base` | Schema failure |
+| `share_knowledge_game_over` | `game_over_victory` | Game over |
 
 ### `POST /pass`
 
@@ -189,6 +202,7 @@ JSON view and saves
 |---|---|---|
 | `pass` | `base` | Pass ends the action phase |
 | `pass_out_of_phase` | `draw_phase` | check_action error |
+| `pass_game_over` | `game_over_victory` | Game over |
 
 ### `POST /draw_cards`
 
@@ -202,6 +216,7 @@ JSON view and saves
 | `draw_cards_out_of_phase` | `base` | Wrong phase |
 | `draw_cards_pending_discard` | `pending_discard` | Pending hand-limit discard |
 | `draw_cards_forecast_active` | `forecast_active` | Blocked by an unfinished Forecast |
+| `draw_cards_game_over` | `game_over_draw_phase` | Game over (no player cards, phase still draw_cards): no further draw |
 
 ### `POST /infect_cities`
 
@@ -212,6 +227,7 @@ JSON view and saves
 | `infect_cities_too_many_outbreaks` | `infect_phase_outbreak_limit` | Game over (too many outbreaks): end_turn_events has game_over and the events so far; the game over is saved |
 | `infect_cities_out_of_phase` | `draw_phase` | Wrong phase |
 | `infect_cities_pending_discard` | `pending_discard` | Pending hand-limit discard |
+| `infect_cities_game_over` | `game_over_infect_phase` | Game over (too many outbreaks, phase still infect_cities): no further infection |
 
 ### `POST /build_research_station`
 
@@ -221,6 +237,7 @@ JSON view and saves
 | `build_research_station_operations_expert` | `operations_expert_away` | Operations Expert builds without a card |
 | `build_research_station_without_card` | `scientist_in_bangkok` | Missing city card |
 | `build_research_station_already_exists` | `base` | A station is already there |
+| `build_research_station_game_over` | `game_over_victory` | Game over |
 
 ### `POST /discard_cards`
 
@@ -232,6 +249,7 @@ JSON view and saves
 | `discard_cards_missing_card` | `pending_discard` | Card not in hand |
 | `discard_cards_not_pending` | `base` | No discard is pending |
 | `discard_cards_invalid_parameters` | `pending_discard` | Schema failure: card_names is not an array |
+| `discard_cards_game_over` | `game_over_victory` | Game over |
 
 ### `POST /action_card`
 
@@ -253,6 +271,7 @@ JSON view and saves
 | `action_card_not_held` | `base` | Nobody holds the card |
 | `action_card_unknown` | `base` | Unknown card: HTTP 500 |
 | `action_card_missing_parameters` | `base` | Schema failure |
+| `action_card_game_over` | `game_over_victory` | Game over |
 
 ### `POST /restart_game`
 
@@ -262,3 +281,4 @@ JSON view and saves
 | `restart_game_difficulty` | `base` | New random game with a new difficulty (after.yaml depends on the Ruby RNG) |
 | `restart_game_invalid_difficulty` | `base` | Schema failure |
 | `restart_game_forecast_active` | `forecast_active` | Even restart is blocked by an unfinished Forecast |
+| `restart_game_after_game_over` | `game_over_infect_phase` | Restart is the one request a finished game accepts (after.yaml depends on the Ruby RNG) |

@@ -1,0 +1,20 @@
+{
+  "name": "infect_cities_game_over",
+  "description": "Game over (too many outbreaks, phase still infect_cities): no further infection",
+  "save_before": "states/game_over_infect_phase.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/infect_cities",
+    "headers": {},
+    "body": null
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "status": "error",
+      "message": "The game is over"
+    }
+  },
+  "save_after": "unchanged"
+}

@@ -101,6 +101,14 @@ class GameState
     return { type: :game_over, reason: game_over_reason }
   end
 
+  # A finished game keeps its phase, so the phase checks alone don't stop
+  # requests that would change it again.
+  def check_game_over
+    return unless @game_over
+
+    { status: 'error', message: 'The game is over' }
+  end
+
   def check_action
     return unless @phase != 'player_actions'
 

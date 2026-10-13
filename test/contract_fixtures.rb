@@ -107,7 +107,27 @@ module ContractFixtures
       set(game, :current_player_idx, 3)
       game.players[3].location = 'Wuhan'
     end,
-    'operations_expert_away' => ->(game) { set(game, :current_player_idx, 3) }
+    'operations_expert_away' => ->(game) { set(game, :current_player_idx, 3) },
+    # Finished games keep the phase they ended in (cc-404).
+    'game_over_victory' => lambda do |game|
+      set(game, :actions_remaining, 3)
+      GameStateConfig::COLORS.each { |color| game.instance_variable_get(:@cures)[color] = true }
+      set(game, :game_over, true)
+      set(game, :game_over_reason, :victory)
+    end,
+    'game_over_draw_phase' => lambda do |game|
+      draw_phase(game)
+      set(game, :player_deck, [])
+      set(game, :game_over, true)
+      set(game, :game_over_reason, :no_player_cards)
+    end,
+    'game_over_infect_phase' => lambda do |game|
+      set(game, :actions_remaining, 0)
+      set(game, :phase, 'infect_cities')
+      set(game, :outbreak_count, 8)
+      set(game, :game_over, true)
+      set(game, :game_over_reason, :too_many_outbreaks)
+    end
   }.freeze
 
   # A save from before forecast_active, operations_expert_move_used and
@@ -280,7 +300,31 @@ module ContractFixtures
     ['restart_game_invalid_difficulty', 'base', 'POST', '/restart_game', { difficulty_level: 'nightmare' },
      'Schema failure'],
     ['restart_game_forecast_active', 'forecast_active', 'POST', '/restart_game', {},
-     'Even restart is blocked by an unfinished Forecast']
+     'Even restart is blocked by an unfinished Forecast'],
+    ['restart_game_after_game_over', 'game_over_infect_phase', 'POST', '/restart_game', {},
+     'Restart is the one request a finished game accepts (after.yaml depends on the Ruby RNG)'],
+
+    # game over (cc-404): every mutating endpoint except restart_game is 422
+    ['move_game_over', 'game_over_victory', 'POST', '/move', { player_index: 0, destination: 'Bangkok' },
+     'Game over (victory, phase still player_actions): 422 {status, message}, nothing changes'],
+    ['move_game_over_missing_parameters', 'game_over_victory', 'POST', '/move', {},
+     'The game-over check comes before parameter validation'],
+    ['treat_game_over', 'game_over_victory', 'POST', '/treat', nil, 'Game over'],
+    ['cure_disease_game_over', 'game_over_victory', 'POST', '/cure_disease',
+     { color: 'red', card_names: %w[Wuhan Beijing Shanghai Seoul] }, 'Game over'],
+    ['retrieve_game_over', 'game_over_victory', 'POST', '/retrieve', { action_card_name: 'Airlift' }, 'Game over'],
+    ['share_knowledge_game_over', 'game_over_victory', 'POST', '/share_knowledge',
+     { giving_player_index: 0, receiving_player_index: 1, city_name: 'Wuhan' }, 'Game over'],
+    ['pass_game_over', 'game_over_victory', 'POST', '/pass', nil, 'Game over'],
+    ['build_research_station_game_over', 'game_over_victory', 'POST', '/build_research_station', nil, 'Game over'],
+    ['draw_cards_game_over', 'game_over_draw_phase', 'POST', '/draw_cards', nil,
+     'Game over (no player cards, phase still draw_cards): no further draw'],
+    ['infect_cities_game_over', 'game_over_infect_phase', 'POST', '/infect_cities', nil,
+     'Game over (too many outbreaks, phase still infect_cities): no further infection'],
+    ['discard_cards_game_over', 'game_over_victory', 'POST', '/discard_cards',
+     { player_index: 0, card_names: ['Wuhan'] }, 'Game over'],
+    ['action_card_game_over', 'game_over_victory', 'POST', '/action_card', { card: 'One Quiet Night' }, 'Game over'],
+    ['state_game_over', 'game_over_victory', 'GET', '/game_state.json', nil, 'A finished game can still be read']
   ].map do |name, state, method, path, body, description, concurrent_state|
     { name:, state:, method:, path:, body:, description:, concurrent_state: }
   end.freeze

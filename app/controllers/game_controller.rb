@@ -4,6 +4,8 @@ class GameController < ApplicationController
   # this web game boundary, and no private user data is exposed by these actions.
   skip_before_action :verify_authenticity_token
   prepend_before_action :authenticate_request!
+  # Only a restart may change a game that is over.
+  before_action :check_game_over, except: %i[state restart_game]
 
   # Get game state as JSON
   def state
@@ -194,6 +196,11 @@ class GameController < ApplicationController
   end
 
   private
+
+  def check_game_over
+    game_over_error = game_state.check_game_over
+    render json: game_over_error, status: 422 if game_over_error
+  end
 
   def render_player_action_phase_error
     action_error = game_state.check_action

@@ -1,0 +1,25 @@
+{
+  "name": "move_game_over",
+  "description": "Game over (victory, phase still player_actions): 422 {status, message}, nothing changes",
+  "save_before": "states/game_over_victory.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/move",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "player_index": 0,
+      "destination": "Bangkok"
+    }
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "status": "error",
+      "message": "The game is over"
+    }
+  },
+  "save_after": "unchanged"
+}

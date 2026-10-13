@@ -1,0 +1,26 @@
+{
+  "name": "share_knowledge_game_over",
+  "description": "Game over",
+  "save_before": "states/game_over_victory.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/share_knowledge",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "giving_player_index": 0,
+      "receiving_player_index": 1,
+      "city_name": "Wuhan"
+    }
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "status": "error",
+      "message": "The game is over"
+    }
+  },
+  "save_after": "unchanged"
+}
