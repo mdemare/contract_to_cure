@@ -34,6 +34,12 @@ class TestContractFixtures < TestHelper
       end
     end
 
+    def test_readme_has_no_test_runner_output
+      readme = read_contract_file('README.md')
+      refute readme.match?(/^(Run options: --seed|# Running:|Finished in .* runs\/s|\d+ runs, \d+ assertions)/),
+             'testdata/contract/README.md contains Minitest output'
+    end
+
     SCENARIOS.each do |scenario|
       define_method("test_contract_#{scenario[:name]}") do
         path = "scenarios/#{scenario[:name]}/scenario.json"
