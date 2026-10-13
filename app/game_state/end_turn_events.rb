@@ -86,10 +86,11 @@ module EndTurnEvents
     # Prevent chain reactions in the same city
     return nil if outbreak_chain.include?(city_name)
 
-    events << { type: :outbreak, city: city_name, color: @cities[city_name].color, outbreak_chain: outbreak_chain }
-
     # Add this city to the chain
     outbreak_chain << city_name
+
+    # Snapshot the chain so later outbreaks in the cascade don't change this event
+    events << { type: :outbreak, city: city_name, color: @cities[city_name].color, outbreak_chain: outbreak_chain.dup }
 
     # Increment outbreak counter
     @outbreak_count += 1

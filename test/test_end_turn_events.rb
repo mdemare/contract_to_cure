@@ -131,6 +131,22 @@ class TestEndTurnEvents < TestHelper
     refute game_state.game_over
   end
 
+  def test_each_outbreak_event_records_the_chain_when_it_happened
+    game_state = create_game_with_custom_state do |state|
+      reset_city_cubes(state)
+      state.cities['Chicago'].connections.replace(['Houston'])
+      state.cities['Houston'].connections.replace(['Chicago'])
+      state.cities['Chicago'].disease_cubes = 3
+      state.cities['Houston'].disease_cubes = 3
+      disable_quarantine_specialists(state)
+    end
+
+    events = []
+    game_state.trigger_outbreak('Chicago', events)
+
+    assert_equal [['Chicago'], ['Chicago', 'Houston']], events.map { |event| event[:outbreak_chain] }
+  end
+
   def test_outbreak_game_over_is_propagated_at_outbreak_limit
     game_state = create_game_with_custom_state do |state|
       reset_city_cubes(state)
