@@ -90,13 +90,13 @@ export async function handleEndOfTurnEvents(endTurnData) {
   await animateCardStack(animContainer, animationEvents.events.map((x) => x));
 
   // After all events are animated, check if the game is over and show dialog if needed
-  await checkGameOverAfterEvents();
+  await checkGameOverAfterEvents(endTurnData.reason);
 
   return true;
 }
 
 // Check for game over after events are complete and show dialog
-async function checkGameOverAfterEvents() {
+async function checkGameOverAfterEvents(reason) {
   try {
     const gameOverModule = await import('./game_over.js');
     const gameStateModule = await import('./game_state.js');
@@ -106,7 +106,7 @@ async function checkGameOverAfterEvents() {
     if (currentGameState && currentGameState.gameStatus && currentGameState.gameStatus.gameOver === true) {
       // Brief pause before showing dialog
       await delay(300);
-      gameOverModule.checkGameOver(currentGameState);
+      gameOverModule.checkGameOver(currentGameState, reason);
     }
   } catch (error) {
     console.error('Failed to check game over after events:', error);

@@ -659,6 +659,62 @@ class TestApiEndpoints < TestHelper
     assert data.key?('status') || data.key?('end_turn_events'), "Response should contain expected keys"
   end
 
+  def test_draw_cards_game_over_returns_events_and_reason
+    create_game_with_custom_state do |state|
+      state.instance_variable_set(:@actions_remaining, 0)
+      state.instance_variable_set(:@phase, 'draw_cards')
+      state.current_player.hand.clear
+      state.player_deck.clear
+      state.player_deck << Card.new(:city, 'Madrid', :yellow)
+    end
+
+    post '/draw_cards'
+    assert_successful_response(last_response)
+
+    data = parse_json_response(last_response)
+    end_turn_events = data['end_turn_events']
+    assert_equal true, end_turn_events['game_over']
+    assert_equal 'no_player_cards', end_turn_events['reason']
+    assert_equal ['draw_card'], end_turn_events['events'].map { |event| event['type'] }
+    assert_equal 'Madrid', end_turn_events['events'].first['card']['name']
+    assert data['game_state']['gameStatus']['gameOver']
+
+    saved_state = GameState.load_from_redis(@test_redis_key)
+    assert saved_state.game_over
+    assert_equal 'draw_cards', saved_state.phase
+  end
+
+  def test_infect_cities_game_over_returns_events_and_reason
+    create_game_with_custom_state do |state|
+      state.instance_variable_set(:@actions_remaining, 0)
+      state.instance_variable_set(:@phase, 'infect_cities')
+      state.instance_variable_set(:@quiet_night, false)
+      state.cities.each_value { |city| city.disease_cubes = 0 }
+      state.players.each do |player|
+        player.instance_variable_set(:@role, :scientist)
+        player.location = 'Atlanta'
+      end
+      state.disease_cubes[:yellow] = 0
+      state.infection_deck.clear
+      state.infection_deck << Card.new(:city, 'Madrid', :blue)
+      state.infection_deck << Card.new(:city, 'Lagos', :yellow)
+    end
+    current_player_idx = GameState.load_from_redis(@test_redis_key).current_player_idx
+
+    post '/infect_cities'
+    assert_successful_response(last_response)
+
+    data = parse_json_response(last_response)
+    end_turn_events = data['end_turn_events']
+    assert_equal true, end_turn_events['game_over']
+    assert_equal 'no_cubes', end_turn_events['reason']
+    assert_equal [{ 'type' => 'infect_city', 'city' => 'Lagos', 'color' => 'yellow' }],
+                 end_turn_events['events']
+    assert data['game_state']['gameStatus']['gameOver']
+    assert_equal 'infect_cities', data['game_state']['gameStatus']['phase']
+    assert_equal current_player_idx, data['game_state']['gameStatus']['currentPlayerIndex']
+  end
+
   def test_infect_cities_rejects_skipping_draw_cards_phase
     create_game_with_custom_state do |state|
       state.instance_variable_set(:@actions_remaining, 0)

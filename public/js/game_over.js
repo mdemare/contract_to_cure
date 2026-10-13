@@ -129,18 +129,29 @@ export async function restartGame() {
   }
 }
 
+const DEFEAT_REASONS = {
+  no_player_cards: 'You ran out of player cards.',
+  too_many_outbreaks: 'Too many outbreaks occurred.',
+  no_cubes: 'You ran out of disease cubes.'
+};
+
+// Text for the game_over reason the backend sends with end_turn_events
+export function defeatReasonText(reason) {
+  return DEFEAT_REASONS[reason] || null;
+}
+
 // Check if the game is over and show dialog if needed
-export function checkGameOver(gameState) {
+export function checkGameOver(gameState, reason = null) {
   if (!gameState) return;
 
   // If gameOver flag is true, show the game over dialog
   if (gameState.gameStatus && gameState.gameStatus.gameOver === true) {
-    showGameOverDialog(gameState);
+    showGameOverDialog(gameState, reason);
   }
 }
 
 // Show the game over dialog with appropriate content
-function showGameOverDialog(gameState) {
+function showGameOverDialog(gameState, reasonCode = null) {
   const overlay = document.querySelector('.game-over-overlay');
   if (!overlay) return;
 
@@ -170,7 +181,9 @@ function showGameOverDialog(gameState) {
 
     // Determine defeat reason
     let defeatReason = '';
-    if (gameState.gameStatus.defeatReason) {
+    if (defeatReasonText(reasonCode)) {
+      defeatReason = defeatReasonText(reasonCode);
+    } else if (gameState.gameStatus.defeatReason) {
       defeatReason = gameState.gameStatus.defeatReason;
     } else if (outbreaks >= 8) {
       defeatReason = 'Too many outbreaks occurred.';

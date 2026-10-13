@@ -1,6 +1,6 @@
 {
   "name": "draw_cards_player_deck_runs_out",
-  "description": "Game over (no player cards): end_turn_events is null and the phase stays draw_cards",
+  "description": "Game over (no player cards): end_turn_events has game_over, reason no_player_cards and the draw event; the phase stays draw_cards",
   "save_before": "states/draw_phase_last_player_card.yaml",
   "request": {
     "method": "POST",
@@ -16,7 +16,21 @@
       "status": "success",
       "message": null,
       "end_turn": true,
-      "end_turn_events": null,
+      "end_turn_events": {
+        "game_over": true,
+        "reason": "no_player_cards",
+        "events": [
+          {
+            "type": "draw_card",
+            "player": 0,
+            "card": {
+              "type": "city",
+              "name": "Istanbul",
+              "color": "black"
+            }
+          }
+        ]
+      },
       "game_state": {
         "gameStatus": {
           "actions_remaining": 0,
