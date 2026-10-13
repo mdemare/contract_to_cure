@@ -13,12 +13,12 @@
   :quiet_night:
   :forecast_active: true
   :forecast_cards:
-  - Montreal
-  - Chicago
-  - Houston
-  - Tehran
-  - Kabul
+  - Stockholm
+  - Nairobi
+  - Sao Paulo
+  - Jakarta
   - Mumbai
+  - Kabul
   :operations_expert_move_used: false
   :difficulty_level: normal
 :disease_cubes:

@@ -85,10 +85,10 @@ Game logic
   `infect_cities_too_many_outbreaks`). `reason` is `no_player_cards`,
   `too_many_outbreaks` or `no_cubes`. The game over is saved in both cases.
 - Draws pop from the *end* of each deck array, and an epidemic takes the *first*
-  infection card. Forecast also looks at, and reorders, the *first* six cards of
-  the infection deck array, which is the bottom of the draw pile. Reordered cards are
-  saved with type `infection`; all other infection cards have type `city`
-  (`action_card_forecast`, `action_card_forecast_apply`).
+  infection card. Forecast looks at, and reorders, the *last* six cards of the
+  infection deck array (the top of the draw pile), listed next card first; the
+  first card of `card_order` ends up last in the array. Reordered cards keep type
+  `city` (`action_card_forecast`, `action_card_forecast_apply`).
 - Playing a retrieved event card removes it from the game, not to the discard pile
   (`action_card_retrieved_card_leaves_game`).
 - A successful event card resolves a pending hand-limit discard once the hand is
@@ -244,7 +244,7 @@ JSON view and saves
 | `action_card_resilient_population_not_in_discard` | `event_cards` | City not in the infection discard pile |
 | `action_card_government_grant` | `event_cards` | Build a station anywhere |
 | `action_card_government_grant_existing_station` | `event_cards` | Station already exists |
-| `action_card_forecast` | `event_cards` | Forecast, step 1: shows the first six cards of the infection deck array (the bottom of the draw pile) |
+| `action_card_forecast` | `event_cards` | Forecast, step 1: shows the top six cards of the infection draw pile, next card first |
 | `action_card_forecast_apply` | `forecast_active` | Forecast, step 2: reorder; the response is the bare JSON view |
 | `action_card_forecast_invalid_order` | `forecast_active` | Not a permutation: error with HTTP 200 |
 | `action_card_forecast_blocked` | `forecast_active` | Other event cards during Forecast: error with HTTP 200 |

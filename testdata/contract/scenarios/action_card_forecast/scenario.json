@@ -1,6 +1,6 @@
 {
   "name": "action_card_forecast",
-  "description": "Forecast, step 1: shows the first six cards of the infection deck array (the bottom of the draw pile)",
+  "description": "Forecast, step 1: shows the top six cards of the infection draw pile, next card first",
   "save_before": "states/event_cards.yaml",
   "request": {
     "method": "POST",
@@ -21,27 +21,27 @@
       "message": "Choose the order for the infection cards",
       "cards": [
         {
-          "name": "Montreal",
+          "name": "Stockholm",
           "color": "blue"
         },
         {
-          "name": "Chicago",
-          "color": "blue"
+          "name": "Nairobi",
+          "color": "yellow"
         },
         {
-          "name": "Houston",
-          "color": "blue"
+          "name": "Sao Paulo",
+          "color": "yellow"
         },
         {
-          "name": "Tehran",
+          "name": "Jakarta",
+          "color": "red"
+        },
+        {
+          "name": "Mumbai",
           "color": "black"
         },
         {
           "name": "Kabul",
-          "color": "black"
-        },
-        {
-          "name": "Mumbai",
           "color": "black"
         }
       ]
