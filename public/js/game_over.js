@@ -180,29 +180,9 @@ function showGameOverDialog(gameState, reasonCode = null) {
     subtitle.textContent = 'The pandemic has overwhelmed humanity';
 
     // Determine defeat reason
-    let defeatReason = '';
-    if (defeatReasonText(reasonCode)) {
-      defeatReason = defeatReasonText(reasonCode);
-    } else if (gameState.gameStatus.defeatReason) {
-      defeatReason = gameState.gameStatus.defeatReason;
-    } else if (outbreaks >= 8) {
-      defeatReason = 'Too many outbreaks occurred.';
-    } else if (gameState.decks && gameState.decks.playerDeck && gameState.decks.playerDeck.length === 0) {
-      defeatReason = 'You ran out of player cards.';
-    } else if (gameState.diseaseCubes) {
-      // Check if any disease cubes ran out
-      const colors = ['blue', 'yellow', 'black', 'red'];
-      for (const color of colors) {
-        if (gameState.diseaseCubes[color] &&
-            gameState.diseaseCubes[color].remaining === 0) {
-          defeatReason = `You ran out of ${color} disease cubes.`;
-          break;
-        }
-      }
-    }
-
+    let defeatReason = defeatReasonText(reasonCode);
     if (!defeatReason) {
-      defeatReason = 'The pandemic spread beyond control.';
+      defeatReason = outbreaks >= 8 ? DEFEAT_REASONS.too_many_outbreaks : 'The pandemic spread beyond control.';
     }
 
     reason.textContent = defeatReason;
