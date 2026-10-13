@@ -509,6 +509,35 @@ class TestApiEndpoints < TestHelper
     assert_equal 7, resolved_state.players[0].hand.size
   end
 
+  def test_retrieved_event_discarded_for_hand_limit_leaves_game
+    create_game_with_custom_state do |state|
+      current_player = state.players[state.current_player_idx]
+      current_player.instance_variable_set(:@role, :contingency_planner)
+      current_player.hand.clear
+      ['Montreal', 'Washington', 'New York', 'London', 'Paris', 'Madrid', 'Essen'].each do |city|
+        current_player.hand << Card.new(:city, city, :blue)
+      end
+      state.player_discard.clear
+      state.player_discard << Card.new(:action, 'Airlift')
+    end
+
+    post '/retrieve', {
+      action_card_name: 'Airlift'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+    assert_successful_response(last_response)
+
+    post '/discard_cards', {
+      player_index: 0,
+      card_names: ['Airlift']
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+    assert_successful_response(last_response)
+
+    resolved_state = GameState.load_from_redis(@test_redis_key)
+    assert_nil resolved_state.pending_hand_limit
+    refute_includes resolved_state.players[0].hand.map(&:name), 'Airlift'
+    refute_includes resolved_state.player_discard.map(&:name), 'Airlift'
+  end
+
   def test_restart_game_endpoint
     create_test_game_state
 

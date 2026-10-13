@@ -559,15 +559,14 @@ func TestDiscardCards(t *testing.T) {
 			t.Errorf("phase %s, pending %+v", g.Phase, g.PendingHandLimit)
 		}
 	})
-	// Rails keeps a retrieved card in the discard pile here, unlike when it
-	// is played (cc-437, open).
-	t.Run("retrieved card goes to the discard pile", func(t *testing.T) {
+	// A retrieved card leaves the game, as when it is played (cc-437).
+	t.Run("retrieved card leaves the game", func(t *testing.T) {
 		g := pendingGame(t)
 		airlift := game.Card{Type: game.ActionCard, Name: game.Airlift, Retrieved: true}
 		g.Players[1].Hand = append(g.Players[1].Hand[:7], airlift)
 		wantSuccess(t, g.DiscardCards(1, []string{game.Airlift}), "discarded")
-		if !slices.Equal(g.Decks.PlayerDiscard, []game.Card{airlift}) {
-			t.Errorf("discard = %+v", g.Decks.PlayerDiscard)
+		if len(g.Decks.PlayerDiscard) != 0 || slices.Contains(g.Players[1].Hand, airlift) {
+			t.Errorf("discard = %+v, hand = %+v", g.Decks.PlayerDiscard, g.Players[1].Hand)
 		}
 	})
 }

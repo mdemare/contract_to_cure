@@ -468,8 +468,11 @@ func (g *GameState) DiscardCards(playerIndex int, cardNames []string) Result {
 		return actionError(fmt.Sprintf("Player does not have the %s card", missing))
 	}
 
+	// A retrieved event card leaves the game, as when it is played.
 	for _, name := range cardNames {
-		g.discard(p, name)
+		if card, ok := p.takeCard(name); ok && !card.Retrieved {
+			g.Decks.PlayerDiscard = append(g.Decks.PlayerDiscard, card)
+		}
 	}
 	g.resolvePendingHandLimit()
 	return eventSuccess(g, fmt.Sprintf("Successfully discarded %d card(s)", len(cardNames)))

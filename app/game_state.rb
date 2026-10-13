@@ -344,7 +344,11 @@ class GameState
       return { success: false, status: 'error', message: "Player does not have the #{missing_card_name} card" }
     end
 
-    card_names.each { |card_name| discard_player_card_by_name(player_index, card_name) }
+    # A retrieved event card leaves the game, as when it is played.
+    card_names.each do |card_name|
+      card, = find_card_in_player_hand(player_index, card_name)
+      discard_player_card_by_name(player_index, card_name, card.retrieved?)
+    end
     resolve_pending_hand_limit_if_satisfied
 
     {
