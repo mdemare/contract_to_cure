@@ -99,8 +99,8 @@ func TestGovernmentGrant(t *testing.T) {
 	if !slices.Equal(g.ResearchStations, []string{game.StartingCity, "Tokyo"}) {
 		t.Errorf("stations = %v", g.ResearchStations)
 	}
-	if g.City("Tokyo").HasResearchStation {
-		t.Error("like Rails, the city flag stays false")
+	if !g.City("Tokyo").HasResearchStation {
+		t.Error("HasResearchStation was not set (cc-434)")
 	}
 	wantError(t, g.GovernmentGrant("Paris"), "No player has the Government Grant card")
 

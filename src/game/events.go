@@ -176,8 +176,7 @@ func (g *GameState) Airlift(playerIndex *int, city string) Result {
 }
 
 // GovernmentGrant builds a research station in any city without a city card
-// (use_government_grant). Like BuildResearchStation, it leaves the city's
-// HasResearchStation alone.
+// (use_government_grant).
 func (g *GameState) GovernmentGrant(city string) Result {
 	holder, card, failed := g.eventCardHolder(GovernmentGrant)
 	if failed != nil {
@@ -193,7 +192,7 @@ func (g *GameState) GovernmentGrant(city string) Result {
 	}
 
 	g.spendEventCard(holder, card)
-	g.ResearchStations = append(g.ResearchStations, city)
+	g.addResearchStation(city)
 	return eventSuccess(g, fmt.Sprintf("Successfully built a research station in %s using Government Grant", city))
 }
 

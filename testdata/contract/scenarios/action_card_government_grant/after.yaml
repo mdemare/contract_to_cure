@@ -468,7 +468,7 @@
     - Kyoto
     - San Francisco
     :disease_cubes: 0
-    :has_research_station: false
+    :has_research_station: true
   Kyoto:
     :name: Kyoto
     :color: :red

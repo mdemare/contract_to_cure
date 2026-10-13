@@ -449,7 +449,7 @@
     - Shanghai
     - Seoul
     :disease_cubes: 0
-    :has_research_station: false
+    :has_research_station: true
   Seoul:
     :name: Seoul
     :color: :red

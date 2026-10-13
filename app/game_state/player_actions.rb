@@ -105,14 +105,14 @@ module PlayerActions
 
     # Operations expert can build without a card
     if current_player.role == :operations_expert
-      @research_stations << city_name
+      add_research_station(city_name)
       return after_action(true, "Successfully built a research station in #{city_name} (Operations Expert ability)")
     end
 
     # Otherwise, player needs the city card
     if has_city_card?(current_player_idx, city_name)
       discard_player_card_by_name(current_player_idx, city_name)
-      @research_stations << city_name
+      add_research_station(city_name)
       return after_action(true, "Successfully built a research station in #{city_name}")
     end
 
@@ -260,6 +260,13 @@ module PlayerActions
   end
 
   private
+
+  # Records a new station in the station list and on the city, so the save's
+  # :cities entry agrees with :research_stations (cc-434).
+  def add_research_station(city_name)
+    @research_stations << city_name
+    @cities[city_name]&.has_research_station = true
+  end
 
   # Common after-action method to handle action consumption, end of turn, and response creation
   def after_action(action_success, message, additional_data = {})

@@ -335,6 +335,36 @@ class TestApiEndpoints < TestHelper
     assert_json_response(last_response)
   end
 
+  # cc-434: the saved city flag must agree with the station list.
+  def test_build_research_station_sets_city_flag_in_save
+    create_game_with_custom_state do |state|
+      current_player = state.players[state.current_player_idx]
+      current_player.location = 'Chicago'
+      current_player.hand.clear
+      current_player.hand << Card.new(:city, 'Chicago', :blue)
+    end
+
+    post '/build_research_station'
+    assert_successful_response(last_response)
+
+    saved = GameState.load_from_redis(@test_redis_key)
+    assert_includes saved.research_stations, 'Chicago'
+    assert saved.cities['Chicago'].has_research_station, 'Chicago has_research_station was not saved'
+  end
+
+  def test_government_grant_sets_city_flag_in_save
+    create_game_with_custom_state do |state|
+      state.players[1].hand << Card.new(:action, 'Government Grant')
+    end
+
+    post '/action_card', { card: 'Government Grant', city: 'Tokyo' }.to_json, 'CONTENT_TYPE' => 'application/json'
+    assert_successful_response(last_response)
+
+    saved = GameState.load_from_redis(@test_redis_key)
+    assert_includes saved.research_stations, 'Tokyo'
+    assert saved.cities['Tokyo'].has_research_station, 'Tokyo has_research_station was not saved'
+  end
+
   def test_pass_endpoint
     create_test_game_state
 
