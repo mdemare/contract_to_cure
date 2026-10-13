@@ -735,6 +735,59 @@ class TestApiEndpoints < TestHelper
     assert_equal [Card.new(:city, 'Madrid', :blue)].map(&:name), saved.infection_deck.map(&:name)
   end
 
+  def test_infect_cities_rejected_after_game_over
+    test_infect_cities_game_over_returns_events_and_reason
+    saved_before = @redis.get(@test_redis_key)
+
+    post '/infect_cities'
+    assert_equal 422, last_response.status
+    assert_equal({ 'status' => 'error', 'message' => 'The game is over' }, parse_json_response(last_response))
+    assert_equal saved_before, @redis.get(@test_redis_key)
+  end
+
+  def test_mutating_endpoints_rejected_after_game_over
+    requests = {
+      '/move' => { player_index: 0, destination: 'Chicago' },
+      '/treat' => {},
+      '/cure_disease' => { color: 'blue', card_names: %w[Atlanta Chicago Montreal New\ York] },
+      '/retrieve' => { action_card_name: 'Airlift' },
+      '/share_knowledge' => { giving_player_index: 0, receiving_player_index: 1, city_name: 'Atlanta' },
+      '/pass' => {},
+      '/draw_cards' => {},
+      '/infect_cities' => {},
+      '/build_research_station' => {},
+      '/discard_cards' => { player_index: 0, card_names: ['Atlanta'] },
+      '/action_card' => { card: 'One Quiet Night' }
+    }
+    %w[player_actions draw_cards infect_cities].each do |phase|
+      create_game_with_custom_state do |state|
+        state.instance_variable_set(:@phase, phase)
+        state.instance_variable_set(:@actions_remaining, phase == 'player_actions' ? 4 : 0)
+        state.instance_variable_set(:@game_over, true)
+        state.instance_variable_set(:@game_over_reason, :victory)
+      end
+      saved_before = @redis.get(@test_redis_key)
+
+      requests.each do |path, body|
+        post path, body.to_json, { 'CONTENT_TYPE' => 'application/json' }
+        assert_equal 422, last_response.status, "#{path} in #{phase}"
+        assert_equal({ 'status' => 'error', 'message' => 'The game is over' }, parse_json_response(last_response))
+        assert_equal saved_before, @redis.get(@test_redis_key), "#{path} in #{phase} changed the save"
+      end
+    end
+  end
+
+  def test_restart_game_allowed_after_game_over
+    create_game_with_custom_state do |state|
+      state.instance_variable_set(:@game_over, true)
+      state.instance_variable_set(:@game_over_reason, :no_player_cards)
+    end
+
+    post '/restart_game', {}.to_json, { 'CONTENT_TYPE' => 'application/json' }
+    assert_successful_response(last_response)
+    refute GameState.load_from_redis(@test_redis_key).game_over
+  end
+
   def test_infect_cities_rejects_skipping_draw_cards_phase
     create_game_with_custom_state do |state|
       state.instance_variable_set(:@actions_remaining, 0)

@@ -1,0 +1,22 @@
+{
+  "name": "move_game_over_missing_parameters",
+  "description": "The game-over check comes before parameter validation",
+  "save_before": "states/game_over_victory.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/move",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {}
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "status": "error",
+      "message": "The game is over"
+    }
+  },
+  "save_after": "unchanged"
+}

@@ -1,0 +1,24 @@
+{
+  "name": "retrieve_game_over",
+  "description": "Game over",
+  "save_before": "states/game_over_victory.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/retrieve",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "action_card_name": "Airlift"
+    }
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "status": "error",
+      "message": "The game is over"
+    }
+  },
+  "save_after": "unchanged"
+}

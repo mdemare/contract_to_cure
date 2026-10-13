@@ -1,0 +1,23 @@
+{
+  "name": "restart_game_after_game_over",
+  "description": "Restart is the one request a finished game accepts (after.yaml depends on the Ruby RNG)",
+  "save_before": "states/game_over_infect_phase.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/restart_game",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {}
+  },
+  "response": {
+    "status": 200,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "success": true,
+      "status": "success",
+      "message": "Game restarted successfully"
+    }
+  },
+  "save_after": "scenarios/restart_game_after_game_over/after.yaml"
+}

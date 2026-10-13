@@ -1,0 +1,30 @@
+{
+  "name": "cure_disease_game_over",
+  "description": "Game over",
+  "save_before": "states/game_over_victory.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/cure_disease",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "color": "red",
+      "card_names": [
+        "Wuhan",
+        "Beijing",
+        "Shanghai",
+        "Seoul"
+      ]
+    }
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "status": "error",
+      "message": "The game is over"
+    }
+  },
+  "save_after": "unchanged"
+}

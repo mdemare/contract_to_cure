@@ -1,0 +1,20 @@
+{
+  "name": "draw_cards_game_over",
+  "description": "Game over (no player cards, phase still draw_cards): no further draw",
+  "save_before": "states/game_over_draw_phase.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/draw_cards",
+    "headers": {},
+    "body": null
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "status": "error",
+      "message": "The game is over"
+    }
+  },
+  "save_after": "unchanged"
+}
