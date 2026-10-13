@@ -73,12 +73,8 @@ var playerActions = map[string]func(t *testing.T, g *game.GameState, r actionReq
 	"/retrieve": func(_ *testing.T, g *game.GameState, r actionRequest) game.Result {
 		return g.Retrieve(r.ActionCardName)
 	},
-	"/share_knowledge": func(t *testing.T, g *game.GameState, r actionRequest) game.Result {
-		res, err := g.ShareKnowledge(r.GivingPlayerIndex, r.ReceivingPlayerIndex, r.CityName)
-		if err != nil {
-			t.Fatal(err)
-		}
-		return res
+	"/share_knowledge": func(_ *testing.T, g *game.GameState, r actionRequest) game.Result {
+		return g.ShareKnowledge(r.GivingPlayerIndex, r.ReceivingPlayerIndex, r.CityName)
 	},
 	"/pass":                   func(_ *testing.T, g *game.GameState, _ actionRequest) game.Result { return g.Pass() },
 	"/build_research_station": func(_ *testing.T, g *game.GameState, _ actionRequest) game.Result { return g.BuildResearchStation() },

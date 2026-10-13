@@ -216,6 +216,12 @@ module ContractFixtures
      'The receiver goes over seven cards: pending discard'],
     ['share_knowledge_not_same_city', 'base', 'POST', '/share_knowledge',
      { giving_player_index: 0, receiving_player_index: 2, city_name: 'Wuhan' }, 'Players are in different cities'],
+    ['share_knowledge_unknown_player', 'base', 'POST', '/share_knowledge',
+     { giving_player_index: 0, receiving_player_index: 4, city_name: 'Wuhan' },
+     'Receiving index past the last player: 422 (cc-433)'],
+    ['share_knowledge_negative_player', 'base', 'POST', '/share_knowledge',
+     { giving_player_index: -1, receiving_player_index: 0, city_name: 'Wuhan' },
+     'Negative giving index: 422, not the last player (cc-433)'],
     ['share_knowledge_missing_parameters', 'base', 'POST', '/share_knowledge', { giving_player_index: 0 },
      'Schema failure'],
 

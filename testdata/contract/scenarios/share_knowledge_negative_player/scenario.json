@@ -1,0 +1,27 @@
+{
+  "name": "share_knowledge_negative_player",
+  "description": "Negative giving index: 422, not the last player (cc-433)",
+  "save_before": "states/base.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/share_knowledge",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "giving_player_index": -1,
+      "receiving_player_index": 0,
+      "city_name": "Wuhan"
+    }
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "success": false,
+      "status": "error",
+      "message": "Unknown player -1"
+    }
+  },
+  "save_after": "unchanged"
+}

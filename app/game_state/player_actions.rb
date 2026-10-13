@@ -140,6 +140,10 @@ module PlayerActions
   end
 
   def share_knowledge(giving_player_index, receiving_player_index, city_name)
+    [giving_player_index, receiving_player_index].each do |index|
+      return after_action(false, "Unknown player #{index}") unless index.between?(0, @players.size - 1)
+    end
+
     giving_player = @players[giving_player_index]
     receiving_player = @players[receiving_player_index]
 
