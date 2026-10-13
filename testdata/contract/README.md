@@ -81,8 +81,9 @@ Game logic
   before its `infect_new_city` event (`draw_cards_epidemic`).
 - When the game ends during `/draw_cards` or `/infect_cities`, `end_turn_events`
   is `{game_over: true, reason, events}` with the events up to the game over, and
-  the phase stays where it was (`draw_cards_player_deck_runs_out`). `reason` is
-  `no_player_cards`, `too_many_outbreaks` or `no_cubes`.
+  the phase stays where it was (`draw_cards_player_deck_runs_out`,
+  `infect_cities_too_many_outbreaks`). `reason` is `no_player_cards`,
+  `too_many_outbreaks` or `no_cubes`. The game over is saved in both cases.
 - Draws pop from the *end* of each deck array, and an epidemic takes the *first*
   infection card. Forecast also looks at, and reorders, the *first* six cards of
   the infection deck array, which is the bottom of the draw pile. Reordered cards are
@@ -208,6 +209,7 @@ JSON view and saves
 |---|---|---|
 | `infect_cities` | `infect_phase` | Infect two cities and start the next turn |
 | `infect_cities_quiet_night` | `infect_phase_quiet_night` | One Quiet Night skips infection |
+| `infect_cities_too_many_outbreaks` | `infect_phase_outbreak_limit` | Game over (too many outbreaks): end_turn_events has game_over and the events so far; the game over is saved |
 | `infect_cities_out_of_phase` | `draw_phase` | Wrong phase |
 | `infect_cities_pending_discard` | `pending_discard` | Pending hand-limit discard |
 

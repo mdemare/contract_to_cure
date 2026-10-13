@@ -63,6 +63,14 @@ module ContractFixtures
       set(game, :phase, 'infect_cities')
       set(game, :quiet_night, true)
     end,
+    'infect_phase_outbreak_limit' => lambda do |game|
+      set(game, :actions_remaining, 0)
+      set(game, :phase, 'infect_cities')
+      # Paris already has three cubes, so drawing it is the eighth outbreak.
+      set(game, :outbreak_count, 7)
+      game.infection_discard.reject! { |card| card.name == 'Paris' }
+      game.infection_deck.push(city_card('Paris'))
+    end,
     'pending_discard' => lambda do |game|
       game.players[1].hand = city_cards('Lagos', 'Cairo', 'Mexico City', 'Los Angeles', 'Buenos Aires', 'Riyadh',
                                         'Baghdad') + [Card.new(:action, 'One Quiet Night')]
@@ -202,6 +210,8 @@ module ContractFixtures
     ['infect_cities', 'infect_phase', 'POST', '/infect_cities', nil, 'Infect two cities and start the next turn'],
     ['infect_cities_quiet_night', 'infect_phase_quiet_night', 'POST', '/infect_cities', nil,
      'One Quiet Night skips infection'],
+    ['infect_cities_too_many_outbreaks', 'infect_phase_outbreak_limit', 'POST', '/infect_cities', nil,
+     'Game over (too many outbreaks): end_turn_events has game_over and the events so far; the game over is saved'],
     ['infect_cities_out_of_phase', 'draw_phase', 'POST', '/infect_cities', nil, 'Wrong phase'],
     ['infect_cities_pending_discard', 'pending_discard', 'POST', '/infect_cities', nil, 'Pending hand-limit discard'],
 
