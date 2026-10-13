@@ -63,9 +63,7 @@ func loadScenarios(t *testing.T, match func(*contract.Scenario) bool) map[string
 // TestEventCardScenarios replays every /action_card contract scenario
 // against the domain: the game-over guard, then PlayEventCard, comparing the
 // body (key order, null vs missing), HTTP status and the save afterwards.
-// Parameter validation is left to the HTTP layer (cc-422). The bare JSON
-// view after a finished Forecast is ported in cc-420, so only its save is
-// compared.
+// Parameter validation is left to the HTTP layer (cc-422).
 func TestEventCardScenarios(t *testing.T) {
 	scenarios := loadScenarios(t, func(sc *contract.Scenario) bool { return sc.Request.Path == "/action_card" })
 	if len(scenarios) < 17 {
@@ -76,7 +74,7 @@ func TestEventCardScenarios(t *testing.T) {
 			before := readFixture(t, sc.SaveBefore)
 			g := decodeFixture(t, before)
 			unchanged := encode(t, g)
-			wantBody := withoutGameState(t, sc.Response.Body)
+			wantBody := compactJSON(t, sc.Response.Body)
 
 			var gotStatus int
 			var body any
@@ -101,11 +99,7 @@ func TestEventCardScenarios(t *testing.T) {
 			if gotStatus != sc.Response.Status {
 				t.Errorf("status = %d, want %d", gotStatus, sc.Response.Status)
 			}
-			if body == any(g) {
-				if strings.Contains(wantBody, `"status"`) {
-					t.Errorf("got the bare game state, want %s", wantBody)
-				}
-			} else if got := withoutGameState(t, marshal(t, body)); got != wantBody {
+			if got := compactJSON(t, marshal(t, body)); got != wantBody {
 				t.Errorf("body:\n got %s\nwant %s", got, wantBody)
 			}
 			checkSave(t, sc, g, unchanged, changed)
@@ -134,7 +128,7 @@ func TestForecastGuardScenarios(t *testing.T) {
 			if sc.Response.Status != http.StatusUnprocessableEntity {
 				t.Errorf("want status %d, the guard gives 422", sc.Response.Status)
 			}
-			if got, want := withoutGameState(t, marshal(t, rej)), withoutGameState(t, sc.Response.Body); got != want {
+			if got, want := compactJSON(t, marshal(t, rej)), compactJSON(t, sc.Response.Body); got != want {
 				t.Errorf("body:\n got %s\nwant %s", got, want)
 			}
 			checkSave(t, sc, g, unchanged, false)

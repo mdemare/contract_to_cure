@@ -617,7 +617,7 @@ func TestResultJSON(t *testing.T) {
 	g := testGame(t, game.Scientist)
 	g.City("Wuhan").SetDiseaseCubes(1)
 	res := g.TreatDisease()
-	res.GameState = nil // the JSON view is cc-420
+	res.GameState = nil // the view itself is checked by TestViewScenarios
 	got, _ := json.Marshal(res)
 	if want := `{"success":true,"status":"success","message":"Treated red disease in Wuhan","end_turn":false,"cubes_removed":1}`; string(got) != want {
 		t.Errorf("treat: %s", got)

@@ -264,8 +264,8 @@ func TestDrawCards(t *testing.T) {
 	want := `{"success":true,"status":"success","message":null,"end_turn":true,"end_turn_events":{"game_over":false,"events":[` +
 		`{"type":"draw_card","player":0,"card":{"type":"city","name":"Paris","color":"blue"}},` +
 		`{"type":"draw_card","player":0,"card":{"type":"city","name":"Lima","color":"yellow"}},` +
-		`{"type":"wait_infect_cities"}]},"game_state":"<game state>"}`
-	if got := withoutGameState(t, marshal(t, res)); got != want {
+		`{"type":"wait_infect_cities"}]},"game_state":` + string(marshal(t, g)) + `}`
+	if got := string(marshal(t, res)); got != want {
 		t.Errorf("JSON:\n got %s\nwant %s", got, want)
 	}
 	if g.Phase != game.InfectCities || !slices.Equal(names(g.CurrentPlayer().Hand), []string{"Paris", "Lima"}) {

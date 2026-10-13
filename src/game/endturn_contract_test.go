@@ -40,7 +40,7 @@ var endTurnSteps = map[string]func(t *testing.T, g *game.GameState, body json.Ra
 // TestEndTurnScenarios replays every /draw_cards, /infect_cities and
 // /discard_cards contract scenario against the domain: the guards in Rails'
 // order (Forecast, game over, then the step's own checks), the body (key
-// order, null vs missing; game_state masked until cc-420), the HTTP status
+// order, null vs missing, game_state included), the HTTP status
 // and the save afterwards. Parameter validation is left to cc-422. The only
 // epidemic in the fixtures intensifies a one-card discard, so the shuffle
 // cannot change the save.
@@ -56,7 +56,7 @@ func TestEndTurnScenarios(t *testing.T) {
 		t.Run(name, func(t *testing.T) {
 			g := decodeFixture(t, readFixture(t, sc.SaveBefore))
 			unchanged := encode(t, g)
-			wantBody := withoutGameState(t, sc.Response.Body)
+			wantBody := compactJSON(t, sc.Response.Body)
 
 			var gotStatus int
 			var body any
@@ -75,7 +75,7 @@ func TestEndTurnScenarios(t *testing.T) {
 			if gotStatus != sc.Response.Status {
 				t.Errorf("status = %d, want %d", gotStatus, sc.Response.Status)
 			}
-			if got := withoutGameState(t, marshal(t, body)); got != wantBody {
+			if got := compactJSON(t, marshal(t, body)); got != wantBody {
 				t.Errorf("body:\n got %s\nwant %s", got, wantBody)
 			}
 			checkSave(t, sc, g, unchanged, changed)

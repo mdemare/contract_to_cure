@@ -88,36 +88,14 @@ func httpStatus(res game.Result) int {
 	return http.StatusOK
 }
 
-// withoutGameState re-encodes a JSON object with the value of game_state
-// replaced by a placeholder, keeping the key order. The JSON view itself is
-// ported in cc-420; the saves are compared instead.
-func withoutGameState(t *testing.T, raw []byte) string {
+// compactJSON compacts a JSON body, keeping its key order.
+func compactJSON(t *testing.T, raw []byte) string {
 	t.Helper()
-	dec := json.NewDecoder(bytes.NewReader(raw))
-	if tok, err := dec.Token(); err != nil || tok != json.Delim('{') {
-		t.Fatalf("not a JSON object: %s", raw)
+	var buf bytes.Buffer
+	if err := json.Compact(&buf, raw); err != nil {
+		t.Fatal(err)
 	}
-	var parts []string
-	for dec.More() {
-		key, err := dec.Token()
-		if err != nil {
-			t.Fatal(err)
-		}
-		var val json.RawMessage
-		if err := dec.Decode(&val); err != nil {
-			t.Fatal(err)
-		}
-		if key == "game_state" {
-			val = json.RawMessage(`"<game state>"`)
-		}
-		k, _ := json.Marshal(key)
-		var compact bytes.Buffer
-		if err := json.Compact(&compact, val); err != nil {
-			t.Fatal(err)
-		}
-		parts = append(parts, string(k)+":"+compact.String())
-	}
-	return "{" + strings.Join(parts, ",") + "}"
+	return buf.String()
 }
 
 func marshal(t *testing.T, v any) []byte {
@@ -131,8 +109,8 @@ func marshal(t *testing.T, v any) []byte {
 
 // TestPlayerActionScenarios replays every contract scenario of a player
 // action against the domain: the guards in Rails' order (Forecast, game
-// over, then phase), the action's result (key order, null vs missing, HTTP
-// status) and the save afterwards. Parameter validation and conflicts are
+// over, then phase), the action's result (key order, null vs missing,
+// game_state included, HTTP status) and the save afterwards. Parameter validation and conflicts are
 // left to the HTTP layer (cc-422).
 func TestPlayerActionScenarios(t *testing.T) {
 	names, err := contract.ScenarioNames(fixtureRoot)
@@ -153,7 +131,7 @@ func TestPlayerActionScenarios(t *testing.T) {
 			before := readFixture(t, sc.SaveBefore)
 			g := decodeFixture(t, before)
 			unchanged := encode(t, g)
-			wantBody := withoutGameState(t, sc.Response.Body)
+			wantBody := compactJSON(t, sc.Response.Body)
 
 			if sc.Response.Status == http.StatusConflict {
 				t.Skip("conflict: cc-422")
@@ -186,7 +164,7 @@ func TestPlayerActionScenarios(t *testing.T) {
 			if gotStatus != sc.Response.Status {
 				t.Errorf("status = %d, want %d", gotStatus, sc.Response.Status)
 			}
-			if got := withoutGameState(t, gotBody); got != wantBody {
+			if got := compactJSON(t, gotBody); got != wantBody {
 				t.Errorf("body:\n got %s\nwant %s", got, wantBody)
 			}
 			checkSave(t, sc, g, unchanged, success)
