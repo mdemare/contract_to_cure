@@ -713,6 +713,12 @@ class TestApiEndpoints < TestHelper
     assert data['game_state']['gameStatus']['gameOver']
     assert_equal 'infect_cities', data['game_state']['gameStatus']['phase']
     assert_equal current_player_idx, data['game_state']['gameStatus']['currentPlayerIndex']
+
+    saved = GameState.load_from_redis(@test_redis_key)
+    assert saved.game_over
+    assert_equal :no_cubes, saved.game_over_reason
+    assert_equal 0, saved.disease_cubes[:yellow]
+    assert_equal [Card.new(:city, 'Madrid', :blue)].map(&:name), saved.infection_deck.map(&:name)
   end
 
   def test_infect_cities_rejects_skipping_draw_cards_phase

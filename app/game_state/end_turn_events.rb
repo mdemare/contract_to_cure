@@ -26,7 +26,10 @@ module EndTurnEvents
     else
       @infection_rate.times do
         end_turn.infect_city
-        return game_over_events(end_turn) if game_over
+        if game_over
+          save_game_state
+          return game_over_events(end_turn)
+        end
       end
     end
 
