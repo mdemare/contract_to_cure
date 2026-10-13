@@ -105,7 +105,8 @@ type Decks struct {
 // and operations_expert_move_used default to false, cards without :retrieved
 // are not retrieved, and a missing or invalid difficulty becomes
 // defaultDifficulty (or heroic if that is invalid too). A current_player_idx
-// outside the players is an error, so the caller starts a new game.
+// or pending_hand_limit player_index outside the players is an error, so the
+// caller starts a new game.
 func DecodeSave(data []byte, defaultDifficulty string) (*Save, error) {
 	root, err := parseRubyYAML(data)
 	if err != nil {
@@ -380,9 +381,12 @@ func (d *decoder) save(root value, defaultDifficulty string) *Save {
 		})
 	}
 
-	// Rails' load_state_from_hash rejects this too (cc-439).
+	// Rails' load_state_from_hash rejects these too (cc-439, cc-444).
 	if d.err == nil && (s.Status.CurrentPlayerIdx < 0 || s.Status.CurrentPlayerIdx >= len(s.Players)) {
 		d.fail("game_status.current_player_idx", "%d is not one of %d players", s.Status.CurrentPlayerIdx, len(s.Players))
+	}
+	if p := s.Status.PendingHandLimit; d.err == nil && p != nil && (p.PlayerIndex < 0 || p.PlayerIndex >= len(s.Players)) {
+		d.fail("game_status.pending_hand_limit.player_index", "%d is not one of %d players", p.PlayerIndex, len(s.Players))
 	}
 
 	decks, _ := d.field(root, "save", "decks")

@@ -430,6 +430,15 @@ class GameState
     end
     @current_player = @players[@current_player_idx]
 
+    # The pending discard's player is looked up the same way, so check it too
+    # (cc-444).
+    if @pending_hand_limit
+      pending_player_idx = @pending_hand_limit[:player_index]
+      unless pending_player_idx.is_a?(Integer) && (0...@players.size).cover?(pending_player_idx)
+        raise ArgumentError, "pending_hand_limit player_index #{pending_player_idx.inspect} is not a player"
+      end
+    end
+
     # Decks
     @player_deck = state[:decks][:player_deck].map { |card_data| card_from_hash(card_data) }
 
