@@ -130,10 +130,10 @@ func marshal(t *testing.T, v any) []byte {
 }
 
 // TestPlayerActionScenarios replays every contract scenario of a player
-// action against the domain: the guards in Rails' order (game over, then
-// phase), the action's result (key order, null vs missing, HTTP status) and
-// the save afterwards. Parameter validation, the Forecast guard and conflicts
-// are left to the HTTP layer (cc-418, cc-422).
+// action against the domain: the guards in Rails' order (Forecast, game
+// over, then phase), the action's result (key order, null vs missing, HTTP
+// status) and the save afterwards. Parameter validation and conflicts are
+// left to the HTTP layer (cc-422).
 func TestPlayerActionScenarios(t *testing.T) {
 	names, err := contract.ScenarioNames(fixtureRoot)
 	if err != nil {
@@ -155,17 +155,16 @@ func TestPlayerActionScenarios(t *testing.T) {
 			unchanged := encode(t, g)
 			wantBody := withoutGameState(t, sc.Response.Body)
 
-			switch {
-			case g.ForecastActive:
-				t.Skip("Forecast guard: cc-418")
-			case sc.Response.Status == http.StatusConflict:
+			if sc.Response.Status == http.StatusConflict {
 				t.Skip("conflict: cc-422")
 			}
 
 			var gotStatus int
 			var gotBody []byte
 			success := false
-			if rej := g.CheckGameOver(); rej != nil {
+			if rej := g.CheckForecast(); rej != nil {
+				gotStatus, gotBody = http.StatusUnprocessableEntity, marshal(t, rej)
+			} else if rej := g.CheckGameOver(); rej != nil {
 				gotStatus, gotBody = http.StatusUnprocessableEntity, marshal(t, rej)
 			} else if rej := g.CheckAction(); rej != nil {
 				gotStatus, gotBody = http.StatusUnprocessableEntity, marshal(t, rej)
@@ -190,23 +189,7 @@ func TestPlayerActionScenarios(t *testing.T) {
 			if got := withoutGameState(t, gotBody); got != wantBody {
 				t.Errorf("body:\n got %s\nwant %s", got, wantBody)
 			}
-
-			after := encode(t, g)
-			if sc.SaveAfter == contract.Unchanged {
-				if success {
-					t.Error("a successful action must be saved")
-				}
-				if !bytes.Equal(after, unchanged) {
-					t.Errorf("the game changed:\n%s", after)
-				}
-				return
-			}
-			if !success {
-				t.Error("a failed action must not be saved")
-			}
-			if want := readFixture(t, sc.SaveAfter); !bytes.Equal(after, want) {
-				t.Errorf("save differs from %s:\n%s", sc.SaveAfter, after)
-			}
+			checkSave(t, sc, g, unchanged, success)
 		})
 		ran++
 	}
