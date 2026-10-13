@@ -198,6 +198,8 @@ JSON view and saves
 | `share_knowledge_missing_parameters` | `base` | Schema failure |
 | `share_knowledge_unknown_player` | `base` | Receiving index past the last player: 422 (cc-433) |
 | `share_knowledge_negative_player` | `base` | Negative giving index: 422, not the last player (cc-433) |
+| `share_knowledge_not_current_player` | `others_share_city` | Neither player is the current player: 422 (cc-441) |
+| `share_knowledge_with_self` | `base` | Giver and receiver are the same player: 422 (cc-441) |
 | `share_knowledge_game_over` | `game_over_victory` | Game over |
 
 ### `POST /pass`

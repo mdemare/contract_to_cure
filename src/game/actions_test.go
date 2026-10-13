@@ -488,6 +488,21 @@ func TestShareKnowledge(t *testing.T) {
 			t.Error("the game changed")
 		}
 	})
+	// cc-441: the current player gives or receives, and nobody shares with
+	// themselves.
+	t.Run("current player and two players", func(t *testing.T) {
+		g := testGame(t, game.Scientist, game.Medic, game.Dispatcher)
+		for i := range g.Players {
+			g.Players[i].Location = "Chicago"
+		}
+		g.Players[0].Hand = cityCards(t, g, "Chicago")
+		g.Players[1].Hand = cityCards(t, g, "Chicago")
+		wantError(t, g.ShareKnowledge(1, 2, "Chicago"), "The current player must give or receive the card")
+		wantError(t, g.ShareKnowledge(0, 0, "Chicago"), "A player cannot share knowledge with themselves")
+		if g.ActionsRemaining != 4 || len(g.Players[0].Hand) != 1 || len(g.Players[1].Hand) != 1 || len(g.Players[2].Hand) != 0 {
+			t.Error("the game changed")
+		}
+	})
 }
 
 // Every way over the hand limit goes through one pending-discard helper.

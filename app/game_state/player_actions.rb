@@ -143,6 +143,12 @@ module PlayerActions
     [giving_player_index, receiving_player_index].each do |index|
       return after_action(false, "Unknown player #{index}") unless index.between?(0, @players.size - 1)
     end
+    if giving_player_index == receiving_player_index
+      return after_action(false, 'A player cannot share knowledge with themselves')
+    end
+    unless [giving_player_index, receiving_player_index].include?(@current_player_idx)
+      return after_action(false, 'The current player must give or receive the card')
+    end
 
     giving_player = @players[giving_player_index]
     receiving_player = @players[receiving_player_index]

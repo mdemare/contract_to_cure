@@ -1,0 +1,27 @@
+{
+  "name": "share_knowledge_not_current_player",
+  "description": "Neither player is the current player: 422 (cc-441)",
+  "save_before": "states/others_share_city.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/share_knowledge",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "giving_player_index": 1,
+      "receiving_player_index": 2,
+      "city_name": "Wuhan"
+    }
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "success": false,
+      "status": "error",
+      "message": "The current player must give or receive the card"
+    }
+  },
+  "save_after": "unchanged"
+}
