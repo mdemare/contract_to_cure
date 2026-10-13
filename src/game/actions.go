@@ -346,12 +346,19 @@ func (g *GameState) TreatDisease() Result {
 
 // ShareKnowledge gives a city card from one player to another in the same
 // city. The card must match that city unless the giver is the Researcher.
-// Both indexes must be in 0..players-1.
+// Both indexes must be in 0..players-1, differ, and include the current
+// player.
 func (g *GameState) ShareKnowledge(givingIndex, receivingIndex int, cityName string) Result {
 	for _, i := range []int{givingIndex, receivingIndex} {
 		if i < 0 || i >= len(g.Players) {
 			return actionError(fmt.Sprintf("Unknown player %d", i))
 		}
+	}
+	if givingIndex == receivingIndex {
+		return actionError("A player cannot share knowledge with themselves")
+	}
+	if givingIndex != g.CurrentPlayerIdx && receivingIndex != g.CurrentPlayerIdx {
+		return actionError("The current player must give or receive the card")
 	}
 	giver, receiver := &g.Players[givingIndex], &g.Players[receivingIndex]
 	if giver.Location != receiver.Location {

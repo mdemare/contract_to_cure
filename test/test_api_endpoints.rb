@@ -318,6 +318,34 @@ class TestApiEndpoints < TestHelper
     end
   end
 
+  # cc-441: any two co-located players could trade, using up the current
+  # player's action, and a player could share a card with themselves.
+  def test_share_knowledge_requires_current_player_and_two_players
+    [[1, 2, 'The current player must give or receive the card'],
+     [0, 0, 'A player cannot share knowledge with themselves']].each do |giving, receiving, message|
+      create_game_with_custom_state do |state|
+        require_relative '../app/game_state/card'
+        state.players.each { |player| player.location = 'Chicago' }
+        state.players.each { |player| player.hand.clear }
+        state.players[0].hand << Card.new(:city, 'Chicago', :blue)
+        state.players[1].hand << Card.new(:city, 'Chicago', :blue)
+      end
+
+      post '/share_knowledge', {
+        giving_player_index: giving, receiving_player_index: receiving, city_name: 'Chicago'
+      }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+      assert_error_response(last_response, 422, message)
+      data = parse_json_response(last_response)
+      assert_equal false, data['success']
+      assert_equal 'error', data['status']
+
+      saved_state = GameState.load_from_redis(@test_redis_key)
+      assert_equal 4, saved_state.actions_remaining, "#{giving} -> #{receiving} used an action"
+      assert_equal [1, 1, 0], saved_state.players.first(3).map { |player| player.hand.size }
+    end
+  end
+
   def test_build_research_station_endpoint
     create_game_with_custom_state do |state|
       # Move player to a city without a research station

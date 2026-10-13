@@ -32,6 +32,15 @@ module ContractFixtures
     'share_hand_limit' => lambda do |game|
       game.players[1].hand = city_cards('Lagos', 'Cairo', 'Kinshasa', 'Lima', 'Riyadh', 'Baghdad', 'Kolkata')
     end,
+    # The medic holds Wuhan and the dispatcher is there too, so only the
+    # current-player rule stops them trading (cc-441).
+    'others_share_city' => lambda do |game|
+      wuhan = game.players[0].hand.find { |card| card.name == 'Wuhan' }
+      game.players[0].hand.delete(wuhan)
+      game.players[1].hand.push(wuhan)
+      game.players[1].hand = game.players[1].sorted_hand
+      game.players[2].location = 'Wuhan'
+    end,
     'draw_phase' => ->(game) { draw_phase(game) },
     'draw_phase_actions_left' => lambda do |game|
       draw_phase(game)
@@ -222,6 +231,12 @@ module ContractFixtures
     ['share_knowledge_negative_player', 'base', 'POST', '/share_knowledge',
      { giving_player_index: -1, receiving_player_index: 0, city_name: 'Wuhan' },
      'Negative giving index: 422, not the last player (cc-433)'],
+    ['share_knowledge_not_current_player', 'others_share_city', 'POST', '/share_knowledge',
+     { giving_player_index: 1, receiving_player_index: 2, city_name: 'Wuhan' },
+     'Neither player is the current player: 422 (cc-441)'],
+    ['share_knowledge_with_self', 'base', 'POST', '/share_knowledge',
+     { giving_player_index: 0, receiving_player_index: 0, city_name: 'Wuhan' },
+     'Giver and receiver are the same player: 422 (cc-441)'],
     ['share_knowledge_missing_parameters', 'base', 'POST', '/share_knowledge', { giving_player_index: 0 },
      'Schema failure'],
 
