@@ -229,19 +229,15 @@ module PlayerActions
     current_player.hand << action_card
     @player_discard.delete_if { |card| card.name == action_card_name }
 
-    # Handle hand limit check if needed
+    # Return success with hand limit info if applicable
+    response = after_action(true, "Successfully retrieved '#{action_card_name}' action card")
     if current_player.hand.size > 7
-      exceeded_limit = {
-        player_index: current_player_idx,
-        discard_count: current_player.hand.size - 7
-      }
-      response = after_action(true, "Successfully retrieved '#{action_card_name}' action card")
+      exceeded_limit = set_pending_hand_limit(current_player_idx, @phase)
+      save_game_state
       response[:exceeded_hand_limit] = exceeded_limit
-      return response
+      response[:game_state] = to_json_state
     end
-
-    # Return success
-    after_action(true, "Successfully retrieved '#{action_card_name}' action card")
+    response
   end
 
   def after_action_response(message, additional_data)

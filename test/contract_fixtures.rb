@@ -84,6 +84,11 @@ module ContractFixtures
       replace_role(game, 0, :contingency_planner)
       game.player_discard.push(Card.new(:action, 'Airlift'))
     end,
+    'contingency_planner_hand_limit' => lambda do |game|
+      replace_role(game, 0, :contingency_planner)
+      game.players[0].hand.concat(city_cards('Kyoto', 'Manila'))
+      game.player_discard.push(Card.new(:action, 'Airlift'))
+    end,
     'contingency_planner_retrieved' => lambda do |game|
       replace_role(game, 0, :contingency_planner)
       airlift = Card.new(:action, 'Airlift')
@@ -156,6 +161,8 @@ module ContractFixtures
     # retrieve
     ['retrieve', 'contingency_planner', 'POST', '/retrieve', { action_card_name: 'Airlift' },
      'Contingency Planner takes an event card from the discard pile'],
+    ['retrieve_hand_limit', 'contingency_planner_hand_limit', 'POST', '/retrieve', { action_card_name: 'Airlift' },
+     'The Contingency Planner goes over seven cards: pending discard'],
     ['retrieve_city_card', 'contingency_planner', 'POST', '/retrieve', { action_card_name: 'Havana' },
      'Only event cards can be retrieved'],
     ['retrieve_not_contingency_planner', 'base', 'POST', '/retrieve', { action_card_name: 'Airlift' },

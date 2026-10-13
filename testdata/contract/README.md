@@ -167,6 +167,7 @@ JSON view and saves
 | Scenario | Starting save | What it pins down |
 |---|---|---|
 | `retrieve` | `contingency_planner` | Contingency Planner takes an event card from the discard pile |
+| `retrieve_hand_limit` | `contingency_planner_hand_limit` | The Contingency Planner goes over seven cards: pending discard |
 | `retrieve_city_card` | `contingency_planner` | Only event cards can be retrieved |
 | `retrieve_not_contingency_planner` | `base` | Only the Contingency Planner can retrieve |
 | `retrieve_missing_parameters` | `contingency_planner` | Schema failure |
