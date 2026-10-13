@@ -290,6 +290,34 @@ class TestApiEndpoints < TestHelper
     assert_error_response(last_response, 422, 'Missing required parameters')
   end
 
+  # cc-433: an index past the last player raised NoMethodError (500), and -1
+  # shared with the last player.
+  def test_share_knowledge_rejects_unknown_player_index
+    [[0, 4, 'Unknown player 4'], [4, 0, 'Unknown player 4'], [0, -1, 'Unknown player -1'],
+     [-1, 0, 'Unknown player -1']].each do |giving, receiving, message|
+      create_game_with_custom_state do |state|
+        require_relative '../app/game_state/card'
+        state.players.each { |player| player.location = 'Chicago' }
+        state.players.each { |player| player.hand.clear }
+        state.players[0].hand << Card.new(:city, 'Chicago', :blue)
+        state.players[-1].hand << Card.new(:city, 'Chicago', :blue)
+      end
+
+      post '/share_knowledge', {
+        giving_player_index: giving, receiving_player_index: receiving, city_name: 'Chicago'
+      }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+      assert_error_response(last_response, 422, message)
+      data = parse_json_response(last_response)
+      assert_equal false, data['success']
+      assert_equal 'error', data['status']
+
+      get '/game_state.json'
+      state = parse_json_response(last_response)
+      assert_equal 4, state['gameStatus']['actions_remaining'], "#{giving} -> #{receiving} used an action"
+    end
+  end
+
   def test_build_research_station_endpoint
     create_game_with_custom_state do |state|
       # Move player to a city without a research station

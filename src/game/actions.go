@@ -338,23 +338,24 @@ func (g *GameState) TreatDisease() Result {
 
 // ShareKnowledge gives a city card from one player to another in the same
 // city. The card must match that city unless the giver is the Researcher.
-// Indexes follow Ruby, so -1 is the last player; an index out of range is
-// an error, where Rails raises NoMethodError (a 500).
-func (g *GameState) ShareKnowledge(givingIndex, receivingIndex int, cityName string) (Result, error) {
-	giver, receiver := g.player(givingIndex), g.player(receivingIndex)
-	if giver == nil || receiver == nil {
-		return Result{}, fmt.Errorf("share knowledge: unknown player %d or %d", givingIndex, receivingIndex)
+// Both indexes must be in 0..players-1.
+func (g *GameState) ShareKnowledge(givingIndex, receivingIndex int, cityName string) Result {
+	for _, i := range []int{givingIndex, receivingIndex} {
+		if i < 0 || i >= len(g.Players) {
+			return actionError(fmt.Sprintf("Unknown player %d", i))
+		}
 	}
+	giver, receiver := &g.Players[givingIndex], &g.Players[receivingIndex]
 	if giver.Location != receiver.Location {
-		return actionError("Both players must be in the same city to share knowledge"), nil
+		return actionError("Both players must be in the same city to share knowledge")
 	}
 	i := giver.cityCardIndex(cityName)
 	if i < 0 {
-		return actionError(fmt.Sprintf("Player does not have the %s city card", cityName)), nil
+		return actionError(fmt.Sprintf("Player does not have the %s city card", cityName))
 	}
 	card := giver.Hand[i]
 	if card.Name != giver.Location && giver.Role != Researcher {
-		return actionError("Card must match current location or player must be a researcher"), nil
+		return actionError("Card must match current location or player must be a researcher")
 	}
 
 	giver.Hand = slices.Delete(giver.Hand, i, i+1)
@@ -364,7 +365,7 @@ func (g *GameState) ShareKnowledge(givingIndex, receivingIndex int, cityName str
 
 	res := g.afterAction(fmt.Sprintf("Successfully shared %s card from %s to %s", card.Name, giver.Role, receiver.Role))
 	g.checkHandLimit(&res, receivingIndex)
-	return res, nil
+	return res
 }
 
 // CureDisease discards the named cards, all of the color, at a research

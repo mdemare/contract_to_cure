@@ -196,6 +196,8 @@ JSON view and saves
 | `share_knowledge_hand_limit` | `share_hand_limit` | The receiver goes over seven cards: pending discard |
 | `share_knowledge_not_same_city` | `base` | Players are in different cities |
 | `share_knowledge_missing_parameters` | `base` | Schema failure |
+| `share_knowledge_unknown_player` | `base` | Receiving index past the last player: 422 (cc-433) |
+| `share_knowledge_negative_player` | `base` | Negative giving index: 422, not the last player (cc-433) |
 | `share_knowledge_game_over` | `game_over_victory` | Game over |
 
 ### `POST /pass`

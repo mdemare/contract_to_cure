@@ -451,10 +451,7 @@ func TestShareKnowledge(t *testing.T) {
 		g := testGame(t, game.Scientist, game.Medic)
 		g.Players[0].Location, g.Players[1].Location = "Chicago", "Chicago"
 		g.Players[0].Hand = cityCards(t, g, "Chicago")
-		res, err := g.ShareKnowledge(0, 1, "Chicago")
-		if err != nil {
-			t.Fatal(err)
-		}
+		res := g.ShareKnowledge(0, 1, "Chicago")
 		wantSuccess(t, res, "Successfully shared Chicago card from scientist to medic")
 		if len(g.Players[0].Hand) != 0 || !slices.Equal(names(g.Players[1].Hand), []string{"Chicago"}) || res.ExceededHandLimit != nil {
 			t.Error("card not moved")
@@ -463,39 +460,32 @@ func TestShareKnowledge(t *testing.T) {
 	t.Run("the Researcher gives any card", func(t *testing.T) {
 		g := testGame(t, game.Medic, game.Researcher)
 		g.Players[1].Hand = cityCards(t, g, "Lima")
-		res, _ := g.ShareKnowledge(1, 0, "Lima")
+		res := g.ShareKnowledge(1, 0, "Lima")
 		wantSuccess(t, res, "from researcher to medic")
 	})
 	t.Run("rule checks", func(t *testing.T) {
 		g := testGame(t, game.Scientist, game.Medic, game.Dispatcher)
 		g.Players[0].Hand = cityCards(t, g, "Lima")
 		g.Players[2].Location = "Lima"
-		res, _ := g.ShareKnowledge(0, 2, "Lima")
-		wantError(t, res, "Both players must be in the same city to share knowledge")
-		res, _ = g.ShareKnowledge(0, 1, "Paris")
-		wantError(t, res, "Player does not have the Paris city card")
-		res, _ = g.ShareKnowledge(0, 1, "Lima")
-		wantError(t, res, "Card must match current location or player must be a researcher")
+		wantError(t, g.ShareKnowledge(0, 2, "Lima"), "Both players must be in the same city to share knowledge")
+		wantError(t, g.ShareKnowledge(0, 1, "Paris"), "Player does not have the Paris city card")
+		wantError(t, g.ShareKnowledge(0, 1, "Lima"), "Card must match current location or player must be a researcher")
 		if g.ActionsRemaining != 4 || len(g.Players[0].Hand) != 1 {
 			t.Error("the game changed")
 		}
-		if _, err := g.ShareKnowledge(0, 4, "Lima"); err == nil {
-			t.Error("unknown receiver accepted")
-		}
 	})
-	// Indexes follow Ruby: -1 is the last player, and the pending discard
-	// keeps the index as given.
-	t.Run("negative index", func(t *testing.T) {
+	// cc-433: an index outside 0..players-1 is rejected; -1 is not the last
+	// player.
+	t.Run("unknown player", func(t *testing.T) {
 		g := testGame(t, game.Scientist, game.Medic, game.Dispatcher, game.Researcher)
 		g.Players[0].Hand = cityCards(t, g, "Wuhan")
-		g.Players[3].Hand = cityCards(t, g, "Lima", "Paris", "London", "Rome", "Moscow", "Barcelona", "Tokyo")
-		res, err := g.ShareKnowledge(0, -1, "Wuhan")
-		if err != nil {
-			t.Fatal(err)
-		}
-		wantSuccess(t, res, "from scientist to researcher")
-		if len(g.Players[3].Hand) != 8 || res.ExceededHandLimit.PlayerIndex != -1 {
-			t.Errorf("hand %d, pending %+v", len(g.Players[3].Hand), res.ExceededHandLimit)
+		g.Players[3].Hand = cityCards(t, g, "Wuhan")
+		wantError(t, g.ShareKnowledge(0, 4, "Wuhan"), "Unknown player 4")
+		wantError(t, g.ShareKnowledge(4, 0, "Wuhan"), "Unknown player 4")
+		wantError(t, g.ShareKnowledge(0, -1, "Wuhan"), "Unknown player -1")
+		wantError(t, g.ShareKnowledge(-1, 0, "Wuhan"), "Unknown player -1")
+		if g.ActionsRemaining != 4 || len(g.Players[0].Hand) != 1 || len(g.Players[3].Hand) != 1 {
+			t.Error("the game changed")
 		}
 	})
 }
@@ -509,11 +499,7 @@ func TestHandLimitAfterAction(t *testing.T) {
 		g.Players[0].Location, g.Players[1].Location = "Chicago", "Chicago"
 		g.Players[0].Hand = cityCards(t, g, "Chicago")
 		g.Players[1].Hand = cityCards(t, g, seven...)
-		res, err := g.ShareKnowledge(0, 1, "Chicago")
-		if err != nil {
-			t.Fatal(err)
-		}
-		return g, res
+		return g, g.ShareKnowledge(0, 1, "Chicago")
 	}
 	retrieve := func(t *testing.T, actions int) (*game.GameState, game.Result) {
 		g := testGame(t, game.ContingencyPlanner)
