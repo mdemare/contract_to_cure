@@ -257,6 +257,8 @@ JSON view and saves
 |---|---|---|
 | `action_card_airlift` | `event_cards` | Airlift another player |
 | `action_card_airlift_unknown_city` | `event_cards` | Airlift to an unknown city |
+| `action_card_airlift_missing_player` | `event_cards` | Airlift without player_index: 422 (cc-435) |
+| `action_card_airlift_unknown_player` | `event_cards` | Airlift with player_index outside 0..players-1: 422 (cc-435) |
 | `action_card_one_quiet_night` | `event_cards` | Sets quiet_night (saved, not in the JSON view) |
 | `action_card_resilient_population` | `event_cards` | Remove a card from the infection discard pile |
 | `action_card_resilient_population_not_in_discard` | `event_cards` | City not in the infection discard pile |

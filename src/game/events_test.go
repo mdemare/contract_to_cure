@@ -1,7 +1,6 @@
 package game_test
 
 import (
-	"errors"
 	"net/http"
 	"slices"
 	"testing"
@@ -19,11 +18,7 @@ func intPtr(i int) *int { return &i }
 
 func play(t *testing.T, g *game.GameState, req game.EventCardRequest) game.EventCardResponse {
 	t.Helper()
-	resp, err := g.PlayEventCard(req)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return resp
+	return g.PlayEventCard(req)
 }
 
 func TestAirlift(t *testing.T) {
@@ -55,34 +50,23 @@ func TestAirlift(t *testing.T) {
 
 func TestAirliftErrors(t *testing.T) {
 	g := testGame(t)
-	wantError(t, mustAirlift(t, g, intPtr(0), "London"), "No player has the Airlift card")
+	wantError(t, g.Airlift(intPtr(0), "London"), "No player has the Airlift card")
 
 	g.Players[0].Hand = []game.Card{eventCard(game.Airlift)}
-	wantError(t, mustAirlift(t, g, intPtr(0), "Atlantis"), "City 'Atlantis' does not exist")
+	wantError(t, g.Airlift(intPtr(0), "Atlantis"), "City 'Atlantis' does not exist")
 
-	for _, idx := range []*int{nil, intPtr(4), intPtr(-5)} {
-		if _, err := g.Airlift(idx, "London"); !errors.Is(err, game.ErrNoSuchPlayer) {
-			t.Errorf("Airlift(%v) error = %v", idx, err)
-		}
-	}
+	// cc-435: no index, or one outside 0..3 (-1 is not the last player).
+	wantError(t, g.Airlift(nil, "London"), "No player given for Airlift")
+	wantError(t, g.Airlift(intPtr(4), "London"), "Unknown player 4")
+	wantError(t, g.Airlift(intPtr(-1), "London"), "Unknown player -1")
 	if len(g.Players[0].Hand) != 1 {
 		t.Error("a failed Airlift spent the card")
 	}
-
-	// Ruby indexing: -1 is the last player.
-	wantSuccess(t, mustAirlift(t, g, intPtr(-1), "London"), "from Wuhan to London")
-	if g.Players[3].Location != "London" {
-		t.Error("-1 did not move the last player")
+	for _, p := range g.Players {
+		if p.Location == "London" {
+			t.Errorf("a failed Airlift moved the %s", p.Role)
+		}
 	}
-}
-
-func mustAirlift(t *testing.T, g *game.GameState, idx *int, city string) game.Result {
-	t.Helper()
-	res, err := g.Airlift(idx, city)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return res
 }
 
 func TestOneQuietNight(t *testing.T) {

@@ -410,6 +410,30 @@ class TestApiEndpoints < TestHelper
     assert_json_response(last_response)
   end
 
+  # cc-435: a missing or out-of-range player_index used to raise (500), and -1
+  # moved the last player.
+  def test_action_card_airlift_without_valid_player_index
+    [[nil, 'No player given for Airlift'], [4, 'Unknown player 4'], [-1, 'Unknown player -1']].each do |index, message|
+      create_game_with_custom_state do |state|
+        require_relative '../app/game_state/card'
+        state.players[state.current_player_idx].hand << Card.new(:action, 'Airlift')
+      end
+
+      params = { card: 'Airlift', city: 'London' }
+      params[:player_index] = index unless index.nil?
+      post '/action_card', params.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+      assert_error_response(last_response, 422, message)
+      data = parse_json_response(last_response)
+      assert_equal false, data['success']
+      assert_equal 'error', data['status']
+
+      get '/game_state.json'
+      state = parse_json_response(last_response)
+      refute(state['players'].any? { |player| player['location'] == 'London' }, "player_index #{index.inspect} moved a player")
+    end
+  end
+
   def test_action_card_one_quiet_night
     create_game_with_custom_state do |state|
       current_player = state.players[state.current_player_idx]
