@@ -1,4 +1,9 @@
 class SessionsController < ApplicationController
+  # Login and logout never touch the game, so they must work during a Forecast
+  # and when Redis is unavailable.
+  skip_around_action :atomically_update_game_state
+  skip_before_action :load_game_state
+  skip_before_action :check_forecast_active
   skip_before_action :verify_authenticity_token, only: [:destroy]
 
   def new
