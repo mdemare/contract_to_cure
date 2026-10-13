@@ -260,11 +260,3 @@ JSON view and saves
 | `restart_game_difficulty` | `base` | New random game with a new difficulty (after.yaml depends on the Ruby RNG) |
 | `restart_game_invalid_difficulty` | `base` | Schema failure |
 | `restart_game_forecast_active` | `forecast_active` | Even restart is blocked by an unfinished Forecast |
-Run options: --seed 54893
-
-# Running:
-
-
-
-Finished in 0.001002s, 0.0000 runs/s, 0.0000 assertions/s.
-0 runs, 0 assertions, 0 failures, 0 errors, 0 skips
