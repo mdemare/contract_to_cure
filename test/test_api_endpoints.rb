@@ -458,6 +458,43 @@ class TestApiEndpoints < TestHelper
     refute_includes play_data['game_state']['decks']['discardPile'].map { |card| card['name'] }, 'Airlift'
   end
 
+  def test_retrieve_over_hand_limit_sets_pending_discard
+    create_game_with_custom_state do |state|
+      current_player = state.players[state.current_player_idx]
+      current_player.instance_variable_set(:@role, :contingency_planner)
+      current_player.hand.clear
+      ['Montreal', 'Washington', 'New York', 'London', 'Paris', 'Madrid', 'Essen'].each do |city|
+        current_player.hand << Card.new(:city, city, :blue)
+      end
+      state.player_discard.clear
+      state.player_discard << Card.new(:action, 'Airlift')
+    end
+
+    post '/retrieve', {
+      action_card_name: 'Airlift'
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+    assert_successful_response(last_response)
+    data = parse_json_response(last_response)
+    assert_equal({ 'player_index' => 0, 'discard_count' => 1, 'return_phase' => 'player_actions' },
+                 data['exceeded_hand_limit'])
+    assert_equal 'pending_discard', data['game_state']['gameStatus']['phase']
+
+    saved_state = GameState.load_from_redis(@test_redis_key)
+    assert_equal 'pending_discard', saved_state.phase
+    assert_equal({ player_index: 0, discard_count: 1, return_phase: 'player_actions' }, saved_state.pending_hand_limit)
+
+    post '/discard_cards', {
+      player_index: 0,
+      card_names: ['Montreal']
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+    assert_successful_response(last_response)
+
+    resolved_state = GameState.load_from_redis(@test_redis_key)
+    assert_equal 'player_actions', resolved_state.phase
+    assert_nil resolved_state.pending_hand_limit
+    assert_equal 7, resolved_state.players[0].hand.size
+  end
+
   def test_restart_game_endpoint
     create_test_game_state
 
