@@ -6,6 +6,7 @@ import {
   GameConflictError,
   handleGameConflict,
   isGameConflict,
+  parseRejectionBody,
   processAPIRequest,
   showErrorMessage,
   showSuccessMessage
@@ -26,8 +27,14 @@ export async function actionCardRequest(payload, fallbackErrorMessage) {
     throw new GameConflictError();
   }
 
+  // Error bodies may be HTML (e.g. a 502 page); only a 422 carries a message.
+  if (!response.ok) {
+    const rejection = await parseRejectionBody(response);
+    throw new Error(rejection?.message || fallbackErrorMessage);
+  }
+
   const data = await response.json();
-  if (!response.ok || data.status === 'error') {
+  if (data.status === 'error') {
     throw new Error(data.message || fallbackErrorMessage);
   }
 

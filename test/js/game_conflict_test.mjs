@@ -197,6 +197,36 @@ test('actionCardRequest refreshes state and rejects with GameConflictError', asy
   assert.equal(conflictNotifications().length, 1);
 });
 
+test('actionCardRequest uses the fallback message for a non-JSON error body (cc-477)', async () => {
+  await reset();
+  mockFetch({ '/action_card': () => jsonResponse(502, new SyntaxError('Unexpected token <')) });
+
+  await assert.rejects(
+    actionCardRequests.actionCardRequest({ card: 'Forecast' }, 'Failed to use Forecast card'),
+    { message: 'Failed to use Forecast card' }
+  );
+});
+
+test('actionCardRequest shows the backend message for a 422 rejection', async () => {
+  await reset();
+  mockFetch({ '/action_card': () => jsonResponse(422, { status: 'error', message: 'Card not in hand' }) });
+
+  await assert.rejects(
+    actionCardRequests.actionCardRequest({ card: 'Forecast' }, 'Failed to use Forecast card'),
+    { message: 'Card not in hand' }
+  );
+});
+
+test('Forecast completion shows the fallback message for a non-JSON error body (cc-477)', async () => {
+  await reset();
+  mockFetch({ '/action_card': () => jsonResponse(500, new SyntaxError('Unexpected token <')) });
+
+  const completed = await actionCardRequests.completeForecast(['Paris', 'Tokyo']);
+
+  assert.equal(completed, false);
+  assert.deepEqual(notifications, [{ type: 'error', message: 'Action failed: Failed to apply Forecast card order' }]);
+});
+
 test('Forecast completion stays retryable after a conflict without an error notification', async () => {
   await reset();
   mockFetch({ '/action_card': () => jsonResponse(409, conflictBody()) });
