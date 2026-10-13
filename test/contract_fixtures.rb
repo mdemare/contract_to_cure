@@ -103,6 +103,15 @@ module ContractFixtures
       airlift.retrieved = true
       game.players[0].hand.push(airlift)
     end,
+    'contingency_planner_retrieved_pending_discard' => lambda do |game|
+      replace_role(game, 0, :contingency_planner)
+      airlift = Card.new(:action, 'Airlift')
+      airlift.retrieved = true
+      game.players[0].hand.concat(city_cards('Kyoto', 'Manila'))
+      game.players[0].hand.push(airlift)
+      set(game, :phase, 'pending_discard')
+      set(game, :pending_hand_limit, { player_index: 0, discard_count: 1, return_phase: 'player_actions' })
+    end,
     'operations_expert_at_station' => lambda do |game|
       set(game, :current_player_idx, 3)
       game.players[3].location = 'Wuhan'
@@ -260,6 +269,9 @@ module ContractFixtures
      'No discard is pending'],
     ['discard_cards_invalid_parameters', 'pending_discard', 'POST', '/discard_cards',
      { player_index: 1, card_names: 'Riyadh' }, 'Schema failure: card_names is not an array'],
+    ['discard_cards_retrieved_card_leaves_game', 'contingency_planner_retrieved_pending_discard', 'POST',
+     '/discard_cards', { player_index: 0, card_names: ['Airlift'] },
+     'A retrieved event card discarded for the hand limit leaves the game'],
 
     # action_card
     ['action_card_airlift', 'event_cards', 'POST', '/action_card', { card: 'Airlift', player_index: 1, city: 'Paris' },

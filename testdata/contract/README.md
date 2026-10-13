@@ -96,7 +96,8 @@ Game logic
   first card of `card_order` ends up last in the array. Reordered cards keep type
   `city` (`action_card_forecast`, `action_card_forecast_apply`).
 - Playing a retrieved event card removes it from the game, not to the discard pile
-  (`action_card_retrieved_card_leaves_game`).
+  (`action_card_retrieved_card_leaves_game`), and so does discarding it for the
+  hand limit (`discard_cards_retrieved_card_leaves_game`).
 - A successful event card resolves a pending hand-limit discard once the hand is
   back to 7 (`action_card_resolves_pending_discard`).
 - `quiet_night` is saved but not shown in the JSON view. `infect_cities` with it
@@ -250,6 +251,7 @@ JSON view and saves
 | `discard_cards_missing_card` | `pending_discard` | Card not in hand |
 | `discard_cards_not_pending` | `base` | No discard is pending |
 | `discard_cards_invalid_parameters` | `pending_discard` | Schema failure: card_names is not an array |
+| `discard_cards_retrieved_card_leaves_game` | `contingency_planner_retrieved_pending_discard` | A retrieved event card discarded for the hand limit leaves the game |
 | `discard_cards_game_over` | `game_over_victory` | Game over |
 
 ### `POST /action_card`
