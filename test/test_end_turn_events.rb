@@ -147,6 +147,24 @@ class TestEndTurnEvents < TestHelper
     assert_equal :too_many_outbreaks, game_state.game_over_reason
   end
 
+  def test_epidemic_outbreak_chain_emits_each_outbreak_once
+    game_state = create_game_with_custom_state do |state|
+      reset_city_cubes(state)
+      configure_two_city_outbreak(state)
+      state.cities['Chicago'].disease_cubes = 1
+      state.cities['Houston'].disease_cubes = 3
+      state.infection_deck[0] = Card.new(:city, 'Chicago')
+      state.player_deck.push(Card.new(:epidemic, 'Event:Epidemic'))
+    end
+
+    end_turn = EndTurn.new(game_state)
+    end_turn.draw_player_card(0)
+
+    outbreaks = end_turn.events.select { |event| event[:type] == :outbreak }
+    assert_equal ['Chicago', 'Houston'], outbreaks.map { |event| event[:city] }
+    assert_equal 2, game_state.outbreak_count
+  end
+
   private
 
   def reset_city_cubes(state)

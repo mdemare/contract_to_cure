@@ -71,7 +71,9 @@ class EndTurn
 
     # Add 3 cubes of the city's color
     infection_event = @game_state.add_disease_cubes(city.name, city.color, 3, @events)
-    @events << infection_event if infection_event
+    # trigger_outbreak already recorded the outbreak events; only a game over
+    # returned by add_disease_cubes still needs to be added.
+    @events << infection_event if infection_event&.dig(:type) == :game_over
 
     # Add card to discard pile
     @game_state.infection_discard << bottom_card # TODO
