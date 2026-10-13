@@ -290,3 +290,49 @@ test('a 422 without a usable body keeps the generic message', async () => {
   assert.equal(notifications.length, 1);
   assert.match(notifications[0].message, /Treatment failed \(422\)/);
 });
+
+test('a 422 from /infect_cities shows the backend message, not the generic failure (cc-475)', async () => {
+  await reset();
+  const { handleInfectCitiesAction } = await import('../../public/js/action_buttons.js');
+  mockFetch({
+    '/infect_cities': () => jsonResponse(422, {
+      status: 'error',
+      message: 'Cannot perform this action unless game phase is infect_cities'
+    })
+  });
+
+  await handleInfectCitiesAction();
+
+  assert.deepEqual(gameState.getCurrentGameState(), staleState);
+  assert.deepEqual(notifications, [
+    { type: 'error', message: 'Action failed: Cannot perform this action unless game phase is infect_cities' }
+  ]);
+});
+
+test('a 422 from /infect_cities without a usable body keeps the generic message', async () => {
+  await reset();
+  const { handleInfectCitiesAction } = await import('../../public/js/action_buttons.js');
+  mockFetch({ '/infect_cities': () => jsonResponse(422, new SyntaxError('Unexpected token <')) });
+
+  await handleInfectCitiesAction();
+
+  assert.equal(notifications.length, 1);
+  assert.match(notifications[0].message, /Failed to infect cities \(422\)/);
+});
+
+test('a 422 hand-limit discard rejects with the backend message (cc-475)', async () => {
+  await reset();
+  mockFetch({
+    '/discard_cards': () => jsonResponse(422, {
+      success: false,
+      status: 'error',
+      message: 'Must discard exactly 1 card(s) to resolve hand limit'
+    })
+  });
+
+  await assert.rejects(
+    selectCards.submitHandLimitDiscard(0, ['Paris']),
+    { message: 'Must discard exactly 1 card(s) to resolve hand limit' }
+  );
+  assert.deepEqual(gameState.getCurrentGameState(), staleState);
+});
