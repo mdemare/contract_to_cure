@@ -95,18 +95,26 @@ func (p *Player) cityCardIndex(name string) int {
 
 func (p *Player) hasCityCard(name string) bool { return p.cityCardIndex(name) >= 0 }
 
-// discard moves the first card with this name, of any type, to the player
-// discard pile and re-sorts the hand. It does nothing if there is none
-// (discard_player_card_by_name).
-func (g *GameState) discard(p *Player, name string) {
+// takeCard removes the first card with this name, of any type, from the
+// hand and re-sorts it.
+func (p *Player) takeCard(name string) (Card, bool) {
 	i := p.cardIndex(func(c Card) bool { return c.Name == name })
 	if i < 0 {
-		return
+		return Card{}, false
 	}
 	card := p.Hand[i]
 	p.Hand = slices.Delete(p.Hand, i, i+1)
 	p.SortHand()
-	g.Decks.PlayerDiscard = append(g.Decks.PlayerDiscard, card)
+	return card, true
+}
+
+// discard moves the first card with this name, of any type, to the player
+// discard pile and re-sorts the hand. It does nothing if there is none
+// (discard_player_card_by_name).
+func (g *GameState) discard(p *Player, name string) {
+	if card, ok := p.takeCard(name); ok {
+		g.Decks.PlayerDiscard = append(g.Decks.PlayerDiscard, card)
+	}
 }
 
 func (g *GameState) hasResearchStation(city string) bool {
@@ -144,6 +152,23 @@ func (g *GameState) setPendingHandLimit(playerIndex int, returnPhase Phase) *Pen
 	g.Phase = PendingDiscard
 	pending := *g.PendingHandLimit
 	return &pending
+}
+
+// resolvePendingHandLimit ends the pending discard and returns to its phase
+// once the player is within the limit, or updates the discard count if not
+// (resolve_pending_hand_limit_if_satisfied). It reports whether it ended.
+func (g *GameState) resolvePendingHandLimit() bool {
+	pending := g.PendingHandLimit
+	if pending == nil {
+		return false
+	}
+	if count := g.handLimitExcess(pending.PlayerIndex); count > 0 {
+		pending.DiscardCount = count
+		return false
+	}
+	g.Phase = pending.ReturnPhase
+	g.PendingHandLimit = nil
+	return true
 }
 
 // checkHandLimit runs after an action that gave the player a card. Over the
