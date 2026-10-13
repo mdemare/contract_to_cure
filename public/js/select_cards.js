@@ -3,7 +3,12 @@ import { getCurrentGameState, loadGameState } from './game_state.js';
 import { createSimpleElement } from './dom.js';
 import { completeForecast } from './action_card_requests.js';
 import { registerHandLimitHandler } from './hand_limit_prompt.js';
-import { GameConflictError, handleGameConflict, isGameConflict } from './player_action_utils.js';
+import {
+  GameConflictError,
+  handleGameConflict,
+  isGameConflict,
+  parseRejectionBody
+} from './player_action_utils.js';
 import { decorateGameCard } from './card_visuals.js';
 import { openCardModal } from './modal_focus.js';
 
@@ -441,7 +446,10 @@ export async function submitHandLimitDiscard(playerIndex, cardNames) {
     });
     throw new GameConflictError('The game changed before your discard was applied.');
   }
-  if (!response.ok) throw new Error('Unable to discard cards.');
+  if (!response.ok) {
+    const rejection = await parseRejectionBody(response);
+    throw new Error(rejection?.message || 'Unable to discard cards.');
+  }
 
   // Refresh game state after discard
   await loadGameState();

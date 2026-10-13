@@ -30,7 +30,9 @@ async function parseConflictBody(response) {
   }
 }
 
-async function parseRejectionBody(response) {
+// Rule rejections arrive as 422 with a JSON {status, message} body. Resolves to
+// that body, or null when the response is not a usable 422 rejection.
+export async function parseRejectionBody(response) {
   if (response.status !== 422) return null;
   try {
     const body = await response.json();

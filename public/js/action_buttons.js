@@ -8,6 +8,7 @@ import { initRetrieveCard, updateRetrieveButtonState } from './retrieve_card.js'
 import {
   handleGameConflict,
   isGameConflict,
+  parseRejectionBody,
   processAPIRequest,
   showSuccessMessage,
   showErrorMessage
@@ -192,7 +193,7 @@ async function handleDrawCardsAction() {
 }
 
 // Handler for infect cities action
-async function handleInfectCitiesAction() {
+export async function handleInfectCitiesAction() {
   try {
     // Get CSRF token from meta tag
     const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
@@ -209,9 +210,12 @@ async function handleInfectCitiesAction() {
 
     if (isGameConflict(response)) {
       await handleGameConflict(response);
-    } else if (response.ok) {
-      const result = await response.json();
-
+      return;
+    }
+    // Rule rejections (out of phase, pending discard, game over) arrive as 422
+    // with a JSON message; show it like any other unsuccessful result.
+    const result = response.ok ? await response.json() : await parseRejectionBody(response);
+    if (result) {
       if (result.status === 'success') {
         const gameStateModule = await import('./game_state.js');
         // Update game state first, so the animation sees the new phase and
