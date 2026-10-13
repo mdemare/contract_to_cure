@@ -184,6 +184,8 @@ module ContractFixtures
      { color: 'red', card_names: %w[Wuhan Beijing Shanghai Seoul] }, 'Scientist cures with four cards'],
     ['cure_disease_wrong_cards', 'base', 'POST', '/cure_disease',
      { color: 'blue', card_names: %w[Wuhan Beijing Shanghai Seoul] }, 'Cards do not match the color'],
+    ['cure_disease_repeated_card_names', 'base', 'POST', '/cure_disease',
+     { color: 'red', card_names: %w[Wuhan Wuhan Wuhan Wuhan] }, 'One card named four times does not cure'],
     ['cure_disease_missing_parameters', 'base', 'POST', '/cure_disease', { color: 'red' }, 'Schema failure'],
 
     # retrieve

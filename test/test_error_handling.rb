@@ -176,6 +176,32 @@ class TestErrorHandling < TestHelper
     assert_json_response(last_response)
   end
 
+  def test_cure_disease_rejects_repeated_card_names
+    create_game_with_custom_state do |state|
+      player = state.players[state.current_player_idx]
+      require_relative '../app/game_state/card'
+
+      player.instance_variable_set(:@role, :scientist)
+      player.hand.clear
+      player.hand << Card.new(:city, 'Chicago', :blue)
+      player.hand << Card.new(:city, 'Lima', :yellow)
+      player.location = 'Chicago'
+      state.research_stations << 'Chicago' unless state.research_stations.include?('Chicago')
+    end
+
+    post '/cure_disease', {
+      color: 'blue',
+      card_names: %w[Chicago Chicago Chicago Chicago]
+    }.to_json, { 'CONTENT_TYPE' => 'application/json' }
+
+    assert_error_response(last_response, 422, 'Selected cards must be different cards from your hand')
+
+    saved_state = GameState.load_from_redis(@test_redis_key)
+    refute saved_state.cures[:blue]
+    assert_equal %w[Chicago Lima], saved_state.players[saved_state.current_player_idx].hand.map(&:name)
+    assert_equal 4, saved_state.actions_remaining
+  end
+
   def test_share_knowledge_players_not_in_same_city
     create_game_with_custom_state do |state|
       # Place players in different cities

@@ -188,6 +188,11 @@ module PlayerActions
       return after_action(false, "All selected cards must be #{color} city cards")
     end
 
+    # Each name must be a separate card in the hand, so a repeated name cannot count twice
+    if first_missing_card_name(current_player.index, card_names)
+      return after_action(false, 'Selected cards must be different cards from your hand')
+    end
+
     card_names.each do |card_name|
       discard_player_card_by_name(current_player.index, card_name)
     end
