@@ -159,6 +159,9 @@ func TestUndecodableSavesAreErrors(t *testing.T) {
 		"missing decks":    base[:strings.Index(base, ":decks:")],
 		"too many cubes":   strings.Replace(base, ":disease_cubes: 3", ":disease_cubes: 4", 1),
 		"turn not integer": strings.Replace(base, ":turn: 1", ":turn: one", 1),
+		// Rails left current_player nil or wrapped it (cc-439).
+		"current player past the end": strings.Replace(base, ":current_player_idx: 0", ":current_player_idx: 4", 1),
+		"negative current player":     strings.Replace(base, ":current_player_idx: 0", ":current_player_idx: -1", 1),
 	}
 	for name, data := range cases {
 		if _, err := DecodeSave([]byte(data), "heroic"); err == nil {

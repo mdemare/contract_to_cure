@@ -144,10 +144,31 @@ func TestFromSaveRejectsIllegalCubes(t *testing.T) {
 	}
 }
 
+// FromSave also guards saves built in code, since CurrentPlayer indexes
+// Players directly (cc-439).
+func TestFromSaveRejectsOutOfRangeCurrentPlayer(t *testing.T) {
+	for _, idx := range []int{-1, 4} {
+		save, err := store.DecodeSave(readFixture(t, "states/base.yaml"), "heroic")
+		if err != nil {
+			t.Fatal(err)
+		}
+		save.Status.CurrentPlayerIdx = idx
+		if _, err := game.FromSave(save); err == nil {
+			t.Errorf("current_player_idx %d of 4 players must not load", idx)
+		}
+	}
+}
+
 // With no save, or one that cannot be decoded, Load deals a new game with the
 // configured players and difficulty, logs it and saves it at commit.
 func TestLoadStartsNewGame(t *testing.T) {
-	for name, save := range map[string][]byte{"no save": nil, "corrupt save": []byte("--- [\n")} {
+	badPlayer := strings.Replace(string(readFixture(t, "states/base.yaml")),
+		":current_player_idx: 0", ":current_player_idx: 4", 1)
+	for name, save := range map[string][]byte{
+		"no save":                     nil,
+		"corrupt save":                []byte("--- [\n"),
+		"current player out of range": []byte(badPlayer), // cc-439
+	} {
 		t.Run(name, func(t *testing.T) {
 			st, mr := newTestStore(t, save)
 			logs := captureLogs(t)
