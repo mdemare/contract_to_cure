@@ -138,6 +138,15 @@ func (g *GameState) hasResearchStation(city string) bool {
 	return slices.Contains(g.ResearchStations, city)
 }
 
+// addResearchStation records a new station in ResearchStations and on the
+// city, so the save's cities agree with research_stations (cc-434).
+func (g *GameState) addResearchStation(city string) {
+	g.ResearchStations = append(g.ResearchStations, city)
+	if c := g.City(city); c != nil {
+		c.HasResearchStation = true
+	}
+}
+
 // medicAbility removes every cube of a cured color from the Medic's city.
 func (g *GameState) medicAbility(p *Player, cityKey string) {
 	if p.Role != Medic {
@@ -281,8 +290,7 @@ func (g *GameState) Move(playerIndex int, destination, cardName string) Result {
 
 // BuildResearchStation builds a station in the current player's city by
 // discarding its card; the Operations Expert needs no card. At most
-// MaxResearchStations exist. Like Rails, it adds the city to
-// ResearchStations but leaves the city's HasResearchStation alone.
+// MaxResearchStations exist.
 func (g *GameState) BuildResearchStation() Result {
 	p := g.CurrentPlayer()
 	city := p.Location
@@ -293,14 +301,14 @@ func (g *GameState) BuildResearchStation() Result {
 		return actionError("Research station already exists in " + city)
 	}
 	if p.Role == OperationsExpert {
-		g.ResearchStations = append(g.ResearchStations, city)
+		g.addResearchStation(city)
 		return g.afterAction(fmt.Sprintf("Successfully built a research station in %s (Operations Expert ability)", city))
 	}
 	if !p.hasCityCard(city) {
 		return actionError(fmt.Sprintf("Player does not have the %s city card", city))
 	}
 	g.discard(p, city)
-	g.ResearchStations = append(g.ResearchStations, city)
+	g.addResearchStation(city)
 	return g.afterAction("Successfully built a research station in " + city)
 }
 

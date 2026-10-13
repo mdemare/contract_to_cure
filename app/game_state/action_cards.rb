@@ -215,7 +215,7 @@ module ActionCards
     return result if result # Return early if there was an error
 
     # Build the research station
-    @research_stations << city_name
+    add_research_station(city_name)
 
     # This doesn't consume an action, so don't call after_action
     response = {

@@ -113,7 +113,7 @@
     - Barcelona
     - Rome
     :disease_cubes: 3
-    :has_research_station: false
+    :has_research_station: true
   Stockholm:
     :name: Stockholm
     :color: :blue

@@ -546,9 +546,8 @@ func TestBuildResearchStation(t *testing.T) {
 		if !slices.Equal(g.ResearchStations, []string{"Wuhan", "Chicago"}) || len(g.Players[0].Hand) != 0 {
 			t.Errorf("stations %v, hand %v", g.ResearchStations, names(g.Players[0].Hand))
 		}
-		// Rails only updates the station list.
-		if g.City("Chicago").HasResearchStation {
-			t.Error("HasResearchStation was set")
+		if !g.City("Chicago").HasResearchStation {
+			t.Error("HasResearchStation was not set (cc-434)")
 		}
 	})
 	t.Run("the Operations Expert needs no card", func(t *testing.T) {
