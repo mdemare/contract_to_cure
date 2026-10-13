@@ -34,10 +34,11 @@ type GameState struct {
 }
 
 // PendingHandLimit is set while a player must discard down to the hand limit.
+// Responses show it as exceeded_hand_limit.
 type PendingHandLimit struct {
-	PlayerIndex  int
-	DiscardCount int
-	ReturnPhase  Phase
+	PlayerIndex  int   `json:"player_index"`
+	DiscardCount int   `json:"discard_count"`
+	ReturnPhase  Phase `json:"return_phase"`
 }
 
 // DiseaseCubes is one color's supply and cure.
