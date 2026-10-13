@@ -10,10 +10,13 @@ import (
 	"github.com/getsentry/sentry-go"
 )
 
+// Views holds the page templates. Its "sentry" partial (views/sentry.tmpl)
+// also goes on the index page (src/web).
+//
 //go:embed views/*.tmpl
-var views embed.FS
+var Views embed.FS
 
-var sentryTestPage = template.Must(template.ParseFS(views, "views/*.tmpl"))
+var sentryTestPage = template.Must(template.ParseFS(Views, "views/*.tmpl"))
 
 // backendTestError is the message of the error /test-sentry/backend-error reports.
 const backendTestError = "Sentry backend test error"

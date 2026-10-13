@@ -3,15 +3,32 @@
 package main
 
 import (
+	"context"
+	"errors"
 	"log/slog"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
 	"github.com/getsentry/sentry-go"
 
 	"github.com/mdemare/contract_to_cure/src/auth"
+	"github.com/mdemare/contract_to_cure/src/game"
 	"github.com/mdemare/contract_to_cure/src/observe"
+	"github.com/mdemare/contract_to_cure/src/store"
+	"github.com/mdemare/contract_to_cure/src/web"
 )
+
+// gitHash is shown on the index page in production. Set it at build time with
+// -ldflags "-X main.gitHash=<hash>"; without it the release from .version is
+// shown.
+var gitHash string
+
+// shutdownTimeout bounds how long requests in flight may finish after
+// SIGTERM.
+const shutdownTimeout = 25 * time.Second
 
 func main() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
@@ -32,17 +49,50 @@ func main() {
 		os.Exit(1)
 	}
 
-	mux := http.NewServeMux()
-	mux.HandleFunc("GET /up", func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-	})
-	auth.SessionRoutes(mux, authConfig)
-	observe.SentryTestRoutes(mux, sentryConfig, auth.NewCSRF(authConfig))
+	st, err := store.New(store.ConfigFromEnv(os.Getenv))
+	if err != nil {
+		slog.Error("configuring Redis", "error", err)
+		os.Exit(1)
+	}
+	defer st.Close()
 
-	handler := observe.LogRequests(observe.Recover(sentry.CurrentHub(), mux))
+	board, err := game.LoadMapFile("public/cities.json")
+	if err != nil {
+		slog.Error("loading the map", "error", err)
+		os.Exit(1)
+	}
+
+	if gitHash == "" {
+		gitHash = sentryConfig.Release
+	}
+	server := web.New(web.Config{
+		Store:   st,
+		Map:     board,
+		Sentry:  sentryConfig,
+		GitHash: gitHash,
+		CSRF:    auth.NewCSRF(authConfig),
+	})
+	sessionRoutes := func(mux *http.ServeMux) { auth.SessionRoutes(mux, authConfig) }
+	srv := &http.Server{Addr: ":" + port, Handler: server.Handler(sentry.CurrentHub(), sessionRoutes)}
+
+	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, os.Interrupt)
+	defer stop()
+	stopped := make(chan struct{})
+	go func() {
+		defer close(stopped)
+		<-ctx.Done()
+		slog.Info("shutting down")
+		shutdownCtx, cancel := context.WithTimeout(context.Background(), shutdownTimeout)
+		defer cancel()
+		if err := srv.Shutdown(shutdownCtx); err != nil {
+			slog.Error("shutting down", "error", err)
+		}
+	}()
+
 	slog.Info("listening", "port", port, "environment", sentryConfig.Environment, "release", sentryConfig.Release)
-	if err := http.ListenAndServe(":"+port, handler); err != nil {
+	if err := srv.ListenAndServe(); !errors.Is(err, http.ErrServerClosed) {
 		slog.Error("server stopped", "error", err)
 		os.Exit(1)
 	}
+	<-stopped
 }
