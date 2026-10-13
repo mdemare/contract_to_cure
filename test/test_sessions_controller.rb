@@ -32,6 +32,45 @@ class TestSessionsController < TestHelper
     assert_equal '/', last_request.path
   end
 
+  def test_session_routes_redirect_during_forecast
+    create_game_with_custom_state do |game|
+      game.instance_variable_set(:@forecast_active, true)
+    end
+
+    previous_env = %w[AUTH_SERVICE_URL SUBDOMAIN DOMAIN_NAME].to_h { |name| [name, ENV[name]] }
+    ENV['AUTH_SERVICE_URL'] = 'https://auth.example.com'
+    ENV['SUBDOMAIN'] = 'game'
+    ENV['DOMAIN_NAME'] = 'example.com'
+
+    get '/login'
+    assert last_response.redirect?, "GET /login: #{last_response.status} #{last_response.body}"
+    assert_equal 'https://auth.example.com/login?return_url=https%3A%2F%2Fgame.example.com',
+                 last_response.location
+
+    delete '/logout'
+    assert last_response.redirect?, "DELETE /logout: #{last_response.status} #{last_response.body}"
+
+    get '/auth/failure', { message: 'invalid_credentials' }
+    assert last_response.redirect?, "GET /auth/failure: #{last_response.status} #{last_response.body}"
+  ensure
+    previous_env&.each { |name, value| restore_env_value(name, value) }
+  end
+
+  def test_session_routes_do_not_touch_game_state
+    # Simulate Redis being down: every game state read or write goes through GameRedisPool.with
+    GameRedisPool.singleton_class.alias_method(:__original_with, :with)
+    GameRedisPool.define_singleton_method(:with) { |*| raise Redis::CannotConnectError, 'Redis is down' }
+
+    delete '/logout'
+    assert last_response.redirect?, "DELETE /logout: #{last_response.status} #{last_response.body}"
+
+    get '/auth/failure', { message: 'invalid_credentials' }
+    assert last_response.redirect?, "GET /auth/failure: #{last_response.status} #{last_response.body}"
+  ensure
+    GameRedisPool.singleton_class.alias_method(:with, :__original_with)
+    GameRedisPool.singleton_class.remove_method(:__original_with)
+  end
+
   def test_current_user_helper
     # Create a test game state first
     create_test_game_state
