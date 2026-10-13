@@ -2,6 +2,7 @@ package game
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/mdemare/contract_to_cure/src/observe"
 	"github.com/mdemare/contract_to_cure/src/store"
@@ -45,7 +46,7 @@ func Load(ctx context.Context, st *store.Store, m *Map, playersCount int, diffic
 // values Rails derives on load, players_count and current_player, are
 // methods here (PlayersCount, CurrentPlayer), so they always follow Players
 // and CurrentPlayerIdx. Like Rails, enum values are taken as saved; only a
-// city's cube count is checked.
+// city's cube count and the current player index are checked.
 func FromSave(s *store.Save) (*GameState, error) {
 	st := s.Status
 	g := &GameState{
@@ -90,6 +91,10 @@ func FromSave(s *store.Save) (*GameState, error) {
 	for _, p := range s.Players {
 		g.Players = append(g.Players, Player{Role: Role(p.Role), Index: p.Index, Location: p.Location,
 			Hand: cardsFromSave(p.Hand)})
+	}
+	// CurrentPlayer indexes Players directly (cc-439).
+	if g.CurrentPlayerIdx < 0 || g.CurrentPlayerIdx >= len(g.Players) {
+		return nil, fmt.Errorf("current_player_idx %d is not one of %d players", g.CurrentPlayerIdx, len(g.Players))
 	}
 	return g, nil
 }

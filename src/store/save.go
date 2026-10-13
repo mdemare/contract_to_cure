@@ -104,7 +104,8 @@ type Decks struct {
 // the defaults Rails' load_state_from_hash applies (Q13-cc): forecast_active
 // and operations_expert_move_used default to false, cards without :retrieved
 // are not retrieved, and a missing or invalid difficulty becomes
-// defaultDifficulty (or heroic if that is invalid too).
+// defaultDifficulty (or heroic if that is invalid too). A current_player_idx
+// outside the players is an error, so the caller starts a new game.
 func DecodeSave(data []byte, defaultDifficulty string) (*Save, error) {
 	root, err := parseRubyYAML(data)
 	if err != nil {
@@ -377,6 +378,11 @@ func (d *decoder) save(root value, defaultDifficulty string) *Save {
 			Location: d.textField(p, path, "location", true),
 			Hand:     d.cards(hand, path+".hand"),
 		})
+	}
+
+	// Rails' load_state_from_hash rejects this too (cc-439).
+	if d.err == nil && (s.Status.CurrentPlayerIdx < 0 || s.Status.CurrentPlayerIdx >= len(s.Players)) {
+		d.fail("game_status.current_player_idx", "%d is not one of %d players", s.Status.CurrentPlayerIdx, len(s.Players))
 	}
 
 	decks, _ := d.field(root, "save", "decks")

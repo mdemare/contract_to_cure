@@ -994,6 +994,24 @@ class TestApiEndpoints < TestHelper
     assert_nil loaded_state.instance_variable_get(:@forecast_cards)
   end
 
+  # cc-439: an out-of-range current_player_idx used to load with a nil (or,
+  # for -1, wrapped) current player and fail later with a 500. It is now an
+  # undecodable save, so the request starts a new game.
+  def test_save_with_out_of_range_current_player_starts_new_game
+    [4, -1].each do |idx|
+      GameState.new(4, :heroic).save_game_state
+      saved_state = YAML.load(@redis.get(@test_redis_key), permitted_classes: [Symbol])
+      saved_state[:game_status][:current_player_idx] = idx
+      @redis.set(@test_redis_key, YAML.dump(saved_state))
+
+      assert_nil GameState.load_from_redis(@test_redis_key), "current_player_idx #{idx}"
+
+      get '/game_state.json'
+      assert_successful_response(last_response)
+      assert_equal 0, JSON.parse(last_response.body)['gameStatus']['currentPlayerIndex'], "current_player_idx #{idx}"
+    end
+  end
+
   def test_operations_expert_special_move_valid
     create_game_with_custom_state do |state|
       # Set first player as Operations Expert

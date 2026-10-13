@@ -423,7 +423,11 @@ class GameState
       @players << player
     end
 
-    # Current player reference
+    # Current player reference. An index outside the players would leave it
+    # nil (or wrap a negative one), so treat the save as undecodable (cc-439).
+    unless @current_player_idx.is_a?(Integer) && (0...@players.size).cover?(@current_player_idx)
+      raise ArgumentError, "current_player_idx #{@current_player_idx.inspect} is not a player"
+    end
     @current_player = @players[@current_player_idx]
 
     # Decks
