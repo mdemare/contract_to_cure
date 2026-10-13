@@ -172,6 +172,7 @@ JSON view and saves
 |---|---|---|
 | `cure_disease` | `base` | Scientist cures with four cards |
 | `cure_disease_wrong_cards` | `base` | Cards do not match the color |
+| `cure_disease_repeated_card_names` | `base` | One card named four times does not cure |
 | `cure_disease_missing_parameters` | `base` | Schema failure |
 | `cure_disease_game_over` | `game_over_victory` | Game over |
 

@@ -95,6 +95,23 @@ func (p *Player) cityCardIndex(name string) int {
 
 func (p *Player) hasCityCard(name string) bool { return p.cityCardIndex(name) >= 0 }
 
+// missingCard returns the first name that is not matched by a card of its
+// own in the hand, counting repeated names against the cards with that name
+// (Rails' first_missing_card_name). ok is false when every name is covered.
+func (p *Player) missingCard(names []string) (name string, ok bool) {
+	available := map[string]int{}
+	for _, c := range p.Hand {
+		available[c.Name]++
+	}
+	for _, n := range names {
+		available[n]--
+		if available[n] < 0 {
+			return n, true
+		}
+	}
+	return "", false
+}
+
 // takeCard removes the first card with this name, of any type, from the
 // hand and re-sorts it.
 func (p *Player) takeCard(name string) (Card, bool) {
@@ -352,8 +369,8 @@ func (g *GameState) ShareKnowledge(givingIndex, receivingIndex int, cityName str
 
 // CureDisease discards the named cards, all of the color, at a research
 // station: CardsNeededForCure of them. Medics then clear the cured color from
-// their cities, and the fourth cure wins the game. Like Rails, each name is
-// looked up on its own, so a repeated name counts more than once.
+// their cities, and the fourth cure wins the game. Each name must be a
+// different card from the hand.
 func (g *GameState) CureDisease(color Color, cardNames []string) Result {
 	p := g.CurrentPlayer()
 	if !g.hasResearchStation(p.Location) {
@@ -372,6 +389,9 @@ func (g *GameState) CureDisease(color Color, cardNames []string) Result {
 		if i < 0 || p.Hand[i].Color != color {
 			return actionError(fmt.Sprintf("All selected cards must be %s city cards", color))
 		}
+	}
+	if _, ok := p.missingCard(cardNames); ok {
+		return actionError("Selected cards must be different cards from your hand")
 	}
 
 	for _, name := range cardNames {

@@ -435,14 +435,13 @@ func TestCureDisease(t *testing.T) {
 			t.Errorf("game over %v, reason %s, phase %s", g.GameOver, g.GameOverReason, g.Phase)
 		}
 	})
-	// Like Rails, each name is looked up separately, so one card can be
-	// named four times.
+	// One card cannot be named four times (cc-432).
 	t.Run("repeated names", func(t *testing.T) {
 		g := testGame(t, game.Scientist)
 		g.Players[0].Hand = cityCards(t, g, "Chicago", "Lima")
-		wantSuccess(t, g.CureDisease(game.Blue, []string{"Chicago", "Chicago", "Chicago", "Chicago"}), "blue")
-		if !slices.Equal(names(g.Players[0].Hand), []string{"Lima"}) {
-			t.Errorf("hand = %v", names(g.Players[0].Hand))
+		wantError(t, g.CureDisease(game.Blue, []string{"Chicago", "Chicago", "Chicago", "Chicago"}), "Selected cards must be different cards from your hand")
+		if !slices.Equal(names(g.Players[0].Hand), []string{"Chicago", "Lima"}) || g.Disease(game.Blue).Cured || g.ActionsRemaining != 4 {
+			t.Errorf("the game changed: hand = %v", names(g.Players[0].Hand))
 		}
 	})
 }

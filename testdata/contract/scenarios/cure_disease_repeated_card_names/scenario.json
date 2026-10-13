@@ -1,0 +1,31 @@
+{
+  "name": "cure_disease_repeated_card_names",
+  "description": "One card named four times does not cure",
+  "save_before": "states/base.yaml",
+  "request": {
+    "method": "POST",
+    "path": "/cure_disease",
+    "headers": {
+      "Content-Type": "application/json"
+    },
+    "body": {
+      "color": "red",
+      "card_names": [
+        "Wuhan",
+        "Wuhan",
+        "Wuhan",
+        "Wuhan"
+      ]
+    }
+  },
+  "response": {
+    "status": 422,
+    "content_type": "application/json; charset=utf-8",
+    "body": {
+      "success": false,
+      "status": "error",
+      "message": "Selected cards must be different cards from your hand"
+    }
+  },
+  "save_after": "unchanged"
+}
