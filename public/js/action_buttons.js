@@ -141,11 +141,10 @@ export function updateButtonStates() {
       }
     });
 
-    if (phase === 'draw_cards') {
-      drawCardsBtn.style.display = 'flex';
-    } else {
-      infectCitiesBtn.style.display = 'flex';
-    }
+    // pending_discard disables these too, so re-enable the one being shown
+    const endTurnBtn = phase === 'draw_cards' ? drawCardsBtn : infectCitiesBtn;
+    endTurnBtn.style.display = 'flex';
+    enableButton(endTurnBtn);
   }
   
   // Always show action cards button if any player has event cards
