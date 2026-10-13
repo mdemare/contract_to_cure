@@ -595,36 +595,36 @@
     :name: Forecast
     :color:
   :infection_deck:
-  - :type: :infection
-    :name: Mumbai
-    :color: :black
-  - :type: :infection
-    :name: Kabul
-    :color: :black
-  - :type: :infection
-    :name: Tehran
-    :color: :black
-  - :type: :infection
-    :name: Houston
-    :color: :blue
-  - :type: :infection
-    :name: Chicago
-    :color: :blue
-  - :type: :infection
+  - :type: :city
     :name: Montreal
     :color: :blue
   - :type: :city
-    :name: Jakarta
-    :color: :red
+    :name: Chicago
+    :color: :blue
   - :type: :city
-    :name: Sao Paulo
-    :color: :yellow
+    :name: Houston
+    :color: :blue
+  - :type: :city
+    :name: Tehran
+    :color: :black
+  - :type: :city
+    :name: Stockholm
+    :color: :blue
   - :type: :city
     :name: Nairobi
     :color: :yellow
   - :type: :city
-    :name: Stockholm
-    :color: :blue
+    :name: Sao Paulo
+    :color: :yellow
+  - :type: :city
+    :name: Jakarta
+    :color: :red
+  - :type: :city
+    :name: Mumbai
+    :color: :black
+  - :type: :city
+    :name: Kabul
+    :color: :black
   :infection_discard:
   - :type: :city
     :name: Wuhan

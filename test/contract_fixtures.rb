@@ -81,7 +81,7 @@ module ContractFixtures
       game.player_discard.push(Card.new(:action, 'Forecast'))
       game.players[0].hand.push(Card.new(:action, 'Airlift'))
       set(game, :forecast_active, true)
-      set(game, :forecast_cards, game.infection_deck.first(6).map(&:name))
+      set(game, :forecast_cards, game.infection_deck.last(6).reverse.map(&:name))
     end,
     'event_cards' => lambda do |game|
       game.players[0].hand.push(Card.new(:action, 'Airlift'), Card.new(:action, 'Forecast'))
@@ -255,9 +255,9 @@ module ContractFixtures
     ['action_card_government_grant_existing_station', 'event_cards', 'POST', '/action_card',
      { card: 'Government Grant', city: 'Wuhan' }, 'Station already exists'],
     ['action_card_forecast', 'event_cards', 'POST', '/action_card', { card: 'Forecast' },
-     'Forecast, step 1: shows the first six cards of the infection deck array (the bottom of the draw pile)'],
+     'Forecast, step 1: shows the top six cards of the infection draw pile, next card first'],
     ['action_card_forecast_apply', 'forecast_active', 'POST', '/action_card',
-     { card: 'Forecast', card_order: %w[Mumbai Kabul Tehran Houston Chicago Montreal] },
+     { card: 'Forecast', card_order: ['Kabul', 'Mumbai', 'Jakarta', 'Sao Paulo', 'Nairobi', 'Stockholm'] },
      'Forecast, step 2: reorder; the response is the bare JSON view'],
     ['action_card_forecast_invalid_order', 'forecast_active', 'POST', '/action_card',
      { card: 'Forecast', card_order: ['Paris'] }, 'Not a permutation: error with HTTP 200'],

@@ -41,9 +41,10 @@ module ActionCards
     result = use_action_card('Forecast')
     return result if result # Return early if there was an error
 
-    # Get the top 6 cards from the infection deck (or all if less than 6)
-    card_count = [@infection_deck.length, 6].min
-    top_cards = @infection_deck.first(card_count)
+    # Get the top 6 cards from the infection deck (or all if less than 6).
+    # Infection draws pop from the end of the array, so the top cards are the
+    # last ones, listed here in draw order (next card first).
+    top_cards = @infection_deck.last(6).reverse
 
     # Set a flag indicating we're in forecast mode
     @forecast_active = true
@@ -73,10 +74,11 @@ module ActionCards
       return { status: 'error', message: 'Invalid card order provided' }
     end
 
-    # Remove the top N cards from the infection deck
-    @infection_deck.shift(@forecast_cards.size)
+    # Remove the top N cards from the infection deck (the end of the array)
+    @infection_deck.pop(@forecast_cards.size)
 
-    # Add the cards back in the specified order (reverse order since we're adding to the top)
+    # Add the cards back so that the first card in card_order is drawn next
+    # (reverse order since the last pushed card is the top of the deck)
     card_order.reverse_each do |card_name|
       # Find the original card with this name
       city = @cities[card_name]
@@ -85,8 +87,8 @@ module ActionCards
       next unless color
 
       # Create a new card and add it to the top of the infection deck
-      new_card = Card.new(:infection, card_name, color)
-      @infection_deck.unshift(new_card)
+      new_card = Card.new(:city, card_name, color)
+      @infection_deck.push(new_card)
     end
 
     # Reset forecast mode

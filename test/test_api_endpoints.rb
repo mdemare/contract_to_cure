@@ -777,16 +777,18 @@ class TestApiEndpoints < TestHelper
     state.current_player.hand = [Card.new(:action, 'Forecast')]
     state.save_game_state
     original_deck = state.infection_deck.map(&:name)
+    # Infection draws pop from the end, so the top six in draw order are the last six reversed.
+    top_six = original_deck.last(6).reverse
 
     post '/action_card', { card: 'Forecast' }.to_json,
          { 'CONTENT_TYPE' => 'application/json' }
 
     assert_successful_response(last_response)
-    assert_equal original_deck.first(6), parse_json_response(last_response)['cards'].map { |card| card['name'] }
+    assert_equal top_six, parse_json_response(last_response)['cards'].map { |card| card['name'] }
     assert @redis.get(@test_redis_key).start_with?('---'), 'State must use production YAML persistence'
     loaded_state = GameState.load_from_redis(@test_redis_key)
     assert loaded_state.forecast_active
-    assert_equal original_deck.first(6), loaded_state.instance_variable_get(:@forecast_cards)
+    assert_equal top_six, loaded_state.instance_variable_get(:@forecast_cards)
     refute_includes loaded_state.current_player.hand.map(&:name), 'Forecast'
     assert_includes loaded_state.player_discard.map(&:name), 'Forecast'
 
@@ -799,7 +801,7 @@ class TestApiEndpoints < TestHelper
     assert_error_response(last_response, 422, 'Cannot perform action while Forecast is active')
     assert_equal saved_state, @redis.get(@test_redis_key)
 
-    reordered_cards = original_deck.first(6).reverse
+    reordered_cards = top_six.reverse
     post '/action_card', { card: 'Forecast', card_order: reordered_cards }.to_json,
          { 'CONTENT_TYPE' => 'application/json' }
 
@@ -807,7 +809,9 @@ class TestApiEndpoints < TestHelper
     completed_state = GameState.load_from_redis(@test_redis_key)
     refute completed_state.forecast_active
     assert_nil completed_state.instance_variable_get(:@forecast_cards)
-    assert_equal reordered_cards + original_deck.drop(6), completed_state.infection_deck.map(&:name)
+    assert_equal original_deck[0...-6] + reordered_cards.reverse, completed_state.infection_deck.map(&:name)
+    assert_equal reordered_cards.first, completed_state.infection_deck.last.name, 'First chosen card is drawn next'
+    assert_equal [:city], completed_state.infection_deck.map(&:type).uniq
 
     post '/pass'
     assert_successful_response(last_response)

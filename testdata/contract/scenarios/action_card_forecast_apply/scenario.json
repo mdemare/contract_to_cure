@@ -11,12 +11,12 @@
     "body": {
       "card": "Forecast",
       "card_order": [
-        "Mumbai",
         "Kabul",
-        "Tehran",
-        "Houston",
-        "Chicago",
-        "Montreal"
+        "Mumbai",
+        "Jakarta",
+        "Sao Paulo",
+        "Nairobi",
+        "Stockholm"
       ]
     }
   },
