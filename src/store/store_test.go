@@ -72,6 +72,24 @@ func TestConfigFromEnv(t *testing.T) {
 	}
 }
 
+// Staging and production share a Redis server (and their generated .env
+// files the same REDIS_URL), so staging must use its own key (cc-458).
+func TestConfigFromEnvKeepsStagingOffProductionKey(t *testing.T) {
+	env := func(vars map[string]string) func(string) string {
+		return func(k string) string { return vars[k] }
+	}
+
+	staging := ConfigFromEnv(env(map[string]string{"DEPLOYMENT_ENV": " staging "}))
+	if staging.Key != StagingKey || staging.Key == DefaultKey {
+		t.Errorf("staging key = %q, want %q", staging.Key, StagingKey)
+	}
+	for _, e := range []string{"", "production", "development", "test"} {
+		if cfg := ConfigFromEnv(env(map[string]string{"DEPLOYMENT_ENV": e})); cfg.Key != DefaultKey {
+			t.Errorf("DEPLOYMENT_ENV=%q: key = %q, want %q", e, cfg.Key, DefaultKey)
+		}
+	}
+}
+
 func TestNewAppliesPoolConfig(t *testing.T) {
 	s, err := New(Config{URL: "redis://localhost:6390/3", PoolSize: 7, PoolTimeout: 9 * time.Second, Key: testKey})
 	if err != nil {
