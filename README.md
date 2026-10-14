@@ -1,7 +1,7 @@
 # Contract To Cure
 
-A fan web implementation of the cooperative board game Pandemic, built with
-Rails, Redis and plain JavaScript (with a Go port of the backend in `src/`).
+A fan web implementation of the cooperative board game Pandemic, built with a
+Go backend (`src/`), Redis and plain JavaScript.
 
 The project documentation is kept in the `noca` knowledge base. Each entry is a
 question with an answer that is checked against the code. Show one with
@@ -17,18 +17,18 @@ question with an answer that is checked against the code. Show one with
 > treat infections, build research stations and discover cures for four
 > diseases before the outbreaks, cube supply or player deck run out.
 
-> **Q8-cc: How do I set up and run the application locally with the correct Ruby, JavaScript, and Redis dependencies?**
+> **Q8-cc: How do I set up and run the application locally with the correct Go, JavaScript, and Redis dependencies?**
 >
-> Short version: install Ruby 4.0.7 with Bundler 4, run `bundle install`, start
-> a local Redis on localhost:6379, and run `bundle exec puma -C config/puma.rb`.
-> Then open http://localhost:4567. The JavaScript needs no build step. Node.js
+> Short version: install Go (the version in `go.mod`), start a local Redis on
+> localhost:6379, and run `make build && DEPLOYMENT_ENV=development ./main`.
+> Then open http://localhost:2583. The JavaScript needs no build step. Node.js
 > 22+ is only needed to run the JS tests.
 
 > **Q37-cc: How are tests organized, and which checks should run for backend, frontend, or cross-layer changes?**
 >
-> Run `make check` from the repository root. It runs the Ruby suite, the
-> JavaScript tests in `test/js/*.mjs`, and `go vet` and `go test` for the Go
-> port. Tests use mock Redis, so no Redis server is needed.
+> Run `make check` from the repository root. It runs the JavaScript tests in
+> `test/js/*.mjs`, then `go vet` and `go test` for the backend. Tests use an
+> in-memory Redis (miniredis), so no Redis server is needed.
 
 ## More questions
 
@@ -37,7 +37,7 @@ question with an answer that is checked against the code. Show one with
 | How the repo is organized | `noca view Q1-cc` |
 | Differences from the original Pandemic | `noca view Q3-cc` |
 | Terminology ("action cards", phases, ...) | `noca view Q5-cc` |
-| Rails controllers, game logic and frontend modules | `noca view Q6-cc` |
+| HTTP handlers, game logic and frontend modules | `noca view Q6-cc` |
 | Which docs are current and which are history | `noca view Q7-cc` |
 | Environment configurations | `noca view Q9-cc` |
 | HTTP routes and API conventions | `noca view Q45-cc,Q16-cc` |
@@ -45,4 +45,4 @@ question with an answer that is checked against the code. Show one with
 | Authentication | `noca view Q17-cc` |
 | Adding a new game action or rule | `noca view Q36-cc` |
 | Build, deployment and health checks | `noca view Q39-cc` |
-| The Go backend port | `noca view Q41-cc` |
+| The contract fixtures and backend parity | `noca view Q41-cc` |

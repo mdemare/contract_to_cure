@@ -1,8 +1,15 @@
 # JWT Authentication Implementation Guide
 
+The Go backend implements this in `src/auth` (token validation, the `/login`,
+`/logout` and `/auth/failure` routes, and CSRF); `src/main.go` wires it into the
+HTTP handler.
+
 ## Environment Variables
 
-- `JWT_SECRET` - Secret key for signing/verifying JWT tokens (required)
+- `DEPLOYMENT_ENV` - `development`, `test`, `staging` or `production` (default
+  `production`, so a missing variable never enables the bypass below)
+- `JWT_SECRET` - Secret key for signing/verifying JWT tokens (required outside
+  development and test; the server refuses to start without it)
 - `AUTH_SERVICE_URL` - URL of the authentication service (required)
 - `SUBDOMAIN` - Subdomain for the application (required)
 - `DOMAIN_NAME` - Base domain name (required)
@@ -70,12 +77,13 @@
 - Enforce role-based access control as needed
 - No API calls without authentication
 
-Development and test environments keep an explicit authentication bypass so local
-gameplay and controller tests do not require a real auth service. Set
-`REQUIRE_AUTH=true` to disable that bypass in tests, or `SKIP_AUTH=true` to force
-the development user fallback.
+Development and test environments (`DEPLOYMENT_ENV`) keep an explicit
+authentication bypass so local gameplay and tests do not require a real auth
+service; in development a request without a token is the "Development User".
+Set `REQUIRE_AUTH=true` to disable that bypass, or `SKIP_AUTH=true` to force
+the development user fallback in any environment.
 
-Rails CSRF verification is intentionally skipped for the game JSON endpoints
+CSRF verification is intentionally skipped for the game JSON endpoints
 after JWT authentication. The auth token is stored in an HTTP-only,
 `SameSite=Lax` cookie, and the application is a shared web game surface rather
 than a store of private user data. A cross-site form post cannot read responses,

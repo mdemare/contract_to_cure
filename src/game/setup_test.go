@@ -462,6 +462,18 @@ func TestParse(t *testing.T) {
 	}
 }
 
+// From test_role_styles.rb.
+func TestRoleNames(t *testing.T) {
+	if got := game.QuarantineSpecialist.Name(); got != "Quarantine Specialist" {
+		t.Errorf("QuarantineSpecialist.Name() = %q", got)
+	}
+	for _, r := range game.Roles {
+		if r.Name() == "" {
+			t.Errorf("role %s has no name", r)
+		}
+	}
+}
+
 func TestEradicated(t *testing.T) {
 	tests := []struct {
 		d    game.DiseaseCubes

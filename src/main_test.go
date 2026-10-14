@@ -37,7 +37,12 @@ func TestMain(m *testing.M) {
 // only this test sees whether main wires it in (cc-456).
 func productionServer(t *testing.T) (http.Handler, *miniredis.Miniredis) {
 	t.Helper()
-	env := map[string]string{"DEPLOYMENT_ENV": "production", "JWT_SECRET": testSecret}
+	return serverWithEnv(t, map[string]string{"DEPLOYMENT_ENV": "production", "JWT_SECRET": testSecret})
+}
+
+// serverWithEnv is main's handler with the auth config read from env.
+func serverWithEnv(t *testing.T, env map[string]string) (http.Handler, *miniredis.Miniredis) {
+	t.Helper()
 	authConfig, err := auth.ConfigFromEnv(func(k string) string { return env[k] })
 	if err != nil {
 		t.Fatal(err)
@@ -129,4 +134,42 @@ func TestProductionGamePostsSkipCSRF(t *testing.T) {
 	if rec := send(h, http.MethodPost, "/restart_game", validToken(t)); rec.Code != http.StatusOK {
 		t.Errorf("POST /restart_game: %d %s", rec.Code, rec.Body)
 	}
+}
+
+// The session routes sit outside the game guards and never read the game:
+// they redirect during a Forecast and while Redis is down
+// (test_sessions_controller.rb).
+func TestSessionRoutesDoNotTouchTheGame(t *testing.T) {
+	h, mr := serverWithEnv(t, map[string]string{
+		"DEPLOYMENT_ENV":   "production",
+		"JWT_SECRET":       testSecret,
+		"AUTH_SERVICE_URL": "https://auth.example.com",
+		"SUBDOMAIN":        "game",
+		"DOMAIN_NAME":      "example.com",
+	})
+	forecast, err := os.ReadFile("../testdata/contract/states/forecast_active.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if err := mr.Set(testKey, string(forecast)); err != nil {
+		t.Fatal(err)
+	}
+	check := func(when string) {
+		t.Helper()
+		rec := send(h, http.MethodGet, "/login", "")
+		if want := "https://auth.example.com/login?return_url=https%3A%2F%2Fgame.example.com"; rec.Code != http.StatusFound || rec.Header().Get("Location") != want {
+			t.Errorf("%s: GET /login: %d to %q, want 302 to %s", when, rec.Code, rec.Header().Get("Location"), want)
+		}
+		for _, r := range []struct{ method, path string }{
+			{http.MethodDelete, "/logout"},
+			{http.MethodGet, "/auth/failure?message=invalid_credentials"},
+		} {
+			if rec := send(h, r.method, r.path, ""); rec.Code != http.StatusFound || rec.Header().Get("Location") != "/" {
+				t.Errorf("%s: %s %s: %d to %q, want 302 to /", when, r.method, r.path, rec.Code, rec.Header().Get("Location"))
+			}
+		}
+	}
+	check("during a Forecast")
+	mr.Close()
+	check("with Redis down")
 }

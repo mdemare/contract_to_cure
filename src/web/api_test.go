@@ -1,6 +1,7 @@
 package web_test
 
 import (
+	"bytes"
 	"context"
 	"net/http"
 	"net/http/httptest"
@@ -49,6 +50,52 @@ func TestRootRendersIndex(t *testing.T) {
 		if strings.Contains(page, unwanted) {
 			t.Errorf("index page outside production with no DSN has %s", unwanted)
 		}
+	}
+}
+
+// From test_menu.rb and test_disease_status_layout.rb.
+func TestIndexHasMenuAndDiseaseStatus(t *testing.T) {
+	ts := newTestServer(t, readFixture(t, "states/base.yaml"))
+	page := ts.do(http.MethodGet, "/", "", "").Body.String()
+	want := []string{
+		`<div class="menu-container">`,
+		`<button id="menu-toggle" class="menu-toggle"`,
+		`aria-label="Menu"`,
+		`aria-expanded="false"`,
+		`<div id="dropdown-menu" class="dropdown-menu"`,
+		`role="menu"`,
+		`<button id="new-game-btn" class="menu-item"`,
+		`<button id="login-menu-btn" class="menu-item"`,
+		`<button id="logout-menu-btn" class="menu-item"`,
+		`<div id="auth-info-menu" class="user-info"`,
+		`<div class="menu-divider">`,
+		`<link rel="stylesheet" href="/css/menu.css">`,
+		`cure-grid`,
+		`cure-info`,
+	}
+	for _, color := range []string{"blue", "yellow", "black", "red"} {
+		want = append(want,
+			"cure-item "+color,
+			color+"-cure",
+			`<span id="`+color+`-cubes" class="cube-count">`)
+	}
+	for _, w := range want {
+		if !strings.Contains(page, w) {
+			t.Errorf("index page lacks %s", w)
+		}
+	}
+	for _, unwanted := range []string{
+		`<div class="auth-container">`,
+		`<button id="login-btn" class="login-button"`,
+		`<button id="logout-btn" class="logout-button"`,
+	} {
+		if strings.Contains(page, unwanted) {
+			t.Errorf("index page still has %s", unwanted)
+		}
+	}
+	newGame := strings.Index(page, "new-game-btn")
+	if newGame > strings.Index(page, "login-menu-btn") || newGame > strings.Index(page, "logout-menu-btn") {
+		t.Error("New Game should come before Login and Logout")
 	}
 }
 
@@ -255,5 +302,59 @@ func TestUndecodableSaveStartsNewGame(t *testing.T) {
 	}
 	if g := ts.savedGame(); g.CurrentPlayerIdx != 0 || g.Turn != 1 {
 		t.Errorf("not a new game: player %d, turn %d", g.CurrentPlayerIdx, g.Turn)
+	}
+}
+
+// From test_api_endpoints.rb: the player-action endpoints reject requests
+// outside player_actions with check_action's error object (no success key),
+// before reading their params, and save nothing.
+func TestPlayerActionsOutsideTheirPhase(t *testing.T) {
+	requests := map[string]string{
+		"/cure_disease":           `{"color":"blue","card_names":[]}`,
+		"/retrieve":               `{"action_card_name":"Airlift"}`,
+		"/share_knowledge":        `{"giving_player_index":0,"receiving_player_index":1,"city_name":"Chicago"}`,
+		"/build_research_station": ``,
+	}
+	for path, body := range requests {
+		before := readFixture(t, "states/draw_phase.yaml")
+		ts := newTestServer(t, before)
+		rec := ts.postJSON(path, body)
+		if want := `{"status":"error","message":"No more actions allowed"}`; rec.Code != http.StatusUnprocessableEntity || compactJSON(t, rec.Body.Bytes()) != want {
+			t.Errorf("POST %s: %d %s, want 422 %s", path, rec.Code, rec.Body, want)
+		}
+		if !bytes.Equal(ts.saved(), before) {
+			t.Errorf("POST %s changed the save", path)
+		}
+	}
+}
+
+// From test_api_endpoints.rb: once the game is over, every mutating endpoint
+// but /restart_game is rejected in every phase and saves nothing.
+func TestMutatingEndpointsRejectedAfterGameOver(t *testing.T) {
+	requests := map[string]string{
+		"/move":                   `{"player_index":0,"destination":"Chicago"}`,
+		"/treat":                  `{}`,
+		"/cure_disease":           `{"color":"blue","card_names":["Atlanta","Chicago","Montreal","New York"]}`,
+		"/retrieve":               `{"action_card_name":"Airlift"}`,
+		"/share_knowledge":        `{"giving_player_index":0,"receiving_player_index":1,"city_name":"Atlanta"}`,
+		"/pass":                   `{}`,
+		"/draw_cards":             `{}`,
+		"/infect_cities":          `{}`,
+		"/build_research_station": `{}`,
+		"/discard_cards":          `{"player_index":0,"card_names":["Atlanta"]}`,
+		"/action_card":            `{"card":"One Quiet Night"}`,
+	}
+	for _, state := range []string{"game_over_victory", "game_over_draw_phase", "game_over_infect_phase"} {
+		before := readFixture(t, "states/"+state+".yaml")
+		ts := newTestServer(t, before)
+		for path, body := range requests {
+			rec := ts.postJSON(path, body)
+			if want := `{"status":"error","message":"The game is over"}`; rec.Code != http.StatusUnprocessableEntity || compactJSON(t, rec.Body.Bytes()) != want {
+				t.Errorf("%s: POST %s: %d %s, want 422 %s", state, path, rec.Code, rec.Body, want)
+			}
+			if !bytes.Equal(ts.saved(), before) {
+				t.Errorf("%s: POST %s changed the save", state, path)
+			}
+		}
 	}
 }
