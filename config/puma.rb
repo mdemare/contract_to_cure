@@ -7,7 +7,8 @@ directory File.expand_path('..', __dir__)
 # Specify the rackup file
 rackup 'config.ru'
 
-# Bind to all interfaces on port 4567 (Sinatra default) or 3000 (for Docker)
+# Bind to all interfaces on $PORT, default 4567. (Docker runs the Go server
+# on 2583 instead of Puma.)
 port_number = ENV['PORT'] || '4567'
 bind "tcp://0.0.0.0:#{port_number}"
 
