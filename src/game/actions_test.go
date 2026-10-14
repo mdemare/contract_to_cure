@@ -187,6 +187,52 @@ func TestMoveFlights(t *testing.T) {
 	})
 }
 
+// An unknown destination is rejected before any move type is tried, so no
+// card is discarded and no action spent (test_error_handling.rb).
+func TestMoveUnknownDestinationIsCheckedFirst(t *testing.T) {
+	const nowhere = "NonExistentCity"
+	tests := []struct {
+		name   string
+		player int
+		card   string
+		setup  func(g *game.GameState)
+	}{
+		{name: "operations expert at a station", setup: func(g *game.GameState) {
+			g.Players[0].Role = game.OperationsExpert
+			g.ResearchStations = append(g.ResearchStations, "Wuhan")
+			g.Players[0].Hand = cityCards(t, g, "London")
+		}},
+		{name: "direct flight", setup: func(g *game.GameState) {
+			g.Players[0].Location = "London"
+			g.Players[0].Hand = []game.Card{{Type: game.CityCard, Name: nowhere, Color: game.Blue}}
+		}},
+		{name: "charter flight", card: "London", setup: func(g *game.GameState) {
+			g.Players[0].Location = "London"
+			g.Players[0].Hand = cityCards(t, g, "London")
+		}},
+		{name: "shuttle flight", setup: func(g *game.GameState) {
+			g.ResearchStations = append(g.ResearchStations, "Wuhan", nowhere)
+		}},
+		{name: "dispatcher gather", player: 1, setup: func(g *game.GameState) {
+			g.Players[0].Role = game.Dispatcher
+			g.Players[1].Location = "London"
+			g.Players[2].Location = nowhere
+		}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g := testGame(t, game.Scientist, game.Medic, game.Researcher, game.QuarantineSpecialist)
+			tt.setup(g)
+			location := g.Players[tt.player].Location
+			hand := names(g.Players[0].Hand)
+			wantError(t, g.Move(tt.player, nowhere, tt.card), "Unknown destination "+nowhere)
+			if g.Players[tt.player].Location != location || !slices.Equal(names(g.Players[0].Hand), hand) || g.ActionsRemaining != 4 {
+				t.Error("the game changed")
+			}
+		})
+	}
+}
+
 func TestMoveMedicClearsCuredColor(t *testing.T) {
 	g := testGame(t, game.Medic)
 	g.Disease(game.Blue).Cured = true

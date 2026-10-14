@@ -2,7 +2,7 @@
 
 ## Overview
 
-This document describes the architecture of the Pandemic game implementation, a web-based cooperative board game built with Ruby/Sinatra backend and vanilla JavaScript frontend. The system follows a traditional client-server architecture with clear separation between game logic and presentation layers.
+This document describes the architecture of the Pandemic game implementation, a web-based cooperative board game built with a Go backend (game state in Redis) and a vanilla JavaScript frontend. The system follows a traditional client-server architecture with clear separation between game logic and presentation layers.
 
 ## High-Level Architecture
 
@@ -20,59 +20,37 @@ This document describes the architecture of the Pandemic game implementation, a 
               HTTP/JSON API
                   │
 ┌─────────────────▼───────────────────────────────────────────┐
-│                 Server (Ruby/Sinatra)                      │
+│                 Server (Go, net/http)                      │
 ├─────────────────────────────────────────────────────────────┤
 │  HTTP Router │  Game Logic Modules │  Persistence          │
 │  ────────────┼───────────────────────┼────────────────────  │
-│  • Endpoints │  • Player Actions    │  • YAML Serialization│
-│  • Validation│  • End Turn Events   │  • Game State Save   │
+│  • Endpoints │  • Player Actions    │  • Redis (YAML save) │
+│  • Validation│  • End Turn Events   │  • Atomic updates    │
 │  • Responses │  • Action Cards      │  • Game State Load    │
 └─────────────────────────────────────────────────────────────┘
 ```
 
-## Backend Architecture (Ruby/Sinatra)
+## Backend Architecture (Go)
 
 ### Core Structure
 
-The backend follows a **modular monolith** pattern with the main `GameState` class serving as the central coordinator that includes specialized modules.
+The backend is a single Go binary (`src/main.go`, built with `make build`) split into packages by concern. The `game` package holds the rules; the other packages adapt it to HTTP, Redis, authentication and error reporting.
 
-#### Module Architecture
-
-```ruby
-class GameState
-  include ActionCards      # Special event card effects
-  include GameStateConfig  # Constants and configuration
-  include PlayerActions    # Core player action logic
-  include EndTurnEvents    # End-of-turn disease spreading
-  include JsonGenerator    # State serialization
-  include Setup           # Game initialization
-end
-```
+| Package | Purpose | Key files |
+|---------|---------|-----------|
+| `src/game` | Game model and rules | `model.go` (GameState, City, Player, Card), `setup.go`, `actions.go` (player actions and guards), `events.go` (event cards), `endturn.go` (draw, infect, discard), `view.go` (JSON view), `save.go` (save format) |
+| `src/store` | Redis persistence | `store.go`, `save.go` (YAML save codec), `atomic.go` (WATCH/MULTI optimistic updates) |
+| `src/web` | HTTP layer | `server.go` (routes, index page, static files), `game.go` (per-route guards and handlers), `params.go` (request validation) |
+| `src/auth` | JWT authentication, sessions and CSRF | see AUTH.md |
+| `src/observe` | Sentry, request logging, panic recovery | `sentry.go`, `middleware.go` |
+| `src/contract` | Loads the API contract fixtures in `testdata/contract` for the replay tests | `contract.go` |
 
 #### Design Patterns
 
-1. **Mixin Pattern**: Modules are included as mixins to extend GameState functionality
-2. **Template Method**: `after_action` provides consistent post-action processing
-3. **Strategy Pattern**: Different roles and card types have specialized behaviors
-4. **Command Pattern**: Complex operations like end-turn events encapsulated in dedicated classes
-
-#### Module Responsibilities
-
-| Module | Purpose | Key Methods |
-|--------|---------|-------------|
-| `GameStateConfig` | Constants and game rules | Configuration values |
-| `PlayerActions` | Core game actions | `move`, `treat_disease`, `cure_disease`, `share_knowledge` |
-| `ActionCards` | Special event cards | `use_airlift`, `use_forecast`, `quiet_night!` |
-| `EndTurnEvents` | Turn-end processing | `draw_cards`, `infect_cities` |
-| `JsonGenerator` | State serialization | `to_json_state` |
-| `Setup` | Game initialization | `initialize_game` |
-
-#### Supporting Classes
-
-- **City**: Represents game board locations with disease cubes and connections
-- **Player**: Manages player state, location, hand, and role abilities
-- **Card**: Polymorphic card representation (city, action, epidemic, infection)
-- **EndTurn**: Encapsulates complex end-turn event processing
+1. **Plain domain model**: `*game.GameState` methods implement the rules and return result values; they know nothing about HTTP or Redis
+2. **Guard pipeline**: each game route runs the Forecast guard, the game-over guard and the phase check before reading its parameters (`gameRoutes()` in `src/web/game.go`)
+3. **Optimistic concurrency**: every game request loads, mutates and commits the save inside `store.AtomicUpdate`; a concurrent change returns 409 with the current state
+4. **Result types**: actions return `Result`, `Rejection` or response structs whose field order matches the JSON the frontend expects
 
 ### API Design
 
@@ -96,44 +74,36 @@ POST /action_card          # Use special cards
 POST /restart_game         # New game
 ```
 
+The full route table is in `src/web/server.go` (and `noca view Q45-cc`).
+
 ### State Management
 
 #### Persistence Strategy
-- **YAML Serialization**: Complete game state saved to `current_game.yaml`
-- **Automatic Saving**: State persisted after each action
-- **State Recovery**: Ability to resume games after server restart
-- **Validation**: State consistency checks during load/save
+- **Redis**: The whole game is one YAML document under the key `contract-to-cure/current-game`
+- **Reload per request**: Each request loads the game from Redis; nothing is kept in memory between requests
+- **Atomic saves**: A request saves only if the key did not change since it was read
+- **State Recovery**: A missing or undecodable save starts a new game; older saves load with defaults for fields they lack
+- **Format**: The save keeps the Ruby/Psych YAML format of the former Rails backend (symbol keys such as `:game_status:`), so existing games still load
 
 #### State Structure
 ```yaml
-game_status:
-  actions_remaining: 4
-  phase: "player_actions"
-  current_player_idx: 0
+:game_status:
+  :actions_remaining: 4
+  :phase: :player_actions
+  :current_player_idx: 0
   # ... other status fields
 
-disease_cubes:
-  blue: { cured: false, in_supply: 24 }
-  # ... other colors
+:disease_cubes:
+  # ... cured flag and supply per color
 
-cities:
-  Atlanta:
-    name: "Atlanta"
-    color: blue
-    disease_cubes: 2
-    has_research_station: true
-    # ... connections
+:cities:
+  # ... disease cubes and research station per city
 
-players:
-  - role: medic
-    location: "Atlanta"
-    hand: [...]
-    # ... player data
+:players:
+  # ... role, location and hand per player
 
-decks:
-  player_deck: [...]
-  infection_deck: [...]
-  # ... deck states
+:decks:
+  # ... player deck, infection deck and discard piles
 ```
 
 ## Frontend Architecture (JavaScript)
@@ -265,9 +235,11 @@ Client State ←→ Server State
 
 | Technology | Purpose | Rationale |
 |------------|---------|-----------|
-| **Ruby** | Programming language | Readable syntax, good for complex business logic |
-| **Sinatra** | Web framework | Lightweight, perfect for API-focused applications |
-| **YAML** | State persistence | Human-readable, easy debugging |
+| **Go** | Programming language | Static binary, standard-library HTTP server, simple deployment |
+| **net/http** | Web server and routing | `ServeMux` method patterns cover the routes without a framework |
+| **Redis** (go-redis) | State persistence | Shared state with atomic WATCH/MULTI updates |
+| **YAML** | Save format | Compatible with saves written by the former Rails backend |
+| **JWT** (golang-jwt) | Authentication | Tokens issued by an external auth service |
 | **JSON** | API communication | Standard web API format |
 
 ### Frontend Technology Stack
@@ -295,9 +267,9 @@ Client State ←→ Server State
 ## Performance Considerations
 
 ### Backend Performance
-- **Efficient State Storage**: YAML files provide fast read/write
+- **Efficient State Storage**: One Redis GET and one transactional SET per request
 - **Minimal Processing**: Simple request/response cycle
-- **Memory Management**: Single game state object in memory
+- **Stateless Server**: No game state kept in memory between requests
 
 ### Frontend Performance
 - **Efficient DOM Updates**: Targeted updates instead of full re-renders
@@ -310,17 +282,17 @@ Client State ←→ Server State
 ### Development Setup
 ```
 Local Machine
-├── Ruby/Sinatra Server (Port 4567)
-├── Static File Serving (Public folder)
-└── File-based Persistence (YAML)
+├── Go server: make build && DEPLOYMENT_ENV=development ./main (Port 2583)
+├── Static File Serving (public/)
+└── Redis (localhost:6379)
 ```
 
-### Production Considerations
-- **Process Management**: Use process manager (PM2, systemd)
-- **Reverse Proxy**: Nginx for static files and load balancing
+### Production
+- **Container**: `make` builds the static binary, then a small Alpine image (`Dockerfile`, docker-compose files) that runs it as a non-root user on port 2583
+- **Reverse Proxy**: Nginx serves `public/` and proxies the API (`nginx.conf`)
 - **SSL/TLS**: HTTPS for secure communication
-- **Database Migration**: Consider database for persistence at scale
-- **Session Management**: Add user authentication and session handling
+- **Authentication**: JWT cookie from an external auth service (AUTH.md)
+- **Monitoring**: Sentry for errors, `/up` and `/health` for health checks
 
 ## Strengths and Trade-offs
 
@@ -333,9 +305,9 @@ Local Machine
 6. **Simplicity**: No over-engineering, appropriate for game complexity
 
 ### Trade-offs and Limitations
-1. **Single-User**: No multi-user or real-time multiplayer support
-2. **File-based Storage**: YAML persistence limits scalability
-3. **No Authentication**: No user management or security
+1. **Single Shared Game**: All authenticated users share one game; no real-time multiplayer updates
+2. **Single Save Key**: The whole game is one Redis value, so concurrent requests conflict (409) rather than merge
+3. **External Authentication**: Users are managed by a separate auth service
 4. **Client-Server Coupling**: Tight coupling between frontend and backend APIs (see detailed analysis below)
 5. **State Size**: Large game state in memory and serialization
 
@@ -410,14 +382,14 @@ function canMoveToCity(fromCity, toCity) {
   // Frontend reimplements backend logic
   return cities[fromCity].connections.includes(toCity);
 }
+```
 
-// Backend has similar logic in Ruby
-def move(player_index, destination, card_name = nil)
-  # Validation logic duplicated here
-  if @cities[current_location].connections.include?(destination)
-    move_type = 'drive / ferry'
-  # ... more validation
-end
+```go
+// Backend has similar logic in Go (src/game/actions.go)
+func (g *GameState) Move(playerIndex int, destination, cardName string) Result {
+	// Validation logic duplicated here
+	// ... drive/ferry when destination is connected, then flights
+}
 ```
 
 **Issues**:
@@ -584,23 +556,10 @@ GameEventBus.on('PLAYER_MOVED', (event) => {
 
 **Solution**: Version the API to enable independent evolution.
 
-```ruby
-# Backend API versioning
-class SinatraApp < Sinatra::Base
-  namespace '/api/v1' do
-    post '/actions/move' do
-      # Version 1 of move API
-      handle_move_v1(JSON.parse(request.body.read))
-    end
-  end
-
-  namespace '/api/v2' do
-    post '/actions/move' do
-      # Version 2 with different structure
-      handle_move_v2(JSON.parse(request.body.read))
-    end
-  end
-end
+```go
+// Backend API versioning
+mux.HandleFunc("POST /api/v1/actions/move", handleMoveV1) // Version 1 of move API
+mux.HandleFunc("POST /api/v2/actions/move", handleMoveV2) // Version 2 with different structure
 ```
 
 ### Benefits of Decoupling

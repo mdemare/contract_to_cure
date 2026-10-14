@@ -2,6 +2,8 @@ package contract
 
 import (
 	"bytes"
+	"os"
+	"regexp"
 	"testing"
 )
 
@@ -61,5 +63,16 @@ func TestEveryScenarioLoads(t *testing.T) {
 				t.Errorf("%s: %v", name, err)
 			}
 		}
+	}
+}
+
+func TestReadmeHasNoTestRunnerOutput(t *testing.T) {
+	readme, err := os.ReadFile(root + "/README.md")
+	if err != nil {
+		t.Fatal(err)
+	}
+	runnerOutput := regexp.MustCompile(`(?m)^(Run options: --seed|# Running:|Finished in .* runs/s|\d+ runs, \d+ assertions)`)
+	if runnerOutput.Match(readme) {
+		t.Error("testdata/contract/README.md contains Minitest output")
 	}
 }

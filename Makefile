@@ -4,8 +4,6 @@
 all: build docker
 
 check:
-	BUNDLE_GEMFILE="$(CURDIR)/Gemfile" BUNDLE_LOCKFILE="$(CURDIR)/Gemfile.lock" \
-		bundle exec rake test
 	node --experimental-default-type=module --test test/js/*.mjs
 	@$(MAKE) --no-print-directory go-vet go-test
 
@@ -28,6 +26,6 @@ docker:
 
 loc:
 	@git ls-files -z -- \
-		'app/*.rb' 'app/**/*.rb' 'app/**/*.erb' \
+		'src/*.go' 'src/**/*.go' 'src/**/*.tmpl' ':!*_test.go' \
 		'public/css/*.css' 'public/js/*.js' 'public/cities.json' | \
 		xargs -0 wc -l | awk 'END {print $$1}'

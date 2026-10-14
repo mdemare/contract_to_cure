@@ -1,18 +1,25 @@
 # API contract fixtures
 
-These fixtures freeze what the Rails backend does today, request by request. They
-are the parity spec for the Go port (epic cc-368): the Go backend should pass every
-scenario here before it replaces Rails.
+These fixtures froze what the Rails backend did, request by request, and are now
+the regression suite for the Go backend that replaced it (epic cc-414).
+`src/web/contract_test.go` replays every scenario over HTTP, and
+`src/game/*_contract_test.go` replays them against the game model, on each
+`make check`.
 
-`test/test_contract_fixtures.rb` replays every scenario against Rails on each
-`make check`. After an intended behavior change, re-record them with
-`bundle exec rake contract:record` and review the diff.
+Rails was removed from the repository in cc-428, so nothing can re-record these
+files any more: they are maintained by hand, from the Go side. After an intended
+behavior change, edit the affected `scenario.json`, `after.yaml` and state files
+(the Go encoder, `GameState.EncodeSave`, writes the save format byte for byte),
+update the scenario table and quirk list below, and review the diff: it is the
+record of what the change does to the API. To add a scenario, add a
+`scenarios/<name>/` directory; the Go replays pick it up automatically.
 
 ## Layout
 
-- `states/<name>.yaml`: saved games, byte for byte as Rails stores them in Redis.
-  They are built in `test/contract_fixtures.rb` without randomness: fixed roles,
-  hands, decks and cubes.
+- `states/<name>.yaml`: saved games, byte for byte as they are stored in Redis.
+  They were built without randomness (fixed roles, hands, decks and cubes) by the
+  Rails fixture builder, which is in git history (`test/contract_fixtures.rb`,
+  removed in cc-428).
 - `scenarios/<name>/scenario.json`: one request and its response.
   - `save_before`: the state that is in Redis when the request starts.
   - `concurrent_save` (only in `move_conflict`): a save that another request
@@ -31,13 +38,13 @@ scenario here before it replaces Rails.
    request has first read the game.
 3. Send the request. Compare the status, the content type and the body. Key order
    matters, and so do `null` values versus missing keys.
-4. Compare Redis with `save_after`. While Rails and Go must read each other's
-   saves (cc-376), compare the YAML exactly. If the save format changes later,
+4. Compare Redis with `save_after`. The save format is still the one Rails
+   wrote (cc-376), so compare the YAML exactly. If the save format changes later,
    compare the decoded values instead.
 
-The Rails test seeds Ruby's RNG with `20261013` before each request. Only the three
-`restart_game` scenarios with a 200 response depend on it: they deal a new random
-game, so for those compare the shape of `after.yaml` (deck sizes, epidemic count
+The Rails recorder seeded Ruby's RNG with `20261013` before each request. Only the
+three `restart_game` scenarios with a 200 response depend on it: they deal a new
+random game, which Go's RNG cannot reproduce, so for those compare the shape of `after.yaml` (deck sizes, epidemic count
 for the difficulty, 9 infected cities, 4 players with hands), not its contents.
 Every other scenario is fully deterministic.
 
@@ -120,9 +127,10 @@ JSON view and saves
 
 ## Not captured here
 
-- A missing or undecodable save starts a new random game. Existing Ruby tests
-  cover this (Q13-cc).
-- Authentication (401 responses): see `test/test_api_authentication.rb` and cc-378.
+- A missing or undecodable save starts a new random game. Go tests cover this
+  (`src/web/api_test.go`, `src/game/save_test.go`; Q13-cc).
+- Authentication (401 responses): see `src/auth/auth_test.go`, `src/main_test.go`
+  and cc-378.
 - Redis connection errors.
 
 ## Scenarios
