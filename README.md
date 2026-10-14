@@ -1,166 +1,48 @@
-# Pandemic: Global Disease Control
+# Contract To Cure
 
-A web-based implementation of the cooperative board game Pandemic, where players work together as disease-fighting specialists to prevent global outbreaks and discover cures for four deadly diseases.
+A fan web implementation of the cooperative board game Pandemic, built with
+Rails, Redis and plain JavaScript (with a Go port of the backend in `src/`).
 
-## Overview
+The project documentation is kept in the `noca` knowledge base. Each entry is a
+question with an answer that is checked against the code. Show one with
+`noca view <key>`, for example `noca view Q44-cc`, or list them all with
+`noca list question --all`.
 
-This is a Ruby/Sinatra web application with a JavaScript frontend that faithfully recreates the Pandemic board game experience. Players take on different specialist roles and must coordinate their efforts to travel the world, treat infections, build research stations, and discover cures before time runs out.
+## Start here
 
-## Game Features
+> **Q44-cc: What is this project, what can players do in it, and what is its licensing status?**
+>
+> "Contract to Cure" is a fan web implementation of the cooperative board game
+> Pandemic. Players act as disease-fighting specialists who travel a world map,
+> treat infections, build research stations and discover cures for four
+> diseases before the outbreaks, cube supply or player deck run out.
 
-### Core Gameplay
-- **Cooperative Strategy**: All players work together to save the world
-- **Multiple Difficulty Levels**: Introductory, Normal, and Heroic difficulty settings
-- **4 Disease Types**: Blue, Yellow, Black, and Red diseases spread across different regions
-- **Specialist Roles**: 7 unique player roles with special abilities:
-  - Medic (removes all disease cubes when treating)
-  - Scientist (needs only 4 cards to discover a cure)
-  - Researcher (can share knowledge more freely)
-  - Operations Expert (builds research stations without city cards)
-  - Dispatcher (can move other players)
-  - Contingency Planner (can retrieve action cards from discard)
-  - Quarantine Specialist (prevents disease spread in nearby cities)
+> **Q8-cc: How do I set up and run the application locally with the correct Ruby, JavaScript, and Redis dependencies?**
+>
+> Short version: install Ruby 4.0.7 with Bundler 4, run `bundle install`, start
+> a local Redis on localhost:6379, and run `bundle exec puma -C config/puma.rb`.
+> Then open http://localhost:4567. The JavaScript needs no build step. Node.js
+> 22+ is only needed to run the JS tests.
 
-### Player Actions
-- **Move**: Travel between connected cities, or use special movement options
-- **Treat Disease**: Remove disease cubes from current city
-- **Share Knowledge**: Exchange city cards with other players
-- **Build Research Station**: Construct facilities needed for discovering cures
-- **Cure Disease**: Discover cures by trading in sets of same-color city cards
-- **Action Cards**: Use special event cards for powerful one-time effects
+> **Q37-cc: How are tests organized, and which checks should run for backend, frontend, or cross-layer changes?**
+>
+> Run `make check` from the repository root. It runs the Ruby suite, the
+> JavaScript tests in `test/js/*.mjs`, and `go vet` and `go test` for the Go
+> port. Tests use mock Redis, so no Redis server is needed.
 
-### Victory & Loss Conditions
-- **Victory**: Discover cures for all 4 diseases
-- **Defeat**: 
-  - 8 outbreaks occur
-  - Run out of disease cubes for any color
-  - Player deck runs out of cards
+## More questions
 
-## Technical Architecture
-
-### Backend (Ruby/Sinatra)
-- **Main Server**: `app/sinatra.rb` - HTTP API endpoints and game coordination
-- **Game Logic**: `app/game_state.rb` - Core game state management
-- **Modular Design**: Game logic split into focused modules:
-  - `game_state/player_actions.rb` - Player action implementations
-  - `game_state/end_turn_events.rb` - End-of-turn disease spreading
-  - `game_state/action_cards.rb` - Special event card effects
-  - `game_state/setup.rb` - Game initialization
-  - `game_state/config.rb` - Game constants and configuration
-
-### Frontend (Vanilla JavaScript)
-- **Modular ES6**: Clean separation of concerns across multiple modules
-- **Interactive Map**: Visual world map with clickable cities and connections
-- **Real-time Updates**: Dynamic UI updates based on game state
-- **Touch-Friendly**: Mobile-responsive interface with large action buttons
-- **Game State Management**: Client-side state synchronization with server
-
-### Key Files
-```
-app/
-├── sinatra.rb              # Main server and API endpoints
-├── game_state.rb           # Core game state class
-└── game_state/
-    ├── config.rb           # Game constants
-    ├── player_actions.rb   # Player action logic
-    ├── end_turn_events.rb  # Disease spreading mechanics
-    ├── action_cards.rb     # Special event cards
-    └── setup.rb            # Game initialization
-
-public/
-├── index.html              # Main game interface
-├── cities.json             # World map data
-├── css/                    # Stylesheets for different UI components
-└── js/                     # Frontend JavaScript modules
-```
-
-## Installation & Setup
-
-### Prerequisites
-- Ruby 4.0.7 (see `.ruby-version`)
-- Bundler gem
-
-### Installation
-1. Clone the repository:
-   ```bash
-   git clone <repository-url>
-   cd contract_to_cure
-   ```
-
-2. Install dependencies:
-   ```bash
-   bundle install
-   ```
-
-3. Start the development server:
-   ```bash
-   bundle exec puma -C config/puma.rb
-   ```
-
-4. Open your browser to `http://localhost:4567`
-
-### Command Line Options
-The Sinatra application supports these options when run directly:
-```bash
-ruby app/sinatra.rb [options]
-
-Options:
-  -d, --difficulty DIFFICULTY    Set game difficulty (introductory, normal, heroic)
-  -n, --new                     Start a new game (ignore saved state)
-  -h, --help                    Show help message
-```
-
-However, when using Puma, pass these options as environment variables:
-```bash
-# Start a new heroic difficulty game
-DIFFICULTY=heroic NEW_GAME=true bundle exec puma -C config/puma.rb
-
-# Load saved game on normal difficulty
-DIFFICULTY=normal bundle exec puma -C config/puma.rb
-```
-
-## Game Persistence
-
-The game automatically saves state to `current_game.yaml` after each action, allowing you to:
-- Resume games after server restarts
-- Load previous game sessions
-- Start fresh games with the `-n` flag
-
-## Development
-
-### Automated Checks
-
-After installing the Ruby bundle, run `make check` from the repository root.
-This requires GNU Make, Node.js 22+ and Go (the version in `go.mod`) and runs the
-full Ruby suite, all JavaScript tests in `test/js/*.mjs`, and then `go vet` and
-`go test` for the Go port under `src/` (`make go-vet go-test`; `make build`
-builds `./main`). A failed check stops the command with a
-nonzero exit status and prints the failing test details. Tests use mock Redis
-by default, so a running Redis server is not required.
-
-### Architecture Highlights
-- **RESTful API**: Clean HTTP endpoints for all game actions
-- **Stateful Server**: Game state persisted server-side with YAML serialization
-- **Modular Frontend**: ES6 modules for maintainable JavaScript code
-- **Responsive Design**: Mobile-first CSS with touch-friendly interactions
-
-### API Endpoints
-- `GET /game_state.json` - Current game state
-- `POST /move` - Move a player
-- `POST /treat` - Treat disease in current city
-- `POST /cure_disease` - Discover a cure
-- `POST /share_knowledge` - Share city cards between players
-- `POST /build_research_station` - Build a research station
-- `POST /action_card` - Use special event cards
-- `POST /restart_game` - Start a new game
-
-### Contributing
-The codebase is well-structured for contributions:
-- Game logic is cleanly separated from presentation
-- Each player action is implemented as a focused method
-- Frontend modules handle specific UI concerns
-- CSS is organized by component for easy styling updates
-
-## License
-
-This is a fan implementation of the Pandemic board game for educational purposes.
+| Topic | Command |
+| --- | --- |
+| How the repo is organized | `noca view Q1-cc` |
+| Differences from the original Pandemic | `noca view Q3-cc` |
+| Terminology ("action cards", phases, ...) | `noca view Q5-cc` |
+| Rails controllers, game logic and frontend modules | `noca view Q6-cc` |
+| Which docs are current and which are history | `noca view Q7-cc` |
+| Environment configurations | `noca view Q9-cc` |
+| HTTP routes and API conventions | `noca view Q45-cc,Q16-cc` |
+| How game state is stored in Redis | `noca view Q12-cc` |
+| Authentication | `noca view Q17-cc` |
+| Adding a new game action or rule | `noca view Q36-cc` |
+| Build, deployment and health checks | `noca view Q39-cc` |
+| The Go backend port | `noca view Q41-cc` |
