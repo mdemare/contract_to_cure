@@ -100,7 +100,8 @@ type Decks struct {
 	InfectionDiscard []Card
 }
 
-// DecodeSave reads a save written by Rails or by EncodeSave. Older saves get
+// DecodeSave reads a save written by Rails, by EncodeSave or, as versioned
+// JSON, by EncodeJSONSave (cc-487). Older saves get
 // the defaults Rails' load_state_from_hash applies (Q13-cc): forecast_active
 // and operations_expert_move_used default to false, cards without :retrieved
 // are not retrieved, and a missing or invalid difficulty becomes
@@ -108,11 +109,14 @@ type Decks struct {
 // or pending_hand_limit player_index outside the players is an error, so the
 // caller starts a new game.
 func DecodeSave(data []byte, defaultDifficulty string) (*Save, error) {
-	root, err := parseRubyYAML(data)
+	parse, d := parseRubyYAML, decoder{cityKey: kindString}
+	if isJSONSave(data) {
+		parse, d = parseJSONSave, decoder{cityKey: kindSymbol}
+	}
+	root, err := parse(data)
 	if err != nil {
 		return nil, err
 	}
-	d := decoder{}
 	s := d.save(root, defaultDifficulty)
 	if d.err != nil {
 		return nil, d.err
@@ -249,6 +253,9 @@ func cardsValue(cards []Card) value {
 // that return zero values, so the field-by-field code stays linear.
 type decoder struct {
 	err error
+	// cityKey is the kind of the :cities keys: strings in YAML, where every
+	// other key is a symbol; JSON keys are all parsed as symbols.
+	cityKey kind
 }
 
 func (d *decoder) fail(path, format string, args ...any) {
@@ -343,7 +350,7 @@ func (d *decoder) save(root value, defaultDifficulty string) *Save {
 	}
 	for _, p := range cities.pairs {
 		path := "cities." + p.key.s
-		if p.key.kind != kindString {
+		if p.key.kind != d.cityKey {
 			d.fail(path, "key is not a string")
 		}
 		conns, _ := d.field(p.val, path, "connections")
