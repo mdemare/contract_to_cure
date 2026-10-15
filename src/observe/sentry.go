@@ -1,5 +1,5 @@
 // Package observe reports errors to Sentry and logs requests (cc-379). It
-// ports config/initializers/sentry.rb and app/controllers/sentry_test_controller.rb.
+// replaces the former Rails Sentry initializer and sentry_test_controller.
 package observe
 
 import (

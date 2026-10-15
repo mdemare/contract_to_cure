@@ -28,9 +28,9 @@ type CSRF struct {
 	secure  bool
 }
 
-// NewCSRF returns the CSRF protection for cfg. Like
-// allow_forgery_protection = false in config/environments/test.rb, the test
-// environment does not verify tokens.
+// NewCSRF returns the CSRF protection for cfg. As in the former Rails test
+// environment (allow_forgery_protection = false), the test environment does
+// not verify tokens.
 func NewCSRF(cfg Config) *CSRF {
 	return &CSRF{enabled: !cfg.test(), secure: !cfg.development() && !cfg.test()}
 }

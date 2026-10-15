@@ -19,7 +19,8 @@ const (
 	Red    Color = "red"
 )
 
-// Colors is GameStateConfig::COLORS, in the order Rails writes :disease_cubes.
+// Colors is the former Rails GameStateConfig::COLORS, in the order Rails wrote
+// :disease_cubes.
 var Colors = []Color{Blue, Yellow, Black, Red}
 
 // Role is a player role.
@@ -35,7 +36,7 @@ const (
 	QuarantineSpecialist Role = "quarantine_specialist"
 )
 
-// Roles is GameStateConfig::ROLES; setup shuffles it to assign roles.
+// Roles is the former Rails GameStateConfig::ROLES; setup shuffles it to assign roles.
 var Roles = []Role{Medic, Scientist, Researcher, OperationsExpert, Dispatcher,
 	ContingencyPlanner, QuarantineSpecialist}
 
@@ -87,7 +88,7 @@ const (
 	Heroic       Difficulty = "heroic"
 )
 
-// DifficultyLevels is GameStateConfig::DIFFICULTY_LEVELS.
+// DifficultyLevels is the former Rails GameStateConfig::DIFFICULTY_LEVELS.
 var DifficultyLevels = []Difficulty{Introductory, Normal, Heroic}
 
 // GameOverReason says why the game ended.

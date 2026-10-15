@@ -6,7 +6,7 @@ import (
 	"time"
 )
 
-// Defaults match app/services/game_redis_pool.rb.
+// Defaults match the former Rails GameRedisPool.
 const (
 	DefaultURL         = "redis://localhost:6379"
 	DefaultPoolSize    = 5

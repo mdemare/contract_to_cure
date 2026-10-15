@@ -32,7 +32,7 @@ func assertRedirect(t *testing.T, rec *httptest.ResponseRecorder, location strin
 	}
 }
 
-// Ports of test/test_sessions_controller.rb (current_user is in auth_test.go).
+// Ports of the former Rails test_sessions_controller.rb (current_user is in auth_test.go).
 
 func TestDestroySession(t *testing.T) {
 	rec := request(sessions(sessionConfig), "DELETE", "/logout", "")
@@ -54,7 +54,7 @@ func TestAuthenticationFailure(t *testing.T) {
 	}
 }
 
-// Characterization of SessionsController beyond the Rails tests.
+// Characterization of the former Rails SessionsController beyond the Rails tests.
 
 func TestLogoutWithoutDomainName(t *testing.T) {
 	cfg := sessionConfig

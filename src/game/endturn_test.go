@@ -9,7 +9,7 @@ import (
 	"github.com/mdemare/contract_to_cure/src/game"
 )
 
-// Unit tests ported from test/test_end_turn_events.rb, plus the end-turn
+// Unit tests ported from the former Rails test_end_turn_events.rb, plus the end-turn
 // flow that cc-383 lists. The contract scenarios are replayed in
 // endturn_contract_test.go.
 

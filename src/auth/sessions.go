@@ -9,7 +9,7 @@ import (
 )
 
 // SessionRoutes adds GET /login, DELETE /logout and GET /auth/failure
-// (SessionsController). They are not authenticated and do not touch Redis.
+// (the former Rails SessionsController). They are not authenticated and do not touch Redis.
 func SessionRoutes(mux *http.ServeMux, cfg Config) {
 	mux.HandleFunc("GET /login", cfg.login)
 	mux.HandleFunc("DELETE /logout", cfg.logout)

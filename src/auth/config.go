@@ -1,5 +1,5 @@
 // Package auth ports JWT authentication (AUTH.md, Q17-cc; cc-423) from
-// app/controllers/application_controller.rb and sessions_controller.rb: the
+// the former Rails ApplicationController and SessionsController: the
 // auth_token cookie check for game endpoints, the /login, /logout and
 // /auth/failure routes, and CSRF tokens for the HTML pages.
 package auth

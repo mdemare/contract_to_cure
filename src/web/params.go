@@ -57,7 +57,7 @@ type field struct {
 // request (validate_request slices them out of params).
 type schema []field
 
-// The schemas of app/services/game_request_schemas.rb.
+// The request schemas, as the former Rails GameRequestSchemas defined them.
 var (
 	moveSchema = schema{
 		{name: "player_index", typ: integerType, required: true},

@@ -5,10 +5,12 @@ import (
 	"slices"
 )
 
-// Colors is the order in which Rails writes :disease_cubes (GameStateConfig::COLORS).
+// Colors is the order in which Rails wrote :disease_cubes (the former
+// GameStateConfig::COLORS).
 var Colors = []string{"blue", "yellow", "black", "red"}
 
-// DifficultyLevels are the valid difficulty levels (GameStateConfig::DIFFICULTY_LEVELS).
+// DifficultyLevels are the valid difficulty levels (the former Rails
+// GameStateConfig::DIFFICULTY_LEVELS).
 var DifficultyLevels = []string{"introductory", "normal", "heroic"}
 
 const (

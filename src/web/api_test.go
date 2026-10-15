@@ -19,8 +19,8 @@ type fixedCSRF struct{}
 func (fixedCSRF) Token(http.ResponseWriter, *http.Request) string { return "token-123" }
 func (fixedCSRF) Protect(next http.Handler) http.Handler          { return next }
 
-// HTTP-level tests from test_api_endpoints.rb and test_error_handling.rb, and
-// characterization of Rails behavior the contract fixtures do not pin
+// HTTP-level tests from the former Rails test_api_endpoints.rb and
+// test_error_handling.rb, and characterization of Rails behavior the contract fixtures do not pin
 // (recorded from the Rails app for cc-422).
 
 func TestRootRendersIndex(t *testing.T) {
@@ -53,7 +53,7 @@ func TestRootRendersIndex(t *testing.T) {
 	}
 }
 
-// From test_menu.rb and test_disease_status_layout.rb.
+// From the former Rails test_menu.rb and test_disease_status_layout.rb.
 func TestIndexHasMenuAndDiseaseStatus(t *testing.T) {
 	ts := newTestServer(t, readFixture(t, "states/base.yaml"))
 	page := ts.do(http.MethodGet, "/", "", "").Body.String()
@@ -305,7 +305,7 @@ func TestUndecodableSaveStartsNewGame(t *testing.T) {
 	}
 }
 
-// From test_api_endpoints.rb: the player-action endpoints reject requests
+// From the former Rails test_api_endpoints.rb: the player-action endpoints reject requests
 // outside player_actions with check_action's error object (no success key),
 // before reading their params, and save nothing.
 func TestPlayerActionsOutsideTheirPhase(t *testing.T) {
@@ -328,7 +328,7 @@ func TestPlayerActionsOutsideTheirPhase(t *testing.T) {
 	}
 }
 
-// From test_api_endpoints.rb: once the game is over, every mutating endpoint
+// From the former Rails test_api_endpoints.rb: once the game is over, every mutating endpoint
 // but /restart_game is rejected in every phase and saves nothing.
 func TestMutatingEndpointsRejectedAfterGameOver(t *testing.T) {
 	requests := map[string]string{

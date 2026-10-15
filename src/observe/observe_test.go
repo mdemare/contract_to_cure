@@ -98,7 +98,7 @@ func logLines(t *testing.T, buf *bytes.Buffer) []map[string]any {
 	return lines
 }
 
-// Ports of test/test_sentry.rb.
+// Ports of the former Rails test_sentry.rb.
 
 func TestSmokeTestPageHasBothErrorControls(t *testing.T) {
 	cfg := Config{Environment: "test"}

@@ -10,8 +10,8 @@ import (
 	"github.com/redis/go-redis/v9"
 )
 
-// Port of test/test_atomic_game_updates.rb at the store level. The game model
-// and HTTP handlers are not ported yet, so a "move" here edits the save
+// Port of the former Rails test_atomic_game_updates.rb at the store level. The
+// store knows nothing of the game model, so a "move" here edits the save
 // directly: it moves player 0 and spends an action.
 
 func move(game *Save, to string) {

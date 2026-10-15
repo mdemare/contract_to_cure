@@ -114,8 +114,8 @@ Game logic
 JSON view and saves
 - `gameStatus` mixes camelCase with the snake_case fields `actions_remaining`,
   `pending_hand_limit`, `forecast_active`, `forecast_cards` and
-  `operations_expert_move_used`. The game-over reason, `quiet_night` and the deck
-  order are not exposed. Hands are sorted by card type and then color. In these
+  `operations_expert_move_used`. `gameOverReason` is exposed (null until the
+  game is over); `quiet_night` and the deck order are not. Hands are sorted by card type and then color. In these
   fixtures cards that tie keep their saved order, so a stable sort matches them.
 - Saves use Ruby symbol keys (`:game_status:`) and symbol values (`:city`,
   `:red`). `retrieved: true` is written only for retrieved cards.
