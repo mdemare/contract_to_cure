@@ -39,7 +39,7 @@ The backend is a single Go binary (`src/main.go`, built with `make build`) split
 | Package | Purpose | Key files |
 |---------|---------|-----------|
 | `src/game` | Game model and rules | `model.go` (GameState, City, Player, Card), `setup.go`, `actions.go` (player actions and guards), `events.go` (event cards), `endturn.go` (draw, infect, discard), `view.go` (JSON view), `save.go` (save format) |
-| `src/store` | Redis persistence | `store.go`, `save.go` (YAML save codec), `atomic.go` (WATCH/MULTI optimistic updates) |
+| `src/store` | Redis persistence | `store.go`, `save.go` (save codec), `rubyyaml.go` (YAML save), `jsonsave.go` (versioned JSON save), `atomic.go` (WATCH/MULTI optimistic updates) |
 | `src/web` | HTTP layer | `server.go` (routes, index page, static files), `game.go` (per-route guards and handlers), `params.go` (request validation) |
 | `src/auth` | JWT authentication, sessions and CSRF | see AUTH.md |
 | `src/observe` | Sentry, request logging, panic recovery | `sentry.go`, `middleware.go` |
@@ -84,6 +84,7 @@ The full route table is in `src/web/server.go` (and `noca view Q45-cc`).
 - **Atomic saves**: A request saves only if the key did not change since it was read
 - **State Recovery**: A missing or undecodable save starts a new game; older saves load with defaults for fields they lack
 - **Format**: The save keeps the Ruby/Psych YAML format of the former Rails backend (symbol keys such as `:game_status:`), so existing games still load
+- **Format migration (cc-487)**: The save is moving to versioned JSON (`{"version": 2, ...}`, same fields and order). Reading JSON ships first, writes stay YAML, so a rollback keeps the live game; a later release switches writes to JSON
 
 #### State Structure
 ```yaml
@@ -238,7 +239,7 @@ Client State ←→ Server State
 | **Go** | Programming language | Static binary, standard-library HTTP server, simple deployment |
 | **net/http** | Web server and routing | `ServeMux` method patterns cover the routes without a framework |
 | **Redis** (go-redis) | State persistence | Shared state with atomic WATCH/MULTI updates |
-| **YAML** | Save format | Compatible with saves written by the former Rails backend |
+| **YAML** | Save format | Compatible with saves written by the former Rails backend; versioned JSON saves are read too (cc-487) |
 | **JWT** (golang-jwt) | Authentication | Tokens issued by an external auth service |
 | **JSON** | API communication | Standard web API format |
 
