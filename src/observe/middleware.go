@@ -42,8 +42,7 @@ func wrap(w http.ResponseWriter) *statusWriter {
 }
 
 // Recover gives each request its own clone of hub and reports panics to it.
-// A panic becomes 500 {status: 'error', message}, like handle_standard_error
-// in Rails production, unless the handler already started its response.
+// A panic becomes 500 {success: false, status: 'error', message}, unless the handler already started its response.
 func Recover(hub *sentry.Hub, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reqHub := hub.Clone()
@@ -68,7 +67,7 @@ func Recover(hub *sentry.Hub, next http.Handler) http.Handler {
 			if sw.status != 0 {
 				return
 			}
-			writeJSON(sw, http.StatusInternalServerError, map[string]string{"status": "error", "message": message})
+			writeJSON(sw, http.StatusInternalServerError, panicBody{Status: "error", Message: message})
 		}()
 		next.ServeHTTP(sw, r.WithContext(ctx))
 	})
@@ -126,4 +125,11 @@ func writeJSON(w http.ResponseWriter, status int, body any) {
 	if err := json.NewEncoder(w).Encode(body); err != nil {
 		slog.Error("writing JSON response", "error", err)
 	}
+}
+
+// panicBody is the 500 body: the same error shape as the game endpoints.
+type panicBody struct {
+	Success bool   `json:"success"`
+	Status  string `json:"status"`
+	Message string `json:"message"`
 }

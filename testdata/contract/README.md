@@ -48,24 +48,32 @@ random game, which Go's RNG cannot reproduce, so for those compare the shape of 
 for the difficulty, 9 infected cities, 4 players with hands), not its contents.
 Every other scenario is fully deterministic.
 
-## Known quirks the port must keep
+## Contract conventions and the quirks that remain
+
+cc-488 cleaned up most of the quirks the port had kept from Rails: every
+rejection is now HTTP 422 with `{success: false, status: "error", message}`,
+Forecast finishes with a normal success body, and `restart_game` returns the
+game. The scenarios were edited by hand; `git log -p` on them is the changelog.
 
 Responses
-- Errors from `check_action` (any player action outside the `player_actions`
-  phase, including during `pending_discard`) are `{status, message}` with HTTP 422
-  and no `success` key (`move_out_of_phase`, `pass_out_of_phase`,
-  `move_pending_discard`).
+- Every error body is `{success: false, status: "error", message}`, in that key
+  order: guards (`check_action`, game over, Forecast, end-turn phase), schema
+  failures, 400 "Invalid JSON", 401, 409 (`status: "conflict"`) and 500.
+  Errors from `check_action` (any player action outside the `player_actions`
+  phase, including during `pending_discard`) are HTTP 422
+  (`move_out_of_phase`, `pass_out_of_phase`, `move_pending_discard`).
 - Inside `/action_card`, while a Forecast is active, playing another card or a
-  wrong `card_order` returns `{status: "error", message}` with **HTTP 200**
-  (`action_card_forecast_blocked`, `action_card_forecast_invalid_order`).
-  Finishing the Forecast returns the bare JSON view with no `status` key
-  (`action_card_forecast_apply`).
+  wrong `card_order` returns HTTP 422 (`action_card_forecast_blocked`,
+  `action_card_forecast_invalid_order`). Finishing the Forecast returns
+  `{success: true, status: "success", message, game_state}`
+  (`action_card_forecast_apply`); the first step is `{success: true, status:
+  "success", type: "forecast_view", message, cards}`.
 - Every other endpoint except `GET /game_state.json` is blocked with HTTP 422 while a
   Forecast is active, including `/restart_game` and `/draw_cards`
   (`*_forecast_active`).
 - Once `game_over` is saved as true, every endpoint except `GET /game_state.json`
-  and `/restart_game` returns HTTP 422 `{status: "error", message: "The game is
-  over"}` (no `success` key) and changes nothing. This check runs before parameter
+  and `/restart_game` returns HTTP 422 `{success: false, status: "error",
+  message: "The game is over"}` and changes nothing. This check runs before parameter
   validation and the phase checks, because a finished game keeps the phase it ended
   in (`*_game_over`, `move_game_over_missing_parameters`). The Forecast check still
   comes first (cc-404).
@@ -74,11 +82,11 @@ Responses
   `move_operations_expert_card_required`).
 - An untreatable city returns `status: "action_unavailable"` with HTTP 422 and
   includes `game_state` (`treat_no_cubes`).
-- An unknown event card returns HTTP 500 (`action_card_unknown`).
+- An unknown event card returns HTTP 422 (`action_card_unknown`).
 - A schema failure returns 422 with only "Missing required parameters" or
   "Invalid parameters".
 - `/draw_cards` and `/infect_cities` in their phase but with actions left return
-  just `{status: "success"}` and change nothing (`draw_cards_actions_left`).
+  HTTP 422 "Actions remaining" and change nothing (`draw_cards_actions_left`).
   Otherwise the body is `success, status, message: null, end_turn,
   end_turn_events, game_state`.
 - A 409 conflict returns `success: false, status: "conflict"` and the
@@ -86,7 +94,9 @@ Responses
   (`move_conflict`).
 - `GET /game_state.json` adds `current_user`. It is `null` here because tests
   bypass authentication without a user.
-- `restart_game` does not return a `game_state`.
+- `restart_game` returns the new game as `game_state`. The three successful
+  scenarios were recorded from Ruby's random deal, so the replay checks that the
+  response's `game_state` is the game that was saved, not its contents.
 - Every JSON response has `Content-Type: application/json; charset=utf-8`.
 
 Game logic
@@ -157,7 +167,7 @@ JSON view and saves
 | `move_unknown_destination` | `base` | Unknown city: game-logic error with success false |
 | `move_missing_parameters` | `base` | Schema failure: Missing required parameters |
 | `move_invalid_parameters` | `base` | Schema failure: Invalid parameters |
-| `move_out_of_phase` | `draw_phase` | check_action error (no success key) |
+| `move_out_of_phase` | `draw_phase` | check_action error (success: false, 422) |
 | `move_pending_discard` | `pending_discard` | Actions are blocked while a hand-limit discard is pending |
 | `move_forecast_active` | `forecast_active` | Blocked by an unfinished Forecast |
 | `move_conflict` | `base` (concurrent: `base_after_concurrent_move`) | Another request commits first: 409 with the current game state |
@@ -226,7 +236,7 @@ JSON view and saves
 | `draw_cards_epidemic` | `draw_phase_epidemic` | Epidemic: infection rate, bottom card with outbreak, intensify |
 | `draw_cards_hand_limit` | `draw_phase_hand_limit` | The second draw goes over the hand limit: pending discard |
 | `draw_cards_player_deck_runs_out` | `draw_phase_last_player_card` | Game over (no player cards): end_turn_events has game_over, reason no_player_cards and the draw event; the phase stays draw_cards |
-| `draw_cards_actions_left` | `draw_phase_actions_left` | Draw phase with actions left: bare success, nothing changes |
+| `draw_cards_actions_left` | `draw_phase_actions_left` | Draw phase with actions left: 422 "Actions remaining", nothing changes |
 | `draw_cards_out_of_phase` | `base` | Wrong phase |
 | `draw_cards_pending_discard` | `pending_discard` | Pending hand-limit discard |
 | `draw_cards_forecast_active` | `forecast_active` | Blocked by an unfinished Forecast |
@@ -280,13 +290,13 @@ JSON view and saves
 | `action_card_government_grant` | `event_cards` | Build a station anywhere |
 | `action_card_government_grant_existing_station` | `event_cards` | Station already exists |
 | `action_card_forecast` | `event_cards` | Forecast, step 1: shows the top six cards of the infection draw pile, next card first |
-| `action_card_forecast_apply` | `forecast_active` | Forecast, step 2: reorder; the response is the bare JSON view |
-| `action_card_forecast_invalid_order` | `forecast_active` | Not a permutation: error with HTTP 200 |
-| `action_card_forecast_blocked` | `forecast_active` | Other event cards during Forecast: error with HTTP 200 |
+| `action_card_forecast_apply` | `forecast_active` | Forecast, step 2: reorder; success with game_state |
+| `action_card_forecast_invalid_order` | `forecast_active` | Not a permutation: error with HTTP 422 |
+| `action_card_forecast_blocked` | `forecast_active` | Other event cards during Forecast: error with HTTP 422 |
 | `action_card_retrieved_card_leaves_game` | `contingency_planner_retrieved` | A retrieved event card is not discarded after use |
 | `action_card_resolves_pending_discard` | `pending_discard` | Playing an event card can resolve a pending discard |
 | `action_card_not_held` | `base` | Nobody holds the card |
-| `action_card_unknown` | `base` | Unknown card: HTTP 500 |
+| `action_card_unknown` | `base` | Unknown card: HTTP 422 |
 | `action_card_missing_parameters` | `base` | Schema failure |
 | `action_card_game_over` | `game_over_victory` | Game over |
 

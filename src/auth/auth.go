@@ -116,7 +116,7 @@ func UserFromContext(ctx context.Context) *User {
 	return user
 }
 
-// Require answers 401 {status: "error", message} unless the request has a
+// Require answers 401 {success: false, status: "error", message} unless the request has a
 // user or the bypass is on. Like Rails' prepend_before_action, wrap it
 // outside the atomic game update, so a rejected request never reads Redis.
 func (a *Authenticator) Require(next http.Handler) http.Handler {
@@ -130,8 +130,10 @@ func (a *Authenticator) Require(next http.Handler) http.Handler {
 	})
 }
 
-// errorBody is Rails' {status: 'error', message} in that key order.
+// errorBody is {success: false, status: 'error', message} in that key order,
+// like the game endpoints' errors (cc-488).
 type errorBody struct {
+	Success bool   `json:"success"`
 	Status  string `json:"status"`
 	Message string `json:"message"`
 }

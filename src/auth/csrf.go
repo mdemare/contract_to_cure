@@ -61,7 +61,7 @@ func (c *CSRF) Token(w http.ResponseWriter, r *http.Request) string {
 	return base64.RawURLEncoding.EncodeToString(masked)
 }
 
-// Protect answers 422 {status: "error", message} to a request other than
+// Protect answers 422 {success: false, status: "error", message} to a request other than
 // GET or HEAD that does not carry a valid token in the X-CSRF-Token header
 // or the authenticity_token form field.
 func (c *CSRF) Protect(next http.Handler) http.Handler {

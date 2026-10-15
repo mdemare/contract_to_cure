@@ -284,8 +284,9 @@ func TestForecastPersistsAcrossRequests(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("apply: %d %s", rec.Code, rec.Body)
 	}
-	if _, ok := decodeBody(t, rec)["gameStatus"]; !ok {
-		t.Errorf("finishing the Forecast should return the bare view: %s", rec.Body)
+	body := decodeBody(t, rec)
+	if body["success"] != true || body["status"] != "success" || body["message"] == "" || body["game_state"] == nil {
+		t.Errorf("finishing the Forecast should return a success with game_state: %s", rec.Body)
 	}
 	if ts.savedGame().ForecastActive {
 		t.Error("the Forecast is still active")
@@ -306,7 +307,7 @@ func TestUndecodableSaveStartsNewGame(t *testing.T) {
 }
 
 // From the former Rails test_api_endpoints.rb: the player-action endpoints reject requests
-// outside player_actions with check_action's error object (no success key),
+// outside player_actions with check_action's error object,
 // before reading their params, and save nothing.
 func TestPlayerActionsOutsideTheirPhase(t *testing.T) {
 	requests := map[string]string{
@@ -319,7 +320,7 @@ func TestPlayerActionsOutsideTheirPhase(t *testing.T) {
 		before := readFixture(t, "states/draw_phase.yaml")
 		ts := newTestServer(t, before)
 		rec := ts.postJSON(path, body)
-		if want := `{"status":"error","message":"No more actions allowed"}`; rec.Code != http.StatusUnprocessableEntity || compactJSON(t, rec.Body.Bytes()) != want {
+		if want := `{"success":false,"status":"error","message":"No more actions allowed"}`; rec.Code != http.StatusUnprocessableEntity || compactJSON(t, rec.Body.Bytes()) != want {
 			t.Errorf("POST %s: %d %s, want 422 %s", path, rec.Code, rec.Body, want)
 		}
 		if !bytes.Equal(ts.saved(), before) {
@@ -349,12 +350,35 @@ func TestMutatingEndpointsRejectedAfterGameOver(t *testing.T) {
 		ts := newTestServer(t, before)
 		for path, body := range requests {
 			rec := ts.postJSON(path, body)
-			if want := `{"status":"error","message":"The game is over"}`; rec.Code != http.StatusUnprocessableEntity || compactJSON(t, rec.Body.Bytes()) != want {
+			if want := `{"success":false,"status":"error","message":"The game is over"}`; rec.Code != http.StatusUnprocessableEntity || compactJSON(t, rec.Body.Bytes()) != want {
 				t.Errorf("%s: POST %s: %d %s, want 422 %s", state, path, rec.Code, rec.Body, want)
 			}
 			if !bytes.Equal(ts.saved(), before) {
 				t.Errorf("%s: POST %s changed the save", state, path)
 			}
 		}
+	}
+}
+
+// restart_game returns the new game, so the client need not fetch it (cc-488).
+func TestRestartGameReturnsGameState(t *testing.T) {
+	ts := newTestServer(t, readFixture(t, "states/game_over_victory.yaml"))
+	rec := ts.postJSON("/restart_game", `{}`)
+	if rec.Code != http.StatusOK {
+		t.Fatalf("restart: %d %s", rec.Code, rec.Body)
+	}
+	body := decodeBody(t, rec)
+	if body["success"] != true || body["status"] != "success" {
+		t.Errorf("body %s", rec.Body)
+	}
+	state, ok := body["game_state"].(map[string]any)
+	if !ok {
+		t.Fatalf("no game_state: %s", rec.Body)
+	}
+	if status := state["gameStatus"].(map[string]any); status["gameOver"] != false || status["phase"] != "player_actions" {
+		t.Errorf("gameStatus = %v", status)
+	}
+	if _, ok := state["current_user"]; ok {
+		t.Error("game_state has current_user")
 	}
 }

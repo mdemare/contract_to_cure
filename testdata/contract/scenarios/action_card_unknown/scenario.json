@@ -1,6 +1,6 @@
 {
   "name": "action_card_unknown",
-  "description": "Unknown card: HTTP 500",
+  "description": "Unknown event card: 422 error",
   "save_before": "states/base.yaml",
   "request": {
     "method": "POST",
@@ -13,9 +13,10 @@
     }
   },
   "response": {
-    "status": 500,
+    "status": 422,
     "content_type": "application/json; charset=utf-8",
     "body": {
+      "success": false,
       "status": "error",
       "message": "Unknown action card: Epidemic"
     }

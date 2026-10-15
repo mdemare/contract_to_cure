@@ -125,37 +125,32 @@ type EndTurnResult struct {
 	GameState     *GameState    `json:"game_state"`
 }
 
-// StatusOnly is the {"status": "success"} Rails answers when actions are
-// left: nothing is drawn or infected.
-type StatusOnly struct {
-	Status string `json:"status"`
-}
-
-// EndTurnResponse is what Rails renders for /draw_cards or /infect_cities.
+// EndTurnResponse is what /draw_cards or /infect_cities render.
 type EndTurnResponse struct {
-	// Body is an EndTurnResult, a *Rejection or a StatusOnly.
+	// Body is an EndTurnResult or a *Rejection.
 	Body       any
 	HTTPStatus int
-	// Changed is true when Rails saved the game: whenever the step ran,
+	// Changed is true when the game was saved: whenever the step ran,
 	// including on a game over (cc-399).
 	Changed bool
 }
 
 // checkEndTurnPhase rejects a draw or infect step while a hand-limit discard
-// is pending or outside its phase. With actions left, the step does nothing.
+// is pending, outside its phase, or while actions are left (cc-488; it used
+// to answer {status: "success"} and change nothing).
 func (g *GameState) checkEndTurnPhase(phase Phase) *EndTurnResponse {
-	var body any
+	var message string
 	switch {
 	case g.PendingHandLimit != nil:
-		body = &Rejection{Status: StatusError, Message: "Must resolve pending hand-limit discard before continuing"}
+		message = "Must resolve pending hand-limit discard before continuing"
 	case g.Phase != phase:
-		body = &Rejection{Status: StatusError, Message: "Cannot perform this action unless game phase is " + string(phase)}
+		message = "Cannot perform this action unless game phase is " + string(phase)
 	case g.ActionsRemaining != 0:
-		return &EndTurnResponse{Body: StatusOnly{Status: StatusSuccess}, HTTPStatus: http.StatusOK}
+		message = "Actions remaining"
 	default:
 		return nil
 	}
-	return &EndTurnResponse{Body: body, HTTPStatus: http.StatusUnprocessableEntity}
+	return &EndTurnResponse{Body: &Rejection{Status: StatusError, Message: message}, HTTPStatus: http.StatusUnprocessableEntity}
 }
 
 func (g *GameState) endTurnResponse(events []Event) EndTurnResponse {

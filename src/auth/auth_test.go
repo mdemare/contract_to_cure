@@ -65,7 +65,7 @@ func assertError(t *testing.T, rec *httptest.ResponseRecorder, status int, messa
 	if ct := rec.Header().Get("Content-Type"); ct != "application/json; charset=utf-8" {
 		t.Errorf("content type %q", ct)
 	}
-	want := `{"status":"error","message":"` + message + `"}`
+	want := `{"success":false,"status":"error","message":"` + message + `"}`
 	if got := strings.TrimSpace(rec.Body.String()); got != want {
 		t.Errorf("body %s, want %s", got, want)
 	}

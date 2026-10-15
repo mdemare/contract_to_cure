@@ -12,6 +12,7 @@
     "status": 422,
     "content_type": "application/json; charset=utf-8",
     "body": {
+      "success": false,
       "status": "error",
       "message": "Cannot perform action while Forecast is active. Please complete the Forecast action first."
     }

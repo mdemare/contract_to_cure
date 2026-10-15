@@ -30,24 +30,28 @@ const { restartGame, handleLogin } = await import('../../public/js/menu.js');
 
 test('successful menu restart reloads state once and dismisses the game-over dialog', async () => {
   let stateReloads = 0;
+  let loadedState;
   let request;
+  const newGame = { gameStatus: { phase: 'player_actions', turn: 1 } };
 
   globalThis.fetch = async (url, options) => {
     request = { url, options };
     return {
       ok: true,
       async json() {
-        return { success: true };
+        return { success: true, status: 'success', message: 'Game restarted successfully', game_state: newGame };
       }
     };
   };
 
-  const restarted = await restartGame(async () => {
+  const restarted = await restartGame(async gameState => {
     stateReloads += 1;
+    loadedState = gameState;
   });
 
   assert.equal(restarted, true);
   assert.equal(stateReloads, 1);
+  assert.equal(loadedState, newGame);
   assert.equal(gameOverDialog.style.display, 'none');
   assert.deepEqual(request, {
     url: '/restart_game',

@@ -187,6 +187,7 @@ func (s *Server) renderConflict(w http.ResponseWriter, r *http.Request) {
 }
 
 type errorResponse struct {
+	Success bool   `json:"success"`
 	Status  string `json:"status"`
 	Message string `json:"message"`
 }
@@ -296,7 +297,7 @@ func (c *call) actionCard() reply {
 }
 
 // restartGame is POST /restart_game: a new game with the same players, and
-// the given difficulty or the current one. It has no game_state.
+// the given difficulty or the current one.
 func (c *call) restartGame() reply {
 	v, rep := c.validate(restartGameSchema)
 	if rep != nil {
@@ -307,7 +308,12 @@ func (c *call) restartGame() reply {
 	}
 	return reply{
 		status: http.StatusOK,
-		body:   game.Result{Success: true, Status: game.StatusSuccess, Message: "Game restarted successfully"},
-		save:   true,
+		body: game.Result{
+			Success:   true,
+			Status:    game.StatusSuccess,
+			Message:   "Game restarted successfully",
+			GameState: c.g,
+		},
+		save: true,
 	}
 }

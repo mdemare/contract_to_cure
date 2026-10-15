@@ -16,6 +16,7 @@
     "status": 200,
     "content_type": "application/json; charset=utf-8",
     "body": {
+      "success": true,
       "status": "success",
       "type": "forecast_view",
       "message": "Choose the order for the infection cards",

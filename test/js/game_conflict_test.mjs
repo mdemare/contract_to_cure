@@ -238,6 +238,55 @@ test('Forecast completion stays retryable after a conflict without an error noti
   assert.deepEqual(notifications, [{ type: 'warning', message: utils.GAME_CONFLICT_MESSAGE }]);
 });
 
+test('Forecast completion loads the state after the success body (cc-488)', async () => {
+  await reset();
+  const requests = mockFetch({
+    '/action_card': () => jsonResponse(200, {
+      success: true,
+      status: 'success',
+      message: 'Infection cards reordered',
+      game_state: persistedState
+    }),
+    '/game_state.json': () => jsonResponse(200, persistedState)
+  });
+
+  const completed = await actionCardRequests.completeForecast(['Paris', 'Tokyo']);
+
+  assert.equal(completed, true);
+  assert.equal(requests[0].url, '/action_card');
+  assert.deepEqual(gameState.getCurrentGameState(), persistedState);
+  assert.deepEqual(notifications, []);
+});
+
+test('Forecast completion shows the message of a 422 invalid order (cc-488)', async () => {
+  await reset();
+  mockFetch({
+    '/action_card': () => jsonResponse(422, {
+      success: false,
+      status: 'error',
+      message: 'Invalid card order provided'
+    })
+  });
+
+  const completed = await actionCardRequests.completeForecast(['Paris']);
+
+  assert.equal(completed, false);
+  assert.deepEqual(notifications, [{ type: 'error', message: 'Action failed: Invalid card order provided' }]);
+});
+
+test('a 422 from /draw_cards with actions left shows the backend message (cc-488)', async () => {
+  await reset();
+  mockFetch({
+    '/draw_cards': () => jsonResponse(422, { success: false, status: 'error', message: 'Actions remaining' })
+  });
+
+  const succeeded = await utils.processAPIRequest('/draw_cards', {}, 'Cards drawn', 'Draw failed');
+
+  assert.equal(succeeded, false);
+  assert.deepEqual(gameState.getCurrentGameState(), staleState);
+  assert.deepEqual(notifications, [{ type: 'error', message: 'Action failed: Actions remaining' }]);
+});
+
 test('hand-limit discard rejects on conflict so the mandatory dialog can retry', async () => {
   await reset();
   const requests = mockFetch({ '/discard_cards': () => jsonResponse(409, conflictBody()) });

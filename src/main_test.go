@@ -99,7 +99,7 @@ func TestProductionRequiresAuthentication(t *testing.T) {
 	}
 	for _, c := range cases {
 		rec := send(h, c.method, c.path, c.cookie)
-		want := `{"status":"error","message":"` + c.message + `"}`
+		want := `{"success":false,"status":"error","message":"` + c.message + `"}`
 		if rec.Code != http.StatusUnauthorized || strings.TrimSpace(rec.Body.String()) != want {
 			t.Errorf("%s %s cookie %q: %d %s, want 401 %s", c.method, c.path, c.cookie, rec.Code, rec.Body, want)
 		}
