@@ -8,8 +8,8 @@ import (
 	"github.com/mdemare/contract_to_cure/src/game"
 )
 
-// Unit tests ported from the event-card tests in test/test_api_endpoints.rb
-// and test/test_error_handling.rb. The contract scenarios are replayed in
+// Unit tests ported from the event-card tests in the former Rails
+// test_api_endpoints.rb and test_error_handling.rb. The contract scenarios are replayed in
 // events_contract_test.go.
 
 func eventCard(name string) game.Card { return game.Card{Type: game.ActionCard, Name: name} }

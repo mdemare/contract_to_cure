@@ -44,7 +44,7 @@ func load(t *testing.T, s *Store) *Save {
 	return save
 }
 
-// Port of test/test_game_redis_pool.rb. Go builds one client per Store, so
+// Port of the former Rails test_game_redis_pool.rb. Go builds one client per Store, so
 // the memoization tests have no counterpart; the env parsing does.
 func TestConfigFromEnv(t *testing.T) {
 	env := func(vars map[string]string) func(string) string {

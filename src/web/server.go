@@ -1,6 +1,6 @@
-// Package web is the HTTP layer of the Go backend (cc-422). It ports
-// ApplicationController, GameController, GameRequestSchemas and the index
-// page, and serves public/.
+// Package web is the HTTP layer of the Go backend (cc-422). It replaces the
+// former Rails ApplicationController, GameController and GameRequestSchemas,
+// renders the index page, and serves public/.
 package web
 
 import (
@@ -94,9 +94,9 @@ func New(cfg Config) *Server {
 	return &Server{cfg: cfg}
 }
 
-// Handler returns every route of config/routes.rb, wrapped in the request
+// Handler returns every route of the game, wrapped in the request
 // log and panic recovery (LogRequests(Recover(hub, mux))). The Sentry test
-// routes skip authentication and the atomic update, as in Rails. extra adds
+// routes skip authentication and the atomic update, as they did in Rails. extra adds
 // routes registered elsewhere, such as auth.SessionRoutes.
 func (s *Server) Handler(hub *sentry.Hub, extra ...func(*http.ServeMux)) http.Handler {
 	mux := http.NewServeMux()
@@ -120,7 +120,7 @@ func (s *Server) Register(mux *http.ServeMux) {
 	mux.Handle("/", staticFiles(s.cfg.PublicDir))
 }
 
-// healthPage is what Rails::HealthController renders.
+// healthPage is what the former Rails::HealthController rendered.
 const healthPage = `<!DOCTYPE html><html><body style="background-color: green"></body></html>`
 
 // health answers the deployment health checks without touching Redis.
@@ -157,7 +157,7 @@ var diseaseColors = []struct{ Color, Name string }{
 	{"blue", "Blue"}, {"yellow", "Yellow"}, {"black", "Black"}, {"red", "Red"},
 }
 
-// index is GET / (ApplicationController#index). Like every Rails action it
+// index is GET /. Like every action of the former Rails app it
 // loads the game, so it deals and saves one when there is none.
 func (c *call) index() reply {
 	data := map[string]any{

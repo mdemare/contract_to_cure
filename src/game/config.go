@@ -4,7 +4,7 @@
 // plain mapping (save.go, cc-421). HTTP lives elsewhere.
 package game
 
-// Constants from GameStateConfig.
+// Constants of the former Rails GameStateConfig.
 const (
 	MaxOutbreaks            = 8
 	MaxDiseaseCubesPerColor = 24

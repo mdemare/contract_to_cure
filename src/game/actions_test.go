@@ -9,8 +9,8 @@ import (
 	"github.com/mdemare/contract_to_cure/src/game"
 )
 
-// Unit tests ported from the rule sections of test/test_api_endpoints.rb and
-// test/test_game_state.rb. The contract scenarios are replayed in
+// Unit tests ported from the rule sections of the former Rails
+// test_api_endpoints.rb and test_game_state.rb. The contract scenarios are replayed in
 // actions_contract_test.go.
 
 // testGame deals a 4-player game, then gives the players these roles, puts
@@ -188,7 +188,7 @@ func TestMoveFlights(t *testing.T) {
 }
 
 // An unknown destination is rejected before any move type is tried, so no
-// card is discarded and no action spent (test_error_handling.rb).
+// card is discarded and no action spent (the former Rails test_error_handling.rb).
 func TestMoveUnknownDestinationIsCheckedFirst(t *testing.T) {
 	const nowhere = "NonExistentCity"
 	tests := []struct {

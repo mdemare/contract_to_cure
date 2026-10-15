@@ -10,7 +10,7 @@ import (
 	"github.com/mdemare/contract_to_cure/src/game"
 )
 
-// Ported from test_disease_summary.rb: every color has its supply, and the
+// Ported from the former Rails test_disease_summary.rb: every color has its supply, and the
 // decks show the player deck's size but nothing of the infection deck.
 func TestViewDiseaseCubesAndDecks(t *testing.T) {
 	g := newGame(t, 4, game.Heroic, 1)

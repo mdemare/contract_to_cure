@@ -6,7 +6,7 @@ import (
 	"testing"
 )
 
-// The HTTP half of test_atomic_game_updates.rb. Request A (stale) reads the
+// The HTTP half of the former Rails test_atomic_game_updates.rb. Request A (stale) reads the
 // game; request B (fresh) then runs to completion before A goes on, so both
 // start from the same snapshot.
 

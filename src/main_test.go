@@ -138,7 +138,7 @@ func TestProductionGamePostsSkipCSRF(t *testing.T) {
 
 // The session routes sit outside the game guards and never read the game:
 // they redirect during a Forecast and while Redis is down
-// (test_sessions_controller.rb).
+// (as in the former Rails test_sessions_controller.rb).
 func TestSessionRoutesDoNotTouchTheGame(t *testing.T) {
 	h, mr := serverWithEnv(t, map[string]string{
 		"DEPLOYMENT_ENV":   "production",

@@ -8,7 +8,7 @@ import (
 	"github.com/mdemare/contract_to_cure/src/store"
 )
 
-// The defaults from config/application.rb for a game started when there is
+// The defaults of the former Rails config/application.rb for a game started when there is
 // no saved one.
 const (
 	DefaultPlayers    = 4

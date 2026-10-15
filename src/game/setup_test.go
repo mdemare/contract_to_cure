@@ -87,8 +87,8 @@ func TestLoadMapRejectsBadBoards(t *testing.T) {
 	}
 }
 
-// Ported from test_game_state.rb (fixture creation, difficulty levels) and
-// test_restart_game.rb (initial status values, epidemic counts), plus the
+// Ported from the former Rails test_game_state.rb (fixture creation,
+// difficulty levels) and test_restart_game.rb (initial status values, epidemic counts), plus the
 // setup rules in Q19-cc.
 func TestNewGame(t *testing.T) {
 	tests := []struct {
@@ -297,7 +297,7 @@ func TestNewRejectsBadSetup(t *testing.T) {
 	}
 }
 
-// Ported from test_restart_game.rb: a restart deals a fresh game with the
+// Ported from the former Rails test_restart_game.rb: a restart deals a fresh game with the
 // same player count, keeps the difficulty unless one is given, and leaves
 // the game alone when the difficulty is unknown.
 func TestReset(t *testing.T) {
@@ -462,7 +462,7 @@ func TestParse(t *testing.T) {
 	}
 }
 
-// From test_role_styles.rb.
+// From the former Rails test_role_styles.rb.
 func TestRoleNames(t *testing.T) {
 	if got := game.QuarantineSpecialist.Name(); got != "Quarantine Specialist" {
 		t.Errorf("QuarantineSpecialist.Name() = %q", got)

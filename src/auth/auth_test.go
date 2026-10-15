@@ -13,10 +13,10 @@ import (
 
 const testSecret = "test-jwt-secret"
 
-// requiredAuth is with_required_auth in test/test_helper.rb.
+// requiredAuth is with_required_auth in the former Rails test_helper.rb.
 var requiredAuth = Config{Environment: "test", JWTSecret: []byte(testSecret), RequireAuth: true}
 
-// testUser is the user of test_helper.rb's auth_token.
+// testUser is the user of the former Rails test_helper.rb's auth_token.
 var testUser = map[string]any{"id": 123, "email": "test@example.com", "name": "Test User"}
 
 func token(t *testing.T, claims jwt.MapClaims, method jwt.SigningMethod, secret string) string {
@@ -28,7 +28,7 @@ func token(t *testing.T, claims jwt.MapClaims, method jwt.SigningMethod, secret 
 	return s
 }
 
-// authToken is auth_token in test_helper.rb.
+// authToken is auth_token in the former Rails test_helper.rb.
 func authToken(t *testing.T, user any, exp time.Time) string {
 	return token(t, jwt.MapClaims{"user": user, "exp": exp.Unix(), "iat": time.Now().Unix()}, jwt.SigningMethodHS256, testSecret)
 }
@@ -85,7 +85,7 @@ func currentUser(t *testing.T, rec *httptest.ResponseRecorder) string {
 	return string(body.CurrentUser)
 }
 
-// Ports of test/test_api_authentication.rb.
+// Ports of the former Rails test_api_authentication.rb.
 
 func TestGameStateRequiresAuthWhenBypassDisabled(t *testing.T) {
 	assertError(t, request(gameServer(requiredAuth), "GET", "/game_state.json", ""), 401, "Authentication required")
@@ -118,7 +118,7 @@ func TestTestEnvironmentBypassRemainsExplicit(t *testing.T) {
 	}
 }
 
-// Ports of the current_user tests in test/test_sessions_controller.rb.
+// Ports of the current_user tests in the former Rails test_sessions_controller.rb.
 
 func TestCurrentUserHelper(t *testing.T) {
 	rec := request(gameServer(Config{Environment: "test", SkipAuth: true}), "GET", "/game_state.json", "")
@@ -134,7 +134,7 @@ func TestCurrentUserHelperWithoutSession(t *testing.T) {
 	}
 }
 
-// Characterization of ApplicationController#current_user and
+// Characterization of the former Rails ApplicationController#current_user and
 // auth_bypass_enabled? beyond the Rails tests.
 
 func TestBypassAndDevelopmentUser(t *testing.T) {
