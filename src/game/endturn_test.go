@@ -400,7 +400,7 @@ func TestEndTurnGuards(t *testing.T) {
 			g := outbreakGame(t)
 			g.ActionsRemaining = 0
 			resp := step(g)
-			want := `{"status":"error","message":"Cannot perform this action unless game phase is ` + string(phase) + `"}`
+			want := `{"success":false,"status":"error","message":"Cannot perform this action unless game phase is ` + string(phase) + `"}`
 			if got := string(marshal(t, resp.Body)); got != want || resp.HTTPStatus != http.StatusUnprocessableEntity || resp.Changed {
 				t.Errorf("out of phase: %d %s", resp.HTTPStatus, got)
 			}
@@ -408,14 +408,14 @@ func TestEndTurnGuards(t *testing.T) {
 			g.Phase = game.PendingDiscard
 			g.PendingHandLimit = &game.PendingHandLimit{PlayerIndex: 0, DiscardCount: 1, ReturnPhase: phase}
 			resp = step(g)
-			want = `{"status":"error","message":"Must resolve pending hand-limit discard before continuing"}`
+			want = `{"success":false,"status":"error","message":"Must resolve pending hand-limit discard before continuing"}`
 			if got := string(marshal(t, resp.Body)); got != want || resp.HTTPStatus != http.StatusUnprocessableEntity || resp.Changed {
 				t.Errorf("pending discard: %d %s", resp.HTTPStatus, got)
 			}
 
 			g.Phase, g.PendingHandLimit, g.ActionsRemaining = phase, nil, 1
 			resp = step(g)
-			if got := string(marshal(t, resp.Body)); got != `{"status":"success"}` || resp.HTTPStatus != http.StatusOK || resp.Changed {
+			if got := string(marshal(t, resp.Body)); got != `{"success":false,"status":"error","message":"Actions remaining"}` || resp.HTTPStatus != http.StatusUnprocessableEntity || resp.Changed {
 				t.Errorf("actions left: %d %s", resp.HTTPStatus, got)
 			}
 			if g.Phase != phase {

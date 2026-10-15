@@ -96,7 +96,7 @@ export async function restartGame(loadState = async gameState => {
   const data = await response.json();
   if (!data.success) return false;
 
-  await loadState();
+  await loadState(data.game_state || null);
 
   const gameOverDialog = document.querySelector('.game-over-dialog');
   if (gameOverDialog) {

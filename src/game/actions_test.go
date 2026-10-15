@@ -351,7 +351,7 @@ func TestGuards(t *testing.T) {
 	}
 	for _, phase := range []game.Phase{game.DrawCards, game.InfectCities, game.PendingDiscard} {
 		g.Phase = phase
-		if got, _ := json.Marshal(g.CheckAction()); string(got) != `{"status":"error","message":"No more actions allowed"}` {
+		if got, _ := json.Marshal(g.CheckAction()); string(got) != `{"success":false,"status":"error","message":"No more actions allowed"}` {
 			t.Errorf("%s: %s", phase, got)
 		}
 	}
@@ -360,7 +360,7 @@ func TestGuards(t *testing.T) {
 	if g.CheckAction() != nil {
 		t.Error("CheckAction looks at game over")
 	}
-	if got, _ := json.Marshal(g.CheckGameOver()); string(got) != `{"status":"error","message":"The game is over"}` {
+	if got, _ := json.Marshal(g.CheckGameOver()); string(got) != `{"success":false,"status":"error","message":"The game is over"}` {
 		t.Errorf("game over: %s", got)
 	}
 }

@@ -1,6 +1,6 @@
 {
   "name": "action_card_forecast_apply",
-  "description": "Forecast, step 2: reorder; the response is the bare JSON view",
+  "description": "Forecast, step 2: reorder; success with game_state",
   "save_before": "states/forecast_active.yaml",
   "request": {
     "method": "POST",
@@ -24,203 +24,208 @@
     "status": 200,
     "content_type": "application/json; charset=utf-8",
     "body": {
-      "gameStatus": {
-        "actions_remaining": 4,
-        "phase": "player_actions",
-        "pending_hand_limit": null,
-        "turn": 1,
-        "gameOver": false,
-        "gameOverReason": null,
-        "outbreaks": 0,
-        "infectionRate": 2,
-        "infectionRatePosition": 0,
-        "currentPlayerIndex": 0,
-        "forecast_active": false,
-        "forecast_cards": null,
-        "operations_expert_move_used": false
-      },
-      "diseaseCubes": {
-        "blue": {
-          "cured": false,
-          "eradicated": false,
-          "inSupply": 21,
-          "onBoard": {
-            "Paris": 3
+      "success": true,
+      "status": "success",
+      "message": "Infection cards reordered",
+      "game_state": {
+        "gameStatus": {
+          "actions_remaining": 4,
+          "phase": "player_actions",
+          "pending_hand_limit": null,
+          "turn": 1,
+          "gameOver": false,
+          "gameOverReason": null,
+          "outbreaks": 0,
+          "infectionRate": 2,
+          "infectionRatePosition": 0,
+          "currentPlayerIndex": 0,
+          "forecast_active": false,
+          "forecast_cards": null,
+          "operations_expert_move_used": false
+        },
+        "diseaseCubes": {
+          "blue": {
+            "cured": false,
+            "eradicated": false,
+            "inSupply": 21,
+            "onBoard": {
+              "Paris": 3
+            }
+          },
+          "yellow": {
+            "cured": false,
+            "eradicated": false,
+            "inSupply": 23,
+            "onBoard": {
+              "Lagos": 1
+            }
+          },
+          "black": {
+            "cured": false,
+            "eradicated": false,
+            "inSupply": 22,
+            "onBoard": {
+              "Cairo": 2
+            }
+          },
+          "red": {
+            "cured": false,
+            "eradicated": false,
+            "inSupply": 21,
+            "onBoard": {
+              "Bangkok": 1,
+              "Wuhan": 2
+            }
           }
         },
-        "yellow": {
-          "cured": false,
-          "eradicated": false,
-          "inSupply": 23,
-          "onBoard": {
-            "Lagos": 1
-          }
+        "researchStations": {
+          "available": 5,
+          "locations": [
+            "Wuhan"
+          ]
         },
-        "black": {
-          "cured": false,
-          "eradicated": false,
-          "inSupply": 22,
-          "onBoard": {
-            "Cairo": 2
+        "players": [
+          {
+            "role": "scientist",
+            "index": 0,
+            "location": "Wuhan",
+            "hand": [
+              {
+                "type": "action",
+                "name": "Airlift",
+                "index": 0
+              },
+              {
+                "type": "city",
+                "name": "Paris",
+                "color": "blue",
+                "index": 1
+              },
+              {
+                "type": "city",
+                "name": "Wuhan",
+                "color": "red",
+                "index": 2
+              },
+              {
+                "type": "city",
+                "name": "Beijing",
+                "color": "red",
+                "index": 3
+              },
+              {
+                "type": "city",
+                "name": "Shanghai",
+                "color": "red",
+                "index": 4
+              },
+              {
+                "type": "city",
+                "name": "Seoul",
+                "color": "red",
+                "index": 5
+              }
+            ]
+          },
+          {
+            "role": "medic",
+            "index": 1,
+            "location": "Wuhan",
+            "hand": [
+              {
+                "type": "city",
+                "name": "Cairo",
+                "color": "black",
+                "index": 0
+              },
+              {
+                "type": "city",
+                "name": "Lagos",
+                "color": "yellow",
+                "index": 1
+              }
+            ]
+          },
+          {
+            "role": "dispatcher",
+            "index": 2,
+            "location": "London",
+            "hand": [
+              {
+                "type": "city",
+                "name": "London",
+                "color": "blue",
+                "index": 0
+              },
+              {
+                "type": "city",
+                "name": "Lima",
+                "color": "yellow",
+                "index": 1
+              }
+            ]
+          },
+          {
+            "role": "operations_expert",
+            "index": 3,
+            "location": "Paris",
+            "hand": [
+              {
+                "type": "city",
+                "name": "Kyiv",
+                "color": "black",
+                "index": 0
+              },
+              {
+                "type": "city",
+                "name": "Tokyo",
+                "color": "red",
+                "index": 1
+              }
+            ]
           }
-        },
-        "red": {
-          "cured": false,
-          "eradicated": false,
-          "inSupply": 21,
-          "onBoard": {
-            "Bangkok": 1,
-            "Wuhan": 2
-          }
-        }
-      },
-      "researchStations": {
-        "available": 5,
-        "locations": [
-          "Wuhan"
-        ]
-      },
-      "players": [
-        {
-          "role": "scientist",
-          "index": 0,
-          "location": "Wuhan",
-          "hand": [
+        ],
+        "decks": {
+          "playerDeck": 7,
+          "discardPile": [
+            {
+              "type": "city",
+              "name": "Havana",
+              "color": "yellow"
+            },
             {
               "type": "action",
-              "name": "Airlift",
-              "index": 0
+              "name": "Forecast"
+            }
+          ],
+          "infectionDiscardPile": [
+            {
+              "type": "city",
+              "name": "Wuhan",
+              "color": "red"
+            },
+            {
+              "type": "city",
+              "name": "Bangkok",
+              "color": "red"
             },
             {
               "type": "city",
               "name": "Paris",
-              "color": "blue",
-              "index": 1
-            },
-            {
-              "type": "city",
-              "name": "Wuhan",
-              "color": "red",
-              "index": 2
-            },
-            {
-              "type": "city",
-              "name": "Beijing",
-              "color": "red",
-              "index": 3
-            },
-            {
-              "type": "city",
-              "name": "Shanghai",
-              "color": "red",
-              "index": 4
-            },
-            {
-              "type": "city",
-              "name": "Seoul",
-              "color": "red",
-              "index": 5
-            }
-          ]
-        },
-        {
-          "role": "medic",
-          "index": 1,
-          "location": "Wuhan",
-          "hand": [
-            {
-              "type": "city",
-              "name": "Cairo",
-              "color": "black",
-              "index": 0
+              "color": "blue"
             },
             {
               "type": "city",
               "name": "Lagos",
-              "color": "yellow",
-              "index": 1
-            }
-          ]
-        },
-        {
-          "role": "dispatcher",
-          "index": 2,
-          "location": "London",
-          "hand": [
-            {
-              "type": "city",
-              "name": "London",
-              "color": "blue",
-              "index": 0
+              "color": "yellow"
             },
             {
               "type": "city",
-              "name": "Lima",
-              "color": "yellow",
-              "index": 1
-            }
-          ]
-        },
-        {
-          "role": "operations_expert",
-          "index": 3,
-          "location": "Paris",
-          "hand": [
-            {
-              "type": "city",
-              "name": "Kyiv",
-              "color": "black",
-              "index": 0
-            },
-            {
-              "type": "city",
-              "name": "Tokyo",
-              "color": "red",
-              "index": 1
+              "name": "Cairo",
+              "color": "black"
             }
           ]
         }
-      ],
-      "decks": {
-        "playerDeck": 7,
-        "discardPile": [
-          {
-            "type": "city",
-            "name": "Havana",
-            "color": "yellow"
-          },
-          {
-            "type": "action",
-            "name": "Forecast"
-          }
-        ],
-        "infectionDiscardPile": [
-          {
-            "type": "city",
-            "name": "Wuhan",
-            "color": "red"
-          },
-          {
-            "type": "city",
-            "name": "Bangkok",
-            "color": "red"
-          },
-          {
-            "type": "city",
-            "name": "Paris",
-            "color": "blue"
-          },
-          {
-            "type": "city",
-            "name": "Lagos",
-            "color": "yellow"
-          },
-          {
-            "type": "city",
-            "name": "Cairo",
-            "color": "black"
-          }
-        ]
       }
     }
   },

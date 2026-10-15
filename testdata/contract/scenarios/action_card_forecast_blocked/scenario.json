@@ -1,6 +1,6 @@
 {
   "name": "action_card_forecast_blocked",
-  "description": "Other event cards during Forecast: error with HTTP 200",
+  "description": "Other event cards during Forecast: 422 error",
   "save_before": "states/forecast_active.yaml",
   "request": {
     "method": "POST",
@@ -15,9 +15,10 @@
     }
   },
   "response": {
-    "status": 200,
+    "status": 422,
     "content_type": "application/json; charset=utf-8",
     "body": {
+      "success": false,
       "status": "error",
       "message": "Cannot perform action while Forecast is active. Please complete the Forecast action first."
     }

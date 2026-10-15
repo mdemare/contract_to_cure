@@ -124,10 +124,10 @@ func TestResilientPopulation(t *testing.T) {
 func TestUnknownEventCard(t *testing.T) {
 	g := testGame(t)
 	resp := play(t, g, game.EventCardRequest{Card: "NonExistentCard"})
-	if resp.HTTPStatus != http.StatusInternalServerError || resp.Changed {
+	if resp.HTTPStatus != http.StatusUnprocessableEntity || resp.Changed {
 		t.Errorf("response = %+v", resp)
 	}
-	if got := string(marshal(t, resp.Body)); got != `{"status":"error","message":"Unknown action card: NonExistentCard"}` {
+	if got := string(marshal(t, resp.Body)); got != `{"success":false,"status":"error","message":"Unknown action card: NonExistentCard"}` {
 		t.Errorf("body = %s", got)
 	}
 }
@@ -193,7 +193,7 @@ func TestForecastAcrossRequests(t *testing.T) {
 		{Card: game.Forecast, CardOrder: append(slices.Clone(topSix[:5]), topSix[0])},
 	} {
 		resp := play(t, g, req)
-		if _, ok := resp.Body.(*game.Rejection); !ok || resp.HTTPStatus != http.StatusOK || resp.Changed {
+		if _, ok := resp.Body.(*game.Rejection); !ok || resp.HTTPStatus != http.StatusUnprocessableEntity || resp.Changed {
 			t.Errorf("%+v: response = %+v", req, resp)
 		}
 	}
@@ -204,8 +204,9 @@ func TestForecastAcrossRequests(t *testing.T) {
 	reordered := slices.Clone(topSix)
 	slices.Reverse(reordered)
 	resp = play(t, g, game.EventCardRequest{Card: game.Forecast, CardOrder: reordered})
-	if resp.Body != any(g) || resp.HTTPStatus != http.StatusOK || !resp.Changed {
-		t.Errorf("response = %+v, want the bare game state", resp)
+	done, ok := resp.Body.(game.Result)
+	if !ok || !done.Success || done.Status != game.StatusSuccess || done.GameState != g || resp.HTTPStatus != http.StatusOK || !resp.Changed {
+		t.Errorf("response = %+v, want a success with the game state", resp)
 	}
 	if g.ForecastActive || g.ForecastCards != nil || g.CheckForecast() != nil {
 		t.Error("Forecast still active")

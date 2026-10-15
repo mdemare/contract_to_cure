@@ -32,8 +32,10 @@ type Result struct {
 	ExceededHandLimit *PendingHandLimit `json:"exceeded_hand_limit,omitempty"`
 }
 
-// Rejection is a guard's error: {status, message} without a success key.
+// Rejection is a guard's error: {success: false, status, message}. Success is
+// never set, so it marshals as false like a failed Result.
 type Rejection struct {
+	Success bool   `json:"success"`
 	Status  string `json:"status"`
 	Message string `json:"message"`
 }

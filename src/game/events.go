@@ -23,7 +23,7 @@ const forecastActiveMessage = "Cannot perform action while Forecast is active. P
 // CheckForecast rejects every request but GET /game_state.json and
 // /action_card while a Forecast waits for its new order
 // (check_forecast_active). It runs before CheckGameOver. Inside
-// /action_card, PlayEventCard gives the same message with HTTP 200.
+// /action_card, PlayEventCard gives the same message, also as 422.
 func (g *GameState) CheckForecast() *Rejection {
 	if !g.ForecastActive {
 		return nil
@@ -40,22 +40,22 @@ type EventCardRequest struct {
 	CardOrder   []string
 }
 
-// EventCardResponse is what Rails renders for POST /action_card.
+// EventCardResponse is what POST /action_card renders.
 type EventCardResponse struct {
-	// Body is a Result, a ForecastView, a *Rejection, or the bare *GameState
-	// after a finished Forecast.
+	// Body is a Result, a ForecastView or a *Rejection.
 	Body any
-	// HTTPStatus keeps the Rails quirks: a Forecast error is 200, an unknown
-	// card is 500, and a failed Result is 422.
+	// HTTPStatus is 200 for a played card and 422 for every rejection,
+	// including a Forecast error and an unknown card (cc-488).
 	HTTPStatus int
-	// Changed is true when Rails saved the game.
+	// Changed is true when the game was saved.
 	Changed bool
 }
 
 // ForecastView is the response to the first step of Forecast: the top cards
-// of the infection deck, next card first. Rails puts game_state on it only
-// when a hand-limit discard is pending.
+// of the infection deck, next card first. It has game_state only when a
+// hand-limit discard was pending.
 type ForecastView struct {
+	Success   bool           `json:"success"`
 	Status    string         `json:"status"`
 	Type      string         `json:"type"`
 	Message   string         `json:"message"`
@@ -78,13 +78,17 @@ func (g *GameState) PlayEventCard(req EventCardRequest) EventCardResponse {
 	if g.ForecastActive {
 		if req.Card == Forecast && req.CardOrder != nil {
 			if rej := g.ApplyForecast(req.CardOrder); rej != nil {
-				return EventCardResponse{Body: rej, HTTPStatus: http.StatusOK}
+				return EventCardResponse{Body: rej, HTTPStatus: http.StatusUnprocessableEntity}
 			}
-			return EventCardResponse{Body: g, HTTPStatus: http.StatusOK, Changed: true}
+			return EventCardResponse{
+				Body:       eventSuccess(g, "Infection cards reordered"),
+				HTTPStatus: http.StatusOK,
+				Changed:    true,
+			}
 		}
 		return EventCardResponse{
 			Body:       &Rejection{Status: StatusError, Message: forecastActiveMessage},
-			HTTPStatus: http.StatusOK,
+			HTTPStatus: http.StatusUnprocessableEntity,
 		}
 	}
 
@@ -111,7 +115,7 @@ func (g *GameState) PlayEventCard(req EventCardRequest) EventCardResponse {
 	default:
 		return EventCardResponse{
 			Body:       &Rejection{Status: StatusError, Message: "Unknown action card: " + req.Card},
-			HTTPStatus: http.StatusInternalServerError,
+			HTTPStatus: http.StatusUnprocessableEntity,
 		}
 	}
 
@@ -241,6 +245,7 @@ func (g *GameState) Forecast() (ForecastView, *Result) {
 	deck := g.Decks.InfectionDeck
 	top := deck[max(len(deck)-forecastCardCount, 0):]
 	view := ForecastView{
+		Success: true,
 		Status:  StatusSuccess,
 		Type:    "forecast_view",
 		Message: "Choose the order for the infection cards",

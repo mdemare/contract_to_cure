@@ -1,6 +1,6 @@
 {
   "name": "draw_cards_actions_left",
-  "description": "Draw phase with actions left: bare success, nothing changes",
+  "description": "Draw phase with actions left: 422 \"Actions remaining\", nothing changes",
   "save_before": "states/draw_phase_actions_left.yaml",
   "request": {
     "method": "POST",
@@ -9,10 +9,12 @@
     "body": null
   },
   "response": {
-    "status": 200,
+    "status": 422,
     "content_type": "application/json; charset=utf-8",
     "body": {
-      "status": "success"
+      "success": false,
+      "status": "error",
+      "message": "Actions remaining"
     }
   },
   "save_after": "unchanged"

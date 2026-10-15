@@ -2,6 +2,7 @@ package web_test
 
 import (
 	"bytes"
+	"encoding/json"
 	"reflect"
 	"testing"
 
@@ -57,7 +58,23 @@ func TestContractScenarios(t *testing.T) {
 			if ct := rec.Header().Get("Content-Type"); ct != sc.Response.ContentType {
 				t.Errorf("content type %q, want %q", ct, sc.Response.ContentType)
 			}
-			if got, want := compactJSON(t, rec.Body.Bytes()), compactJSON(t, sc.Response.Body); got != want {
+			gotBody, wantBody := rec.Body.Bytes(), []byte(sc.Response.Body)
+			if randomRestarts[name] {
+				// The new game is dealt by Go's RNG, so game_state is only
+				// required to be the game that was saved.
+				var gotGame, wantGame json.RawMessage
+				gotBody, gotGame = splitGameState(t, gotBody)
+				wantBody, _ = splitGameState(t, wantBody)
+				saved, err := json.Marshal(ts.savedGame())
+				if err != nil {
+					t.Fatal(err)
+				}
+				wantGame = saved
+				if got, want := compactJSON(t, gotGame), compactJSON(t, wantGame); got != want {
+					t.Errorf("game_state is not the saved game\n got: %s\nwant: %s", got, want)
+				}
+			}
+			if got, want := compactJSON(t, gotBody), compactJSON(t, wantBody); got != want {
 				t.Errorf("body differs\n got: %s\nwant: %s", got, want)
 			}
 
@@ -78,6 +95,23 @@ func TestContractScenarios(t *testing.T) {
 			}
 		})
 	}
+}
+
+// splitGameState returns a response body without its game_state, and the
+// game_state itself.
+func splitGameState(t *testing.T, body []byte) (rest, state json.RawMessage) {
+	t.Helper()
+	var fields map[string]json.RawMessage
+	if err := json.Unmarshal(body, &fields); err != nil {
+		t.Fatalf("invalid JSON %q: %v", body, err)
+	}
+	state = fields["game_state"]
+	delete(fields, "game_state")
+	rest, err := json.Marshal(fields)
+	if err != nil {
+		t.Fatal(err)
+	}
+	return rest, state
 }
 
 // gameShape is what a new game has regardless of the deal.

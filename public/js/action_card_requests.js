@@ -33,12 +33,8 @@ export async function actionCardRequest(payload, fallbackErrorMessage) {
     throw new Error(rejection?.message || fallbackErrorMessage);
   }
 
-  const data = await response.json();
-  if (data.status === 'error') {
-    throw new Error(data.message || fallbackErrorMessage);
-  }
-
-  return data;
+  // Every rejection is a 422, so a 200 body is a success.
+  return response.json();
 }
 
 export async function completeForecast(cardOrder) {
@@ -51,7 +47,7 @@ export async function completeForecast(cardOrder) {
   try {
     const data = await request;
 
-    if (data.status === 'success' || data.players) {
+    if (data.status === 'success') {
       await loadGameState();
       return true;
     } else {

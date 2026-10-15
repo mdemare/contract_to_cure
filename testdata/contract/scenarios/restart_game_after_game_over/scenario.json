@@ -16,7 +16,198 @@
     "body": {
       "success": true,
       "status": "success",
-      "message": "Game restarted successfully"
+      "message": "Game restarted successfully",
+      "game_state": {
+        "gameStatus": {
+          "actions_remaining": 4,
+          "phase": "player_actions",
+          "pending_hand_limit": null,
+          "turn": 1,
+          "gameOver": false,
+          "gameOverReason": null,
+          "outbreaks": 0,
+          "infectionRate": 2,
+          "infectionRatePosition": 0,
+          "currentPlayerIndex": 0,
+          "forecast_active": false,
+          "forecast_cards": null,
+          "operations_expert_move_used": false
+        },
+        "diseaseCubes": {
+          "blue": {
+            "cured": false,
+            "eradicated": false,
+            "inSupply": 19,
+            "onBoard": {
+              "Houston": 2,
+              "Stockholm": 3
+            }
+          },
+          "yellow": {
+            "cured": false,
+            "eradicated": false,
+            "inSupply": 19,
+            "onBoard": {
+              "Paramaribo": 3,
+              "Cape Town": 2
+            }
+          },
+          "black": {
+            "cured": false,
+            "eradicated": false,
+            "inSupply": 22,
+            "onBoard": {
+              "Casablanca": 1,
+              "Chennai": 1
+            }
+          },
+          "red": {
+            "cured": false,
+            "eradicated": false,
+            "inSupply": 18,
+            "onBoard": {
+              "Wuhan": 3,
+              "Seoul": 2,
+              "Taipei": 1
+            }
+          }
+        },
+        "researchStations": {
+          "available": 5,
+          "locations": [
+            "Wuhan"
+          ]
+        },
+        "players": [
+          {
+            "role": "dispatcher",
+            "index": 0,
+            "location": "Wuhan",
+            "hand": [
+              {
+                "type": "city",
+                "name": "Wuhan",
+                "color": "red",
+                "index": 0
+              },
+              {
+                "type": "city",
+                "name": "Hong Kong",
+                "color": "red",
+                "index": 1
+              }
+            ]
+          },
+          {
+            "role": "operations_expert",
+            "index": 1,
+            "location": "Wuhan",
+            "hand": [
+              {
+                "type": "city",
+                "name": "Kinshasa",
+                "color": "yellow",
+                "index": 0
+              },
+              {
+                "type": "city",
+                "name": "Sao Paulo",
+                "color": "yellow",
+                "index": 1
+              }
+            ]
+          },
+          {
+            "role": "scientist",
+            "index": 2,
+            "location": "Wuhan",
+            "hand": [
+              {
+                "type": "city",
+                "name": "Casablanca",
+                "color": "black",
+                "index": 0
+              },
+              {
+                "type": "city",
+                "name": "Rome",
+                "color": "blue",
+                "index": 1
+              }
+            ]
+          },
+          {
+            "role": "medic",
+            "index": 3,
+            "location": "Wuhan",
+            "hand": [
+              {
+                "type": "city",
+                "name": "San Francisco",
+                "color": "blue",
+                "index": 0
+              },
+              {
+                "type": "city",
+                "name": "Buenos Aires",
+                "color": "yellow",
+                "index": 1
+              }
+            ]
+          }
+        ],
+        "decks": {
+          "playerDeck": 50,
+          "discardPile": [],
+          "infectionDiscardPile": [
+            {
+              "type": "city",
+              "name": "Paramaribo",
+              "color": "yellow"
+            },
+            {
+              "type": "city",
+              "name": "Wuhan",
+              "color": "red"
+            },
+            {
+              "type": "city",
+              "name": "Stockholm",
+              "color": "blue"
+            },
+            {
+              "type": "city",
+              "name": "Seoul",
+              "color": "red"
+            },
+            {
+              "type": "city",
+              "name": "Cape Town",
+              "color": "yellow"
+            },
+            {
+              "type": "city",
+              "name": "Houston",
+              "color": "blue"
+            },
+            {
+              "type": "city",
+              "name": "Casablanca",
+              "color": "black"
+            },
+            {
+              "type": "city",
+              "name": "Chennai",
+              "color": "black"
+            },
+            {
+              "type": "city",
+              "name": "Taipei",
+              "color": "red"
+            }
+          ]
+        }
+      }
     }
   },
   "save_after": "scenarios/restart_game_after_game_over/after.yaml"

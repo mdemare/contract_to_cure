@@ -235,7 +235,7 @@ func TestPanicIsReportedAndAnswered500(t *testing.T) {
 	if rec.Code != http.StatusInternalServerError {
 		t.Fatalf("status %d", rec.Code)
 	}
-	if got := strings.TrimSpace(rec.Body.String()); got != `{"message":"boom","status":"error"}` {
+	if got := strings.TrimSpace(rec.Body.String()); got != `{"success":false,"status":"error","message":"boom"}` {
 		t.Errorf("body %s", got)
 	}
 	if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {

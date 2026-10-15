@@ -236,7 +236,7 @@ func checkError(t *testing.T, rec *httptest.ResponseRecorder, status int, messag
 		t.Errorf("content type %q", ct)
 	}
 	body := decodeBody(t, rec)
-	if body["status"] != "error" || body["message"] != message {
-		t.Errorf("body %s, want error %q", rec.Body, message)
+	if success, ok := body["success"]; !ok || success != false || body["status"] != "error" || body["message"] != message {
+		t.Errorf("body %s, want error %q with success false", rec.Body, message)
 	}
 }

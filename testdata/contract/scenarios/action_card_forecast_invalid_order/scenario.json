@@ -1,6 +1,6 @@
 {
   "name": "action_card_forecast_invalid_order",
-  "description": "Not a permutation: error with HTTP 200",
+  "description": "Not a permutation: 422 error",
   "save_before": "states/forecast_active.yaml",
   "request": {
     "method": "POST",
@@ -16,9 +16,10 @@
     }
   },
   "response": {
-    "status": 200,
+    "status": 422,
     "content_type": "application/json; charset=utf-8",
     "body": {
+      "success": false,
       "status": "error",
       "message": "Invalid card order provided"
     }

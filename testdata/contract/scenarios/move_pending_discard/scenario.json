@@ -17,6 +17,7 @@
     "status": 422,
     "content_type": "application/json; charset=utf-8",
     "body": {
+      "success": false,
       "status": "error",
       "message": "No more actions allowed"
     }
