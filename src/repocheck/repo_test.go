@@ -338,3 +338,55 @@ func TestReadmeQuotedSetupMatchesTheRepo(t *testing.T) {
 		}
 	}
 }
+
+// The app keeps its state in Redis and has no database. Ticket worktrees get
+// a throwaway PostgreSQL database in .env's TEST_DATABASE_* block, alongside
+// libpq's PG* variables (cc-491). Nothing may read production DATABASE_* or
+// PG* settings; tests that ever need a database must use TEST_DATABASE_* and
+// skip or fail without it.
+
+var databaseSetting = regexp.MustCompile(`\b(DATABASE_[A-Z]+|PG(HOST|PORT|DATABASE|USER|PASSWORD))\b`)
+
+func readsDatabaseSetting(text string) []string {
+	var found []string
+	for _, m := range databaseSetting.FindAllStringIndex(text, -1) {
+		if !strings.HasSuffix(text[:m[0]], "TEST_") {
+			found = append(found, text[m[0]:m[1]])
+		}
+	}
+	return found
+}
+
+func TestReadsDatabaseSettingIgnoresTestDatabaseVariables(t *testing.T) {
+	for text, want := range map[string][]string{
+		`os.Getenv("DATABASE_URL")`:                 {"DATABASE_URL"},
+		"DATABASE_HOST=db\nPGPASSWORD=x":            {"DATABASE_HOST", "PGPASSWORD"},
+		`os.Getenv("TEST_DATABASE_NAME")`:           nil,
+		"TEST_DATABASE_USER=u TEST_DATABASE_PORT=1": nil,
+		"MY_DATABASE_URL PGHOSTNAME database_url":   nil,
+		"TEST_DATABASE_HOST DATABASE_PORT":          {"DATABASE_PORT"},
+	} {
+		if got := readsDatabaseSetting(text); !slices.Equal(got, want) {
+			t.Errorf("readsDatabaseSetting(%q) = %v, want %v", text, got, want)
+		}
+	}
+}
+
+func TestNoTrackedFileReadsProductionDatabaseSettings(t *testing.T) {
+	out, err := exec.Command("git", "-C", root, "ls-files", "-z").Output()
+	if err != nil {
+		t.Skipf("git ls-files: %v", err)
+	}
+	for _, path := range strings.Split(strings.TrimRight(string(out), "\x00"), "\x00") {
+		if path == "src/repocheck/repo_test.go" {
+			continue
+		}
+		b, err := os.ReadFile(filepath.Join(root, path))
+		if err != nil {
+			t.Fatal(err)
+		}
+		if found := readsDatabaseSetting(string(b)); found != nil {
+			t.Errorf("%s mentions %v; tests must use TEST_DATABASE_* (cc-491)", path, found)
+		}
+	}
+}
