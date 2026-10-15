@@ -1,6 +1,6 @@
-// Command main is the Go port of the former Rails backend (epic cc-368). `make`
-// builds it and the Docker image runs it (cc-425). The Rails code was removed
-// in cc-428; see git history before that commit.
+// Command main is the backend server. `make` builds it and the Docker image
+// runs it (cc-425). It started as a port of the Rails backend (epic cc-368),
+// which was removed in cc-428; see git history before that commit.
 package main
 
 import (
