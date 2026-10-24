@@ -224,3 +224,17 @@
     font-size: 10px;
   }
 }
+
+/* New Game dialog */
+.new-game-modal .difficulty-choice {
+  display: block;
+  margin: 15px 0;
+  font-weight: bold;
+}
+
+.difficulty-select {
+  margin-left: 8px;
+  padding: 6px 10px;
+  font-size: 1rem;
+  border-radius: 5px;
+}

@@ -8,6 +8,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/mdemare/contract_to_cure/src/game"
 	"github.com/mdemare/contract_to_cure/src/observe"
 	"github.com/mdemare/contract_to_cure/src/store"
 	"github.com/mdemare/contract_to_cure/src/web"
@@ -72,6 +73,7 @@ func TestIndexHasMenuAndDiseaseStatus(t *testing.T) {
 		`<link rel="stylesheet" href="/css/menu.css">`,
 		`cure-grid`,
 		`cure-info`,
+		`<dd id="difficulty-status">`,
 	}
 	for _, color := range []string{"blue", "yellow", "black", "red"} {
 		want = append(want,
@@ -381,6 +383,53 @@ func TestMutatingEndpointsRejectedAfterGameOver(t *testing.T) {
 				t.Errorf("%s: POST %s changed the save", state, path)
 			}
 		}
+	}
+}
+
+// A restart with each difficulty deals its number of epidemics, saves the
+// difficulty and reports it in the returned game; without one it keeps the
+// current difficulty.
+func TestRestartGameDifficulty(t *testing.T) {
+	tests := []struct {
+		body      string
+		want      game.Difficulty
+		epidemics int
+	}{
+		{`{"difficulty_level":"introductory"}`, game.Introductory, 4},
+		{`{"difficulty_level":"normal"}`, game.Normal, 5},
+		{`{"difficulty_level":"heroic"}`, game.Heroic, 6},
+		{`{}`, game.Normal, 5}, // base.yaml is normal
+	}
+	for _, tt := range tests {
+		t.Run(tt.body, func(t *testing.T) {
+			ts := newTestServer(t, readFixture(t, "states/base.yaml"))
+			rec := ts.postJSON("/restart_game", tt.body)
+			if rec.Code != http.StatusOK {
+				t.Fatalf("restart: %d %s", rec.Code, rec.Body)
+			}
+			status := decodeBody(t, rec)["game_state"].(map[string]any)["gameStatus"].(map[string]any)
+			if status["difficulty_level"] != string(tt.want) {
+				t.Errorf("difficulty_level = %v, want %s", status["difficulty_level"], tt.want)
+			}
+			g := ts.savedGame()
+			if g.DifficultyLevel != tt.want {
+				t.Errorf("saved difficulty = %s, want %s", g.DifficultyLevel, tt.want)
+			}
+			epidemics := 0
+			for _, c := range g.Decks.PlayerDeck {
+				if c.Type == game.EpidemicCard {
+					epidemics++
+				}
+			}
+			if epidemics != tt.epidemics {
+				t.Errorf("%d epidemics, want %d", epidemics, tt.epidemics)
+			}
+
+			state := decodeBody(t, ts.do(http.MethodGet, "/game_state.json", "", ""))
+			if got := state["gameStatus"].(map[string]any)["difficulty_level"]; got != string(tt.want) {
+				t.Errorf("game_state.json difficulty_level = %v, want %s", got, tt.want)
+			}
+		})
 	}
 }
 

@@ -26,7 +26,7 @@ globalThis.document = {
 };
 globalThis.window = {};
 
-const { restartGame, handleLogin } = await import('../../public/js/menu.js');
+const { restartGame, handleNewGame, handleLogin } = await import('../../public/js/menu.js');
 
 test('successful menu restart reloads state once and dismisses the game-over dialog', async () => {
   let stateReloads = 0;
@@ -44,7 +44,7 @@ test('successful menu restart reloads state once and dismisses the game-over dia
     };
   };
 
-  const restarted = await restartGame(async gameState => {
+  const restarted = await restartGame('normal', async gameState => {
     stateReloads += 1;
     loadedState = gameState;
   });
@@ -61,9 +61,78 @@ test('successful menu restart reloads state once and dismisses the game-over dia
         'Content-Type': 'application/json',
         'X-CSRF-Token': 'csrf-token'
       },
+      body: '{"difficulty_level":"normal"}',
       credentials: 'same-origin'
     }
   });
+});
+
+test('menu restart without a difficulty sends an empty body, keeping the current one', async () => {
+  let body;
+  globalThis.fetch = async (url, options) => {
+    body = options.body;
+    return { ok: true, async json() { return { success: true, game_state: {} }; } };
+  };
+
+  assert.equal(await restartGame(undefined, async () => {}), true);
+  assert.equal(body, '{}');
+});
+
+// Stubs the menu elements closeMenu touches.
+function stubMenuElements() {
+  const menuToggle = { classList: { remove() {} }, setAttribute() {} };
+  const dropdownMenu = { classList: { remove() {} } };
+  document.getElementById = id => ({ 'menu-toggle': menuToggle, 'dropdown-menu': dropdownMenu })[id] || null;
+}
+
+for (const [current, chosen] of [['introductory', 'heroic'], ['heroic', 'introductory'], ['normal', 'normal']]) {
+  test(`New Game offers the current ${current} difficulty and restarts with the chosen ${chosen}`, async () => {
+    stubMenuElements();
+    const offered = [];
+    let body;
+    globalThis.fetch = async (url, options) => {
+      body = JSON.parse(options.body);
+      return { ok: true, async json() { return { success: true, game_state: {} }; } };
+    };
+
+    await handleNewGame({
+      getState: async () => ({ gameStatus: { difficulty_level: current } }),
+      choose: async offeredDifficulty => {
+        offered.push(offeredDifficulty);
+        return chosen;
+      },
+      restart: difficulty => restartGame(difficulty, async () => {})
+    });
+
+    assert.deepEqual(offered, [current]);
+    assert.deepEqual(body, { difficulty_level: chosen });
+  });
+}
+
+test('New Game defaults to heroic when the state has no difficulty', async () => {
+  stubMenuElements();
+  const offered = [];
+  await handleNewGame({
+    getState: async () => ({ gameStatus: {} }),
+    choose: async difficulty => {
+      offered.push(difficulty);
+      return null;
+    },
+    restart: async () => assert.fail('restarted')
+  });
+  assert.deepEqual(offered, ['heroic']);
+});
+
+test('cancelling the New Game dialog does not restart', async () => {
+  stubMenuElements();
+  let fetched = false;
+  globalThis.fetch = async () => {
+    fetched = true;
+  };
+
+  await handleNewGame({ getState: async () => null, choose: async () => null });
+
+  assert.equal(fetched, false);
 });
 
 test('menu restart conflict refreshes from the conflict state and keeps the game', async () => {
@@ -83,7 +152,7 @@ test('menu restart conflict refreshes from the conflict state and keeps the game
   });
 
   await assert.rejects(
-    restartGame(async gameState => {
+    restartGame('heroic', async gameState => {
       loadedStates.push(gameState);
       return gameState;
     }),

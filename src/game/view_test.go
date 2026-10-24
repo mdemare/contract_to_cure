@@ -99,6 +99,21 @@ func TestViewEmptyValues(t *testing.T) {
 	}
 }
 
+// gameStatus reports the difficulty, last, so the client can show it and
+// offer it as the default for the next game.
+func TestViewDifficultyLevel(t *testing.T) {
+	for _, d := range game.DifficultyLevels {
+		g := newGame(t, 4, d, 1)
+		if got := g.View().GameStatus.DifficultyLevel; got != d {
+			t.Errorf("view difficulty = %q, want %q", got, d)
+		}
+		want := `"operations_expert_move_used":false,"difficulty_level":"` + string(d) + `"}`
+		if got := string(marshal(t, g)); !strings.Contains(got, want) {
+			t.Errorf("view lacks %s:\n%s", want, got)
+		}
+	}
+}
+
 // A color is eradicated once it is cured and all its cubes are back.
 func TestViewEradicated(t *testing.T) {
 	g := testGame(t)

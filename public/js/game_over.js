@@ -3,6 +3,7 @@ import { reportNotification } from './error_reporting.js';
 // game_over.js
 import { createSimpleElement } from './dom.js';
 import { handleGameConflict, isGameConflict } from './player_action_utils.js';
+import { createDifficultySelect, gameDifficulty } from './difficulty.js';
 
 // Initialize game over functionality
 export function initGameOver() {
@@ -67,6 +68,11 @@ function createGameOverDialog() {
   statsContainer.appendChild(curesStat);
   modal.appendChild(statsContainer);
 
+  // Difficulty of the next game; showGameOverDialog selects the current one
+  const difficultyChoice = createSimpleElement('label', 'difficulty-choice', 'Next game difficulty ');
+  difficultyChoice.appendChild(createDifficultySelect());
+  modal.appendChild(difficultyChoice);
+
   // Buttons
   const buttonsContainer = createSimpleElement('div', 'game-over-buttons');
   const restartButton = createSimpleElement('button', ['game-over-button', 'restart-button'], 'Restart Game');
@@ -94,8 +100,10 @@ function setupGameOverButtons() {
   });
 }
 
-// Restart the game
+// Restart the game with the difficulty chosen in the dialog
 export async function restartGame() {
+  const difficulty = document.querySelector('.game-over-overlay .difficulty-select')?.value;
+
   // Hide the game over dialog
   hideGameOverDialog();
 
@@ -106,7 +114,8 @@ export async function restartGame() {
       headers: {
         'Content-Type': 'application/json',
         'X-CSRF-Token': document.querySelector('meta[name="csrf-token"]')?.getAttribute('content')
-      }
+      },
+      body: JSON.stringify(difficulty ? { difficulty_level: difficulty } : {})
     });
 
     if (isGameConflict(response)) {
@@ -187,6 +196,10 @@ function showGameOverDialog(gameState, reasonCode = null) {
 
     reason.textContent = defeatReason;
   }
+
+  // Offer the current difficulty for the next game
+  const difficultySelect = document.querySelector('.game-over-overlay .difficulty-select');
+  if (difficultySelect) difficultySelect.value = gameDifficulty(gameState);
 
   // Update statistics
   document.getElementById('turns-stat').textContent = turns;
