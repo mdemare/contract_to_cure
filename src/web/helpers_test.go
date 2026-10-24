@@ -14,6 +14,7 @@ import (
 	"sync"
 	"sync/atomic"
 	"testing"
+	"time"
 
 	"github.com/alicebob/miniredis/v2"
 	"github.com/getsentry/sentry-go"
@@ -59,6 +60,7 @@ type testServer struct {
 	mr      *miniredis.Miniredis
 	client  *redis.Client
 	store   *store.Store
+	cfg     web.Config
 	handler http.Handler
 }
 
@@ -84,8 +86,42 @@ func newTestServer(t *testing.T, save []byte, opts ...func(*web.Config)) *testSe
 	for _, opt := range opts {
 		opt(&cfg)
 	}
-	return &testServer{t: t, mr: mr, client: client, store: st,
+	return &testServer{t: t, mr: mr, client: client, store: st, cfg: cfg,
 		handler: web.New(cfg).Handler(sentry.CurrentHub())}
+}
+
+// withSentry makes ts report to a hub that records its events, and returns
+// the recorded events.
+func (ts *testServer) withSentry() func() []*sentry.Event {
+	ts.t.Helper()
+	transport := &recordingTransport{}
+	client, err := sentry.NewClient(sentry.ClientOptions{Dsn: "https://public@example.ingest.sentry.io/123", Transport: transport})
+	if err != nil {
+		ts.t.Fatal(err)
+	}
+	ts.handler = web.New(ts.cfg).Handler(sentry.NewHub(client, sentry.NewScope()))
+	return transport.sent
+}
+
+// recordingTransport keeps Sentry events instead of sending them.
+type recordingTransport struct {
+	mu     sync.Mutex
+	events []*sentry.Event
+}
+
+func (t *recordingTransport) Flush(time.Duration) bool              { return true }
+func (t *recordingTransport) FlushWithContext(context.Context) bool { return true }
+func (t *recordingTransport) Configure(sentry.ClientOptions)        {}
+func (t *recordingTransport) Close()                                {}
+func (t *recordingTransport) SendEvent(e *sentry.Event) {
+	t.mu.Lock()
+	t.events = append(t.events, e)
+	t.mu.Unlock()
+}
+func (t *recordingTransport) sent() []*sentry.Event {
+	t.mu.Lock()
+	defer t.mu.Unlock()
+	return t.events
 }
 
 // lockedRand is a seeded Shuffler that is safe for concurrent requests.

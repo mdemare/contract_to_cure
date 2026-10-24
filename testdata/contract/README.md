@@ -59,6 +59,8 @@ Responses
 - Every error body is `{success: false, status: "error", message}`, in that key
   order: guards (`check_action`, game over, Forecast, end-turn phase), schema
   failures, 400 "Invalid JSON", 401, 409 (`status: "conflict"`) and 500.
+  A 500 (Redis errors, panics) always has the message "Internal server
+  error"; the Go error goes to the log and Sentry only (cc-493).
   Errors from `check_action` (any player action outside the `player_actions`
   phase, including during `pending_discard`) are HTTP 422
   (`move_out_of_phase`, `pass_out_of_phase`, `move_pending_discard`).

@@ -139,12 +139,33 @@ func TestHealthChecksDoNotTouchRedis(t *testing.T) {
 	}
 }
 
+// A Redis error is a 500 with the generic message; the dial error goes to
+// Sentry only (cc-493).
 func TestRedisErrorIs500(t *testing.T) {
 	ts := newTestServer(t, nil)
+	events := ts.withSentry()
 	ts.mr.Close()
-	rec := ts.do(http.MethodGet, "/game_state.json", "", "")
-	if rec.Code != http.StatusInternalServerError || decodeBody(t, rec)["status"] != "error" {
-		t.Errorf("%d %s", rec.Code, rec.Body)
+	for _, tc := range []struct{ method, path string }{
+		{http.MethodGet, "/game_state.json"},
+		{http.MethodPost, "/pass"},
+	} {
+		rec := ts.do(tc.method, tc.path, "", "")
+		checkError(t, rec, http.StatusInternalServerError, "Internal server error")
+		if strings.Contains(rec.Body.String(), "dial") {
+			t.Errorf("%s: body leaks the Go error: %s", tc.path, rec.Body)
+		}
+	}
+	sent := events()
+	if len(sent) != 2 {
+		t.Fatalf("%d Sentry events, want 2", len(sent))
+	}
+	for _, e := range sent {
+		if len(e.Exception) == 0 || !strings.Contains(e.Exception[len(e.Exception)-1].Value, "dial") {
+			t.Errorf("event lacks the Redis error: %+v", e.Exception)
+		}
+		if e.Request == nil || e.Request.URL == "" {
+			t.Error("event has no request")
+		}
 	}
 }
 
@@ -154,7 +175,10 @@ func TestNestedUpdateIs500(t *testing.T) {
 		req := httptest.NewRequestWithContext(ctx, http.MethodGet, "/game_state.json", nil)
 		w := httptest.NewRecorder()
 		ts.handler.ServeHTTP(w, req)
-		checkError(t, w, http.StatusInternalServerError, store.ErrNestedUpdate.Error())
+		checkError(t, w, http.StatusInternalServerError, "Internal server error")
+		if strings.Contains(w.Body.String(), store.ErrNestedUpdate.Error()) {
+			t.Errorf("body leaks the Go error: %s", w.Body)
+		}
 		return nil
 	})
 	if err != nil {

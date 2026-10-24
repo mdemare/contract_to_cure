@@ -41,8 +41,25 @@ func wrap(w http.ResponseWriter) *statusWriter {
 	return &statusWriter{ResponseWriter: w}
 }
 
+// InternalErrorMessage is the message of every 500 body. The detail goes to
+// the log and to Sentry only (cc-493).
+const InternalErrorMessage = "Internal server error"
+
+// ReportError logs err as msg with attrs and reports it to the request's
+// Sentry hub (the one Recover put on ctx), so handled 500s reach Sentry as
+// panics do.
+func ReportError(ctx context.Context, msg string, err error, attrs ...any) {
+	slog.ErrorContext(ctx, msg, append(attrs, "error", err)...)
+	hub := sentry.GetHubFromContext(ctx)
+	if hub == nil {
+		hub = sentry.CurrentHub()
+	}
+	hub.CaptureException(err)
+}
+
 // Recover gives each request its own clone of hub and reports panics to it.
-// A panic becomes 500 {success: false, status: 'error', message}, unless the handler already started its response.
+// A panic becomes 500 {success: false, status: 'error', message:
+// InternalErrorMessage}, unless the handler already started its response.
 func Recover(hub *sentry.Hub, next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		reqHub := hub.Clone()
@@ -67,7 +84,7 @@ func Recover(hub *sentry.Hub, next http.Handler) http.Handler {
 			if sw.status != 0 {
 				return
 			}
-			writeJSON(sw, http.StatusInternalServerError, panicBody{Status: "error", Message: message})
+			writeJSON(sw, http.StatusInternalServerError, panicBody{Status: "error", Message: InternalErrorMessage})
 		}()
 		next.ServeHTTP(sw, r.WithContext(ctx))
 	})
