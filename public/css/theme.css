@@ -891,14 +891,14 @@ button:focus-visible,
 
 .cancel-btn,
 .cancel-button,
-.menu-button {
+.view-board-button {
   color: #fff;
   background: var(--ink-muted);
 }
 
 .cancel-btn:hover,
 .cancel-button:hover,
-.menu-button:hover {
+.view-board-button:hover {
   background: var(--ink);
 }
 
