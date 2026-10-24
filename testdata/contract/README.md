@@ -122,9 +122,9 @@ Game logic
   (`action_card_one_quiet_night`, `infect_cities_quiet_night`).
 
 JSON view and saves
-- `gameStatus` mixes camelCase with the snake_case fields `actions_remaining`,
-  `pending_hand_limit`, `forecast_active`, `forecast_cards` and
-  `operations_expert_move_used`. `gameOverReason` is exposed (null until the
+- `gameStatus` keys are all snake_case, like the request params (cc-492 renamed
+  `gameOver`, `gameOverReason`, `infectionRate`, `infectionRatePosition` and
+  `currentPlayerIndex`). `game_over_reason` is exposed (null until the
   game is over); `quiet_night` and the deck order are not. Hands are sorted by card type and then color. In these
   fixtures cards that tie keep their saved order, so a stable sort matches them.
 - Saves use Ruby symbol keys (`:game_status:`) and symbol values (`:city`,

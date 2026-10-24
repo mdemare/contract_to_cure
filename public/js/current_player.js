@@ -5,7 +5,7 @@ export function updateCurrentPlayer(gameState) {
   }
 
   // Find the current player based on turn index
-  const currentPlayerIndex = gameState.gameStatus?.currentPlayerIndex || 0;
+  const currentPlayerIndex = gameState.gameStatus?.current_player_index || 0;
   const currentPlayer = gameState.players[currentPlayerIndex];
 
   if (!currentPlayer || !currentPlayer.role) {

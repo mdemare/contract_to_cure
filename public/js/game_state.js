@@ -19,7 +19,7 @@ export function isDispatcher() {
   const gameState = getCurrentGameState();
   if (!gameState || !gameState.players || !gameState.gameStatus) return false;
 
-  const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
+  const currentPlayerIndex = gameState.gameStatus.current_player_index;
   const currentPlayer = gameState.players[currentPlayerIndex];
 
   return currentPlayer && currentPlayer.role &&
@@ -42,6 +42,27 @@ export async function loadCities() {
     document.querySelector('.map-container').innerHTML =
       `<div class="error-message">Failed to initialize game state: ${error.message}</div>`;
   }
+}
+
+// Servers before cc-492 sent these gameStatus keys in camelCase. A page loaded
+// from such a server may still be open during a deploy, and vice versa, so
+// copy the old names to the snake_case ones the readers use.
+// TODO: remove once every server sends snake_case.
+const LEGACY_GAME_STATUS_KEYS = {
+  gameOver: 'game_over',
+  gameOverReason: 'game_over_reason',
+  infectionRate: 'infection_rate',
+  infectionRatePosition: 'infection_rate_position',
+  currentPlayerIndex: 'current_player_index'
+};
+
+export function normalizeGameStatusKeys(gameState) {
+  const status = gameState?.gameStatus;
+  if (!status) return gameState;
+  for (const [legacy, key] of Object.entries(LEGACY_GAME_STATUS_KEYS)) {
+    if (legacy in status && !(key in status)) status[key] = status[legacy];
+  }
+  return gameState;
 }
 
 function pendingHandLimitKey(gameState, pendingHandLimit) {
@@ -100,6 +121,7 @@ export async function loadGameState(providedGameState = null, { promptPendingHan
       gameState = await response.json();
     }
 
+    normalizeGameStatusKeys(gameState);
     currentGameState = gameState;
     
     // Update authentication UI
@@ -120,7 +142,7 @@ export async function loadGameState(providedGameState = null, { promptPendingHan
     }
 
     if (showGameOver) {
-      checkGameOver(gameState, gameState.gameStatus?.gameOverReason);
+      checkGameOver(gameState, gameState.gameStatus?.game_over_reason);
     }
 
     return gameState;
@@ -148,7 +170,7 @@ export function getCurrentPlayer() {
     throw new Error('Game state not loaded or invalid');
   }
 
-  const currentPlayerIndex = currentGameState.gameStatus.currentPlayerIndex;
+  const currentPlayerIndex = currentGameState.gameStatus.current_player_index;
   const currentPlayer = currentGameState.players.find(player => player.index === currentPlayerIndex);
 
   if (!currentPlayer) {

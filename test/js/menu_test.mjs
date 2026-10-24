@@ -67,7 +67,7 @@ test('successful menu restart reloads state once and dismisses the game-over dia
 });
 
 test('menu restart conflict refreshes from the conflict state and keeps the game', async () => {
-  const persistedState = { gameStatus: { phase: 'player_actions', gameOver: true } };
+  const persistedState = { gameStatus: { phase: 'player_actions', game_over: true } };
   const loadedStates = [];
   gameOverDialog.style.display = 'flex';
   notifications.length = 0;

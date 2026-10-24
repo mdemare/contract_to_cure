@@ -34,7 +34,7 @@ export function updateShareKnowledgeButtonState() {
   if (!gameState || !shareBtn) return;
 
   // Get current player
-  const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
+  const currentPlayerIndex = gameState.gameStatus.current_player_index;
   const currentPlayer = gameState.players[currentPlayerIndex];
 
   if (!currentPlayer) return;
@@ -67,7 +67,7 @@ function getPlayersInSameLocation(gameState, location) {
 
   gameState.players.forEach((player, index) => {
     // Only include other players (not the current player)
-    if (player.location === location && index !== gameState.gameStatus.currentPlayerIndex) {
+    if (player.location === location && index !== gameState.gameStatus.current_player_index) {
       result.push({
         index: index,
         role: player.role,
@@ -240,7 +240,7 @@ export function showShareKnowledgeModal(cards, players) {
 }
 
 async function shareKnowledge(cityName, otherPlayerIndex, action) {
-  let currentPlayerIndex = getCurrentGameState().gameStatus.currentPlayerIndex;
+  let currentPlayerIndex = getCurrentGameState().gameStatus.current_player_index;
   let givingPlayerIndex, receivingPlayerIndex;
 
   if (action === 'give') {

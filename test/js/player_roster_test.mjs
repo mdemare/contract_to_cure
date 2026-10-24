@@ -97,7 +97,7 @@ function largeHand(playerIndex) {
 test('maximum-size roster keeps every complete hand visible', () => {
   const roles = ['medic', 'scientist', 'operations_expert', 'quarantine_specialist'];
   const gameState = {
-    gameStatus: { currentPlayerIndex: 2 },
+    gameStatus: { current_player_index: 2 },
     players: roles.map((role, index) => ({
       index,
       role,
@@ -142,7 +142,7 @@ test('maximum-size roster keeps every complete hand visible', () => {
 
 test('production commit hash remains outside repeated roster renders', () => {
   const gameState = {
-    gameStatus: { currentPlayerIndex: 0 },
+    gameStatus: { current_player_index: 0 },
     players: [{ index: 0, role: 'medic', location: 'Atlanta', hand: [] }]
   };
   const { listContainer, rosterContainer } = createPlayerRosterContainer('abc123');

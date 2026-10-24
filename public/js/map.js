@@ -305,7 +305,7 @@ export function prepareMapForRendering(rawMap) {
 // Add live game pieces without mutating the authoritative game-state objects.
 export function prepareMapWithGameState(rawMap, gameState) {
   const updatedMap = prepareMapForRendering(rawMap);
-  const currentPlayerIndex = gameState.gameStatus?.currentPlayerIndex;
+  const currentPlayerIndex = gameState.gameStatus?.current_player_index;
 
   for (const diseaseInfo of Object.values(gameState.diseaseCubes ?? {})) {
     for (const [cityName, cubeCount] of Object.entries(diseaseInfo?.onBoard ?? {})) {

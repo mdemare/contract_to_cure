@@ -103,10 +103,10 @@ async function checkGameOverAfterEvents(reason) {
     const currentGameState = gameStateModule.getCurrentGameState();
     
     // Check if the game is over and show dialog
-    if (currentGameState && currentGameState.gameStatus && currentGameState.gameStatus.gameOver === true) {
+    if (currentGameState && currentGameState.gameStatus && currentGameState.gameStatus.game_over === true) {
       // Brief pause before showing dialog
       await delay(300);
-      gameOverModule.checkGameOver(currentGameState, reason ?? currentGameState.gameStatus.gameOverReason);
+      gameOverModule.checkGameOver(currentGameState, reason ?? currentGameState.gameStatus.game_over_reason);
     }
   } catch (error) {
     console.error('Failed to check game over after events:', error);

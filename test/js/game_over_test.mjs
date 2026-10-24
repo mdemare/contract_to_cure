@@ -34,7 +34,7 @@ function shownDefeatReason({ outbreaks = 0, decks, diseaseCubes = {} }, reasonCo
     getElementById(id) { return (elements[id] ??= fakeElement()); }
   };
   try {
-    const gameState = { gameStatus: { gameOver: true, turn: 3, outbreaks }, diseaseCubes, decks };
+    const gameState = { gameStatus: { game_over: true, turn: 3, outbreaks }, diseaseCubes, decks };
     checkGameOver(gameState, reasonCode);
   } finally {
     globalThis.document = saved;
