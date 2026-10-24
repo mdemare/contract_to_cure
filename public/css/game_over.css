@@ -111,12 +111,12 @@
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-.menu-button {
+.view-board-button {
   background-color: #757575;
   color: white;
 }
 
-.menu-button:hover {
+.view-board-button:hover {
   background-color: #616161;
   transform: translateY(-2px);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);

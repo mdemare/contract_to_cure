@@ -103,3 +103,64 @@ test('Restart Game sends the difficulty chosen in the game-over dialog', async (
     assert.equal(reloaded, true);
   }
 });
+
+// A minimal DOM in which initGameOver builds the real dialog.
+function fakeDialogDocument() {
+  const listeners = [];
+  let overlay = null;
+  const createElement = tag => {
+    const classes = new Set();
+    return {
+      tag,
+      children: [],
+      style: {},
+      textContent: '',
+      classList: {
+        add: (...names) => names.forEach(name => classes.add(name)),
+        remove: (...names) => names.forEach(name => classes.delete(name)),
+        contains: name => classes.has(name)
+      },
+      appendChild(child) { this.children.push(child); return child; }
+    };
+  };
+  const document = {
+    createElement,
+    body: { appendChild(child) { overlay = child; return child; } },
+    addEventListener(type, listener) { if (type === 'click') listeners.push(listener); },
+    querySelector(selector) { return selector === '.game-over-overlay' ? overlay : null; },
+    click(target) { listeners.forEach(listener => listener({ target })); }
+  };
+  return { document, overlay: () => overlay };
+}
+
+function findAll(element, predicate, found = []) {
+  if (predicate(element)) found.push(element);
+  for (const child of element.children ?? []) findAll(child, predicate, found);
+  return found;
+}
+
+test('the second game-over button closes the overlay so the finished board can be viewed', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const { initGameOver } = await import('../../public/js/game_over.js');
+  const fake = fakeDialogDocument();
+  const saved = globalThis.document;
+  globalThis.document = fake.document;
+  globalThis.window = { location: { href: 'http://localhost/' } };
+  try {
+    initGameOver();
+    const overlay = fake.overlay();
+    overlay.classList.add('visible');
+    overlay.style.display = 'flex';
+
+    const buttons = findAll(overlay, el => el.tag === 'button');
+    assert.deepEqual(buttons.map(b => b.textContent), ['Restart Game', 'View Board']);
+    fake.document.click(buttons[1]);
+    t.mock.timers.tick(500);
+
+    assert.equal(overlay.classList.contains('visible'), false);
+    assert.equal(overlay.style.display, 'none');
+    assert.equal(globalThis.window.location.href, 'http://localhost/');
+  } finally {
+    globalThis.document = saved;
+  }
+});

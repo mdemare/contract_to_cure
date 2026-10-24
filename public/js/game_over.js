@@ -76,10 +76,12 @@ function createGameOverDialog() {
   // Buttons
   const buttonsContainer = createSimpleElement('div', 'game-over-buttons');
   const restartButton = createSimpleElement('button', ['game-over-button', 'restart-button'], 'Restart Game');
-  const menuButton = createSimpleElement('button', ['game-over-button', 'menu-button'], 'Main Menu');
+  // There is no separate main menu; closing the dialog shows the finished board,
+  // and the menu's New Game still starts another game.
+  const viewBoardButton = createSimpleElement('button', ['game-over-button', 'view-board-button'], 'View Board');
 
   buttonsContainer.appendChild(restartButton);
-  buttonsContainer.appendChild(menuButton);
+  buttonsContainer.appendChild(viewBoardButton);
   modal.appendChild(buttonsContainer);
 
   overlay.appendChild(modal);
@@ -93,9 +95,8 @@ function setupGameOverButtons() {
     if (event.target.classList.contains('restart-button')) {
       // Reset game state and hide dialog
       restartGame();
-    } else if (event.target.classList.contains('menu-button')) {
-      // Return to main menu
-      window.location.href = '/'; // Assuming main menu is at root
+    } else if (event.target.classList.contains('view-board-button')) {
+      hideGameOverDialog();
     }
   });
 }
