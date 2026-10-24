@@ -1,3 +1,5 @@
+import { difficultyLabel, gameDifficulty } from './difficulty.js';
+
 const MAX_ACTIONS = 4;
 const MAX_OUTBREAKS = 8;
 const MAX_CUBES = 24;
@@ -119,6 +121,9 @@ export function updateGameStatus(gameState) {
 
   const phase = document.getElementById('phase-status');
   if (phase) phase.textContent = formatPhase(status.phase);
+
+  const difficulty = document.getElementById('difficulty-status');
+  if (difficulty) difficulty.textContent = difficultyLabel(gameDifficulty(gameState));
 
   const playerCards = document.getElementById('player-cards');
   if (playerCards && gameState.decks?.playerDeck !== undefined) {

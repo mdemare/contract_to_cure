@@ -311,6 +311,8 @@ func TestReset(t *testing.T) {
 		{"keeps heroic", game.Heroic, "", game.Heroic, 6},
 		{"keeps introductory", game.Introductory, "", game.Introductory, 4},
 		{"keeps normal", game.Normal, "", game.Normal, 5},
+		{"sets introductory", game.Heroic, game.Introductory, game.Introductory, 4},
+		{"sets normal", game.Heroic, game.Normal, game.Normal, 5},
 		{"sets heroic", game.Normal, game.Heroic, game.Heroic, 6},
 	}
 	m := loadMap(t)

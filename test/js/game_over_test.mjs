@@ -6,7 +6,7 @@ globalThis.document = {
   querySelector() { return null; }
 };
 
-const { checkGameOver, defeatReasonText } = await import('../../public/js/game_over.js');
+const { checkGameOver, defeatReasonText, restartGame } = await import('../../public/js/game_over.js');
 
 test('end-turn game-over reasons become defeat messages', () => {
   assert.equal(defeatReasonText('no_player_cards'), 'You ran out of player cards.');
@@ -27,6 +27,11 @@ function fakeElement() {
 // Shows the dialog for a lost game with the given JSON fields and reason
 // code, and returns the defeat reason it displays.
 function shownDefeatReason({ outbreaks = 0, decks, diseaseCubes = {} }, reasonCode) {
+  return showDialog({ outbreaks, decks, diseaseCubes }, reasonCode)['.game-over-reason'].textContent;
+}
+
+// Shows the dialog for a lost game and returns the elements it touched.
+function showDialog({ outbreaks = 0, decks, diseaseCubes = {}, difficulty_level }, reasonCode) {
   const elements = {};
   const saved = globalThis.document;
   globalThis.document = {
@@ -34,12 +39,12 @@ function shownDefeatReason({ outbreaks = 0, decks, diseaseCubes = {} }, reasonCo
     getElementById(id) { return (elements[id] ??= fakeElement()); }
   };
   try {
-    const gameState = { gameStatus: { game_over: true, turn: 3, outbreaks }, diseaseCubes, decks };
+    const gameState = { gameStatus: { game_over: true, turn: 3, outbreaks, difficulty_level }, diseaseCubes, decks };
     checkGameOver(gameState, reasonCode);
   } finally {
     globalThis.document = saved;
   }
-  return elements['.game-over-reason'].textContent;
+  return elements;
 }
 
 test('a known reason code becomes the defeat message', () => {
@@ -58,4 +63,43 @@ test('an unknown reason code otherwise shows the generic defeat message', () => 
   };
   assert.equal(shownDefeatReason(state, 'mystery'), 'The pandemic spread beyond control.');
   assert.equal(shownDefeatReason(state, null), 'The pandemic spread beyond control.');
+});
+
+test('the game-over dialog offers the current difficulty for the next game', () => {
+  for (const level of ['introductory', 'normal', 'heroic']) {
+    const elements = showDialog({ difficulty_level: level }, 'no_cubes');
+    assert.equal(elements['.game-over-overlay .difficulty-select'].value, level);
+  }
+  assert.equal(showDialog({}, 'no_cubes')['.game-over-overlay .difficulty-select'].value, 'heroic');
+});
+
+test('Restart Game sends the difficulty chosen in the game-over dialog', async () => {
+  for (const difficulty of ['introductory', 'normal', 'heroic']) {
+    const select = { value: difficulty };
+    const saved = globalThis.document;
+    globalThis.document = {
+      querySelector(selector) {
+        if (selector === '.game-over-overlay .difficulty-select') return select;
+        if (selector === 'meta[name="csrf-token"]') return { getAttribute: () => 'csrf-token' };
+        return null;
+      }
+    };
+    let request;
+    let reloaded = false;
+    globalThis.window = { location: { reload() { reloaded = true; } } };
+    globalThis.fetch = async (url, options) => {
+      request = { url, options };
+      return { ok: true, status: 200, async json() { return { success: true, game_state: {} }; } };
+    };
+    try {
+      await restartGame();
+    } finally {
+      globalThis.document = saved;
+    }
+
+    assert.equal(request.url, '/restart_game');
+    assert.equal(request.options.method, 'POST');
+    assert.deepEqual(JSON.parse(request.options.body), { difficulty_level: difficulty });
+    assert.equal(reloaded, true);
+  }
 });

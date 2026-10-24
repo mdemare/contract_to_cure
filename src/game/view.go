@@ -32,6 +32,7 @@ type StatusView struct {
 	ForecastActive           bool              `json:"forecast_active"`
 	ForecastCards            []string          `json:"forecast_cards"`
 	OperationsExpertMoveUsed bool              `json:"operations_expert_move_used"`
+	DifficultyLevel          Difficulty        `json:"difficulty_level"`
 }
 
 // DiseaseCubesView is diseaseCubes: an object keyed by color, in Colors order.
@@ -124,6 +125,7 @@ func (g *GameState) statusView() StatusView {
 		ForecastActive:           g.ForecastActive,
 		ForecastCards:            g.ForecastCards,
 		OperationsExpertMoveUsed: g.OperationsExpertMoveUsed,
+		DifficultyLevel:          g.DifficultyLevel,
 	}
 }
 

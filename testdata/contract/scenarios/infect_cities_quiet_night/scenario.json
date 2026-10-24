@@ -42,7 +42,8 @@
           "current_player_index": 1,
           "forecast_active": false,
           "forecast_cards": null,
-          "operations_expert_move_used": false
+          "operations_expert_move_used": false,
+          "difficulty_level": "normal"
         },
         "diseaseCubes": {
           "blue": {

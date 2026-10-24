@@ -127,7 +127,7 @@ JSON view and saves
 - `gameStatus` keys are all snake_case, like the request params (cc-492 renamed
   `gameOver`, `gameOverReason`, `infectionRate`, `infectionRatePosition` and
   `currentPlayerIndex`). `game_over_reason` is exposed (null until the
-  game is over); `quiet_night` and the deck order are not. Hands are sorted by card type and then color. In these
+  game is over), and so is `difficulty_level`, last (cc-461); `quiet_night` and the deck order are not. Hands are sorted by card type and then color. In these
   fixtures cards that tie keep their saved order, so a stable sort matches them.
 - Saves use Ruby symbol keys (`:game_status:`) and symbol values (`:city`,
   `:red`). `retrieved: true` is written only for retrieved cards.

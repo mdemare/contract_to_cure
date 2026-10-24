@@ -177,3 +177,10 @@
     width: 100%;
   }
 }
+
+/* Difficulty of the next game */
+.game-over-modal .difficulty-choice {
+  display: block;
+  margin-bottom: 20px;
+  font-weight: bold;
+}
