@@ -27,7 +27,7 @@ export function updatePlayerHand(gameState) {
   // Get current player
   if (!gameState || !gameState.gameStatus) return;
 
-  const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
+  const currentPlayerIndex = gameState.gameStatus.current_player_index;
   const currentPlayer = gameState.players[currentPlayerIndex];
 
   if (!currentPlayer || !currentPlayer.hand) return;

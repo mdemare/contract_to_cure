@@ -34,7 +34,7 @@ export function createPlayerRosterContainer(gitHashData) {
 export function renderPlayerRoster(container, gameState) {
   container.innerHTML = '';
 
-  const currentPlayerIndex = gameState.gameStatus?.currentPlayerIndex ?? 0;
+  const currentPlayerIndex = gameState.gameStatus?.current_player_index ?? 0;
 
   gameState.players.forEach((player, rosterIndex) => {
     if (!player || !player.role) return;

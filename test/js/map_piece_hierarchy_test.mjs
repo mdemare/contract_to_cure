@@ -96,7 +96,7 @@ test('map presentation identifies the current pawn and city without mutating pla
     { index: 3, role: 'researcher', location: 'Paris' }
   ];
   const gameState = {
-    gameStatus: { currentPlayerIndex: 2 },
+    gameStatus: { current_player_index: 2 },
     players,
     diseaseCubes: { blue: { onBoard: { Atlanta: 3 } } },
     researchStations: { locations: ['Atlanta'] }
@@ -124,7 +124,7 @@ function rectanglesOverlap(left, right) {
 test('dense city labels avoid labels, markers, and live pieces', async () => {
   const cityMap = JSON.parse(await readFile(new URL('../../public/cities.json', import.meta.url)));
   const preparedMap = prepareMapWithGameState(cityMap, {
-    gameStatus: { currentPlayerIndex: 0 },
+    gameStatus: { current_player_index: 0 },
     players: [
       { index: 0, role: 'operations_expert', location: 'Kolkata' },
       { index: 1, role: 'contingency_planner', location: 'Kolkata' }

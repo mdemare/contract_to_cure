@@ -120,7 +120,7 @@ export function updatePlayerPanel(providedGameState) {
     return;
   }
 
-  const currentPlayerIndex = gameState.gameStatus?.currentPlayerIndex ?? 0;
+  const currentPlayerIndex = gameState.gameStatus?.current_player_index ?? 0;
   const currentPlayerChanged = currentPlayerIndex !== lastCurrentPlayerIndex;
 
   renderPlayerRoster(playerRoster, gameState);

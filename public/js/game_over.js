@@ -144,8 +144,8 @@ export function defeatReasonText(reason) {
 export function checkGameOver(gameState, reason = null) {
   if (!gameState) return;
 
-  // If gameOver flag is true, show the game over dialog
-  if (gameState.gameStatus && gameState.gameStatus.gameOver === true) {
+  // If the game_over flag is true, show the game over dialog
+  if (gameState.gameStatus && gameState.gameStatus.game_over === true) {
     showGameOverDialog(gameState, reason);
   }
 }

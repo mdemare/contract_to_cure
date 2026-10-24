@@ -375,7 +375,7 @@ func TestRestartGameReturnsGameState(t *testing.T) {
 	if !ok {
 		t.Fatalf("no game_state: %s", rec.Body)
 	}
-	if status := state["gameStatus"].(map[string]any); status["gameOver"] != false || status["phase"] != "player_actions" {
+	if status := state["gameStatus"].(map[string]any); status["game_over"] != false || status["phase"] != "player_actions" {
 		t.Errorf("gameStatus = %v", status)
 	}
 	if _, ok := state["current_user"]; ok {

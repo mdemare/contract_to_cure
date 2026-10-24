@@ -70,8 +70,8 @@ function diseaseCubes(curedColors = []) {
 function finishedState({ reason, cured = [] }) {
   return {
     gameStatus: {
-      phase: 'infect_cities', currentPlayerIndex: 0, turn: 7, outbreaks: 3,
-      gameOver: true, gameOverReason: reason
+      phase: 'infect_cities', current_player_index: 0, turn: 7, outbreaks: 3,
+      game_over: true, game_over_reason: reason
     },
     players: [{ index: 0, role: 'medic', location: 'Atlanta', hand: [] }],
     diseaseCubes: diseaseCubes(cured)
@@ -132,9 +132,29 @@ test('a game-over state can be loaded without the overlay until end-turn animati
 test('an unfinished game shows no overlay', async () => {
   resetOverlay();
   const state = finishedState({ reason: null });
-  state.gameStatus.gameOver = false;
+  state.gameStatus.game_over = false;
 
   await gameState.loadGameState(state);
 
   assert.equal(overlay.classList.contains('visible'), false);
+});
+
+test('a state with the camelCase gameStatus keys from before cc-492 still loads', async () => {
+  resetOverlay();
+  globalThis.fetch = async () => jsonResponse(200, {
+    gameStatus: {
+      phase: 'infect_cities', currentPlayerIndex: 0, turn: 7, outbreaks: 3,
+      gameOver: true, gameOverReason: 'no_cubes', infectionRate: 2, infectionRatePosition: 0
+    },
+    players: [{ index: 0, role: 'medic', location: 'Atlanta', hand: [] }],
+    diseaseCubes: diseaseCubes()
+  });
+
+  const loaded = await gameState.loadGameState();
+
+  assert.equal(gameState.getCurrentPlayer().role, 'medic');
+  assert.equal(loaded.gameStatus.infection_rate, 2);
+  assert.equal(loaded.gameStatus.infection_rate_position, 0);
+  assert.equal(overlay.classList.contains('visible'), true);
+  assert.equal(dialogElements['.game-over-reason'].textContent, 'You ran out of disease cubes.');
 });

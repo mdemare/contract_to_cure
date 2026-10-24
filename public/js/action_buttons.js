@@ -91,7 +91,7 @@ export function updateButtonStates() {
   if (!gameState) return;
 
   // Determine which actions are available based on game state
-  const currentPlayerIndex = gameState.gameStatus.currentPlayerIndex;
+  const currentPlayerIndex = gameState.gameStatus.current_player_index;
   const currentPlayer = gameState.players[currentPlayerIndex];
   const actionsRemaining = gameState.gameStatus.actions_remaining;
   const phase = gameState.gameStatus.phase

@@ -74,7 +74,7 @@ func TestViewEmptyValues(t *testing.T) {
 	got := string(marshal(t, g))
 
 	for _, want := range []string{
-		`"gameOverReason":null`,
+		`"game_over_reason":null`,
 		`"forecast_cards":null`,
 		`"onBoard":{}`,
 		`"researchStations":{"available":6,"locations":[]}`,
@@ -92,7 +92,7 @@ func TestViewEmptyValues(t *testing.T) {
 	g.ForecastCards = []string{}
 	g.GameOver, g.GameOverReason = true, game.GameOverReason("victory")
 	got = string(marshal(t, g))
-	for _, want := range []string{`"forecast_cards":[]`, `"gameOver":true,"gameOverReason":"victory"`} {
+	for _, want := range []string{`"forecast_cards":[]`, `"game_over":true,"game_over_reason":"victory"`} {
 		if !strings.Contains(got, want) {
 			t.Errorf("view lacks %s:\n%s", want, got)
 		}

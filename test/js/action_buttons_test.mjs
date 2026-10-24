@@ -50,7 +50,7 @@ const [actionButtons, gameStateModule] = await Promise.all([
 function stateInPhase(phase) {
   return {
     players: [{ role: 'medic', location: 'Atlanta', hand: [] }],
-    gameStatus: { currentPlayerIndex: 0, actions_remaining: 0, phase },
+    gameStatus: { current_player_index: 0, actions_remaining: 0, phase },
     researchStations: { locations: ['Atlanta'], available: 5 },
     decks: { discardPile: [] }
   };

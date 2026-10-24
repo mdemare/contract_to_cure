@@ -69,11 +69,11 @@ const [utils, gameState, actionCardState, actionCardRequests, selectCards, gameO
 ]);
 
 const staleState = {
-  gameStatus: { phase: 'player_actions', currentPlayerIndex: 0, actionsRemaining: 4 },
+  gameStatus: { phase: 'player_actions', current_player_index: 0, actionsRemaining: 4 },
   players: [{ index: 0, role: 'medic', location: 'Atlanta', hand: [] }]
 };
 const persistedState = {
-  gameStatus: { phase: 'player_actions', currentPlayerIndex: 0, actionsRemaining: 3 },
+  gameStatus: { phase: 'player_actions', current_player_index: 0, actionsRemaining: 3 },
   players: [{ index: 0, role: 'medic', location: 'Chicago', hand: [] }]
 };
 
@@ -320,7 +320,7 @@ test('game-over restart conflict refreshes state and restores the dialog without
   globalThis.window.location = { reload() { reloaded = true; } };
   overlay.classList.add('visible');
   const overState = structuredClone(persistedState);
-  overState.gameStatus.gameOver = true;
+  overState.gameStatus.game_over = true;
   mockFetch({ '/restart_game': () => jsonResponse(409, conflictBody(overState)) });
 
   await gameOver.restartGame();

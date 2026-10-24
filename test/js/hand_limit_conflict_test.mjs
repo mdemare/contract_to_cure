@@ -109,7 +109,7 @@ function pendingState(hand, discardCount = hand.length - 7) {
   return {
     gameStatus: {
       phase: 'pending_discard',
-      currentPlayerIndex: 0,
+      current_player_index: 0,
       pending_hand_limit: { player_index: 0, discard_count: discardCount, return_phase: 'draw_cards' }
     },
     players: [{ index: 0, role: 'medic', location: 'Atlanta', hand: hand.map((card, index) => ({ ...card, index })) }]
@@ -117,7 +117,7 @@ function pendingState(hand, discardCount = hand.length - 7) {
 }
 
 const resolvedState = {
-  gameStatus: { phase: 'draw_cards', currentPlayerIndex: 0, pending_hand_limit: null },
+  gameStatus: { phase: 'draw_cards', current_player_index: 0, pending_hand_limit: null },
   players: [{ index: 0, role: 'medic', location: 'Atlanta', hand: eightCards.slice(1) }]
 };
 

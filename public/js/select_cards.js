@@ -113,7 +113,7 @@ export function showHandSelectionModal(count, cardIndices, completionFunction, {
   const gameState = getCurrentGameState();
 
   // Use specified player index or default to current player
-  const index = playerIndex !== undefined ? playerIndex : gameState.gameStatus.currentPlayerIndex;
+  const index = playerIndex !== undefined ? playerIndex : gameState.gameStatus.current_player_index;
   const player = gameState.players[index];
 
   if (!player || !player.hand || !Array.isArray(player.hand)) {

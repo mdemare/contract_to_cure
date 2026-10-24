@@ -16,18 +16,19 @@ type View struct {
 	Decks            DecksView        `json:"decks"`
 }
 
-// StatusView is gameStatus, with Rails' mix of camelCase and snake_case keys.
+// StatusView is gameStatus. Its keys are snake_case, like the request params
+// (cc-492); Rails mixed in camelCase ones.
 type StatusView struct {
 	ActionsRemaining         int               `json:"actions_remaining"`
 	Phase                    Phase             `json:"phase"`
 	PendingHandLimit         *PendingHandLimit `json:"pending_hand_limit"`
 	Turn                     int               `json:"turn"`
-	GameOver                 bool              `json:"gameOver"`
-	GameOverReason           *GameOverReason   `json:"gameOverReason"`
+	GameOver                 bool              `json:"game_over"`
+	GameOverReason           *GameOverReason   `json:"game_over_reason"`
 	Outbreaks                int               `json:"outbreaks"`
-	InfectionRate            int               `json:"infectionRate"`
-	InfectionRatePosition    int               `json:"infectionRatePosition"`
-	CurrentPlayerIndex       int               `json:"currentPlayerIndex"`
+	InfectionRate            int               `json:"infection_rate"`
+	InfectionRatePosition    int               `json:"infection_rate_position"`
+	CurrentPlayerIndex       int               `json:"current_player_index"`
 	ForecastActive           bool              `json:"forecast_active"`
 	ForecastCards            []string          `json:"forecast_cards"`
 	OperationsExpertMoveUsed bool              `json:"operations_expert_move_used"`
