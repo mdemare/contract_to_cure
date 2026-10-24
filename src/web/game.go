@@ -9,6 +9,7 @@ import (
 	"net/http"
 
 	"github.com/mdemare/contract_to_cure/src/game"
+	"github.com/mdemare/contract_to_cure/src/observe"
 	"github.com/mdemare/contract_to_cure/src/store"
 )
 
@@ -60,7 +61,7 @@ func (c *call) validate(sc schema) (values, *reply) {
 	case errors.Is(err, errBadRequest):
 		return nil, &reply{status: http.StatusBadRequest}
 	case err != nil:
-		rep := jsonReply(http.StatusInternalServerError, errorBody(err.Error()))
+		rep := internalError(c.r, "reading params", err)
 		return nil, &rep
 	}
 	v, msg := sc.validate(params)
@@ -150,8 +151,8 @@ func (s *Server) gameHandler(fn func(*call) reply) http.Handler {
 			slog.InfoContext(r.Context(), "Rejected stale game update", "error", err)
 			s.renderConflict(w, r)
 		case err != nil:
-			slog.ErrorContext(r.Context(), "game request failed", "method", r.Method, "path", r.URL.Path, "error", err)
-			writeJSON(w, http.StatusInternalServerError, errorBody(err.Error()))
+			rep := internalError(r, "game request failed", err)
+			writeJSON(w, rep.status, rep.body)
 		case rep.html != nil:
 			w.Header().Set("Content-Type", "text/html; charset=utf-8")
 			w.WriteHeader(rep.status)
@@ -190,6 +191,13 @@ type errorResponse struct {
 	Success bool   `json:"success"`
 	Status  string `json:"status"`
 	Message string `json:"message"`
+}
+
+// internalError logs err and reports it to Sentry, and replies 500 with the
+// generic message: the Go error text is not sent to the client (cc-493).
+func internalError(r *http.Request, msg string, err error) reply {
+	observe.ReportError(r.Context(), msg, err, "method", r.Method, "path", r.URL.Path)
+	return jsonReply(http.StatusInternalServerError, errorBody(observe.InternalErrorMessage))
 }
 
 func errorBody(message string) errorResponse {
@@ -304,7 +312,7 @@ func (c *call) restartGame() reply {
 		return *rep
 	}
 	if err := c.g.Reset(c.s.cfg.Map, game.Difficulty(v.string("difficulty_level")), c.s.cfg.RNG); err != nil {
-		return jsonReply(http.StatusInternalServerError, errorBody(err.Error()))
+		return internalError(c.r, "restarting game", err)
 	}
 	return reply{
 		status: http.StatusOK,

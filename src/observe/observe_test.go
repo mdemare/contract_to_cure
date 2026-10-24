@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -235,7 +236,7 @@ func TestPanicIsReportedAndAnswered500(t *testing.T) {
 	if rec.Code != http.StatusInternalServerError {
 		t.Fatalf("status %d", rec.Code)
 	}
-	if got := strings.TrimSpace(rec.Body.String()); got != `{"success":false,"status":"error","message":"boom"}` {
+	if got := strings.TrimSpace(rec.Body.String()); got != `{"success":false,"status":"error","message":"Internal server error"}` {
 		t.Errorf("body %s", got)
 	}
 	if ct := rec.Header().Get("Content-Type"); !strings.HasPrefix(ct, "application/json") {
@@ -249,10 +250,40 @@ func TestPanicIsReportedAndAnswered500(t *testing.T) {
 		t.Error("event has no request")
 	}
 	lines := logLines(t, logs)
+	if len(lines) < 2 || lines[len(lines)-2]["msg"] != "panic in handler" || lines[len(lines)-2]["error"] != "boom" {
+		t.Errorf("panic log %v", lines)
+	}
 	last := lines[len(lines)-1]
 	if last["msg"] != "request" || last["status"] != float64(500) || last["outcome"] != "error" {
 		t.Errorf("request log %v", last)
 	}
+}
+
+func TestReportErrorLogsAndReportsToRequestHub(t *testing.T) {
+	logs := captureLogs(t)
+	hub, transport := newHub(t, Config{DSN: testDSN})
+	h := Recover(hub, http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		ReportError(r.Context(), "request failed", errors.New("dial tcp: refused"), "path", r.URL.Path)
+	}))
+	serve(h, "GET", "/game_state.json")
+	events := transport.sent()
+	if len(events) != 1 || len(events[0].Exception) == 0 || events[0].Exception[0].Value != "dial tcp: refused" {
+		t.Fatalf("events %+v", events)
+	}
+	if events[0].Request == nil || !strings.HasSuffix(events[0].Request.URL, "/game_state.json") {
+		t.Errorf("event request %+v", events[0].Request)
+	}
+	lines := logLines(t, logs)
+	if len(lines) != 1 || lines[0]["msg"] != "request failed" || lines[0]["error"] != "dial tcp: refused" || lines[0]["path"] != "/game_state.json" || lines[0]["level"] != "ERROR" {
+		t.Errorf("log %v", lines)
+	}
+}
+
+// Without a hub on the context, ReportError falls back to the global hub and
+// does not panic.
+func TestReportErrorWithoutRequestHub(t *testing.T) {
+	captureLogs(t)
+	ReportError(context.Background(), "failed", errors.New("x"))
 }
 
 func TestPanicAfterResponseStartedKeepsResponse(t *testing.T) {
