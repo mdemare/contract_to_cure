@@ -1,7 +1,7 @@
 {
   "name": "share_knowledge_hand_limit",
   "description": "The receiver goes over seven cards: pending discard",
-  "save_before": "states/share_hand_limit.yaml",
+  "save_before": "states/share_hand_limit.json",
   "request": {
     "method": "POST",
     "path": "/share_knowledge",
@@ -255,5 +255,5 @@
       }
     }
   },
-  "save_after": "scenarios/share_knowledge_hand_limit/after.yaml"
+  "save_after": "scenarios/share_knowledge_hand_limit/after.json"
 }

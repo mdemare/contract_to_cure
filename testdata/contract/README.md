@@ -8,7 +8,7 @@ the regression suite for the Go backend that replaced it (epic cc-414).
 
 Rails was removed from the repository in cc-428, so nothing can re-record these
 files any more: they are maintained by hand, from the Go side. After an intended
-behavior change, edit the affected `scenario.json`, `after.yaml` and state files
+behavior change, edit the affected `scenario.json`, `after.json` and state files
 (the Go encoder, `GameState.EncodeSave`, writes the save format byte for byte),
 update the scenario table and quirk list below, and review the diff: it is the
 record of what the change does to the API. To add a scenario, add a
@@ -16,10 +16,17 @@ record of what the change does to the API. To add a scenario, add a
 
 ## Layout
 
-- `states/<name>.yaml`: saved games, byte for byte as they are stored in Redis.
-  They were built without randomness (fixed roles, hands, decks and cubes) by the
-  Rails fixture builder, which is in git history (`test/contract_fixtures.rb`,
-  removed in cc-428).
+- `states/<name>.json`: saved games, byte for byte as they are stored in Redis
+  (versioned JSON, `{"version": 2, ...}`, since cc-490). They were built without
+  randomness (fixed roles, hands, decks and cubes) by the Rails fixture builder,
+  which is in git history (`test/contract_fixtures.rb`, removed in cc-428), and
+  converted from Rails' YAML in cc-490.
+- `states/<name>.yaml`: legacy saves in the Ruby/Psych YAML that Rails and Go
+  wrote before cc-490 (version 1, no stamp). They are only decoded, to pin that
+  such saves still load. `base`, `pending_discard` and
+  `contingency_planner_retrieved` must decode to the same game as their JSON
+  twins (`TestLegacyYAMLFixturesDecodeLikeTheirJSONTwins`); `legacy_save` is
+  older still (see below) and has no twin.
 - `scenarios/<name>/scenario.json`: one request and its response.
   - `save_before`: the state that is in Redis when the request starts.
   - `concurrent_save` (only in `move_conflict`): a save that another request
@@ -28,8 +35,8 @@ record of what the change does to the API. To add a scenario, add a
     means the request is sent with no body.
   - `response`: HTTP `status`, `content_type` and the parsed JSON `body`.
   - `save_after`: `"unchanged"` when Redis still holds `save_before` byte for byte.
-    Otherwise it is the path of the `after.yaml` that Redis holds after the request.
-- `scenarios/<name>/after.yaml`: the save after the request, when it changed.
+    Otherwise it is the path of the `after.json` that Redis holds after the request.
+- `scenarios/<name>/after.json`: the save after the request, when it changed.
 
 ## Replaying a scenario
 
@@ -38,13 +45,13 @@ record of what the change does to the API. To add a scenario, add a
    request has first read the game.
 3. Send the request. Compare the status, the content type and the body. Key order
    matters, and so do `null` values versus missing keys.
-4. Compare Redis with `save_after`. The save format is still the one Rails
-   wrote (cc-376), so compare the YAML exactly. If the save format changes later,
-   compare the decoded values instead.
+4. Compare Redis with `save_after` byte for byte. Every write is versioned JSON,
+   so a request on a YAML save writes JSON (`move_legacy_save`), while a
+   read-only one leaves the YAML as it is (`state_legacy_save`).
 
 The Rails recorder seeded Ruby's RNG with `20261013` before each request. Only the
 three `restart_game` scenarios with a 200 response depend on it: they deal a new
-random game, which Go's RNG cannot reproduce, so for those compare the shape of `after.yaml` (deck sizes, epidemic count
+random game, which Go's RNG cannot reproduce, so for those compare the shape of `after.json` (deck sizes, epidemic count
 for the difficulty, 9 infected cities, 4 players with hands), not its contents.
 Every other scenario is fully deterministic.
 
@@ -129,8 +136,11 @@ JSON view and saves
   `currentPlayerIndex`). `game_over_reason` is exposed (null until the
   game is over), and so is `difficulty_level`, last (cc-461); `quiet_night` and the deck order are not. Hands are sorted by card type and then color. In these
   fixtures cards that tie keep their saved order, so a stable sort matches them.
-- Saves use Ruby symbol keys (`:game_status:`) and symbol values (`:city`,
-  `:red`). `retrieved: true` is written only for retrieved cards.
+- Saves are versioned JSON (`{"version": 2, "game_status": {...}, ...}`) with the
+  fields, layout and order of the Ruby YAML they replaced; its symbol values
+  (`:city`, `:red`) are plain strings. `"retrieved": true` is written only for
+  retrieved cards. YAML saves (symbol keys such as `:game_status:`) are still
+  read.
 - An older save without `forecast_active`, `forecast_cards`,
   `operations_expert_move_used` or `difficulty_level` loads with `false`/`nil`
   defaults and the configured default difficulty (`heroic`). A read-only request
@@ -306,8 +316,8 @@ JSON view and saves
 
 | Scenario | Starting save | What it pins down |
 |---|---|---|
-| `restart_game` | `base` | New random game, same difficulty (after.yaml depends on the Ruby RNG) |
-| `restart_game_difficulty` | `base` | New random game with a new difficulty (after.yaml depends on the Ruby RNG) |
+| `restart_game` | `base` | New random game, same difficulty (after.json depends on the Ruby RNG) |
+| `restart_game_difficulty` | `base` | New random game with a new difficulty (after.json depends on the Ruby RNG) |
 | `restart_game_invalid_difficulty` | `base` | Schema failure |
 | `restart_game_forecast_active` | `forecast_active` | Even restart is blocked by an unfinished Forecast |
-| `restart_game_after_game_over` | `game_over_infect_phase` | Restart is the one request a finished game accepts (after.yaml depends on the Ruby RNG) |
+| `restart_game_after_game_over` | `game_over_infect_phase` | Restart is the one request a finished game accepts (after.json depends on the Ruby RNG) |

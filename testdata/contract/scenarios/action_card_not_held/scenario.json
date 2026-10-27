@@ -1,7 +1,7 @@
 {
   "name": "action_card_not_held",
   "description": "Nobody holds the card",
-  "save_before": "states/base.yaml",
+  "save_before": "states/base.json",
   "request": {
     "method": "POST",
     "path": "/action_card",

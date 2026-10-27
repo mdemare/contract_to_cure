@@ -1,8 +1,8 @@
 {
   "name": "move_conflict",
   "description": "Another request commits first: 409 with the current game state",
-  "save_before": "states/base.yaml",
-  "concurrent_save": "states/base_after_concurrent_move.yaml",
+  "save_before": "states/base.json",
+  "concurrent_save": "states/base_after_concurrent_move.json",
   "request": {
     "method": "POST",
     "path": "/move",
@@ -215,5 +215,5 @@
       }
     }
   },
-  "save_after": "scenarios/move_conflict/after.yaml"
+  "save_after": "scenarios/move_conflict/after.json"
 }

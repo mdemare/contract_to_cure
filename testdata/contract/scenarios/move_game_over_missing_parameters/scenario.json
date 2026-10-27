@@ -1,7 +1,7 @@
 {
   "name": "move_game_over_missing_parameters",
   "description": "The game-over check comes before parameter validation",
-  "save_before": "states/game_over_victory.yaml",
+  "save_before": "states/game_over_victory.json",
   "request": {
     "method": "POST",
     "path": "/move",

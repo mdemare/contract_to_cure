@@ -1,7 +1,7 @@
 {
   "name": "share_knowledge_missing_parameters",
   "description": "Schema failure",
-  "save_before": "states/base.yaml",
+  "save_before": "states/base.json",
   "request": {
     "method": "POST",
     "path": "/share_knowledge",

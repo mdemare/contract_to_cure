@@ -1,7 +1,7 @@
 {
   "name": "draw_cards_epidemic",
   "description": "Epidemic: infection rate, bottom card with outbreak, intensify",
-  "save_before": "states/draw_phase_epidemic.yaml",
+  "save_before": "states/draw_phase_epidemic.json",
   "request": {
     "method": "POST",
     "path": "/draw_cards",
@@ -236,5 +236,5 @@
       }
     }
   },
-  "save_after": "scenarios/draw_cards_epidemic/after.yaml"
+  "save_after": "scenarios/draw_cards_epidemic/after.json"
 }

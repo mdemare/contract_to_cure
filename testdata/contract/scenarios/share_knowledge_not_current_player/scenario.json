@@ -1,7 +1,7 @@
 {
   "name": "share_knowledge_not_current_player",
   "description": "Neither player is the current player: 422 (cc-441)",
-  "save_before": "states/others_share_city.yaml",
+  "save_before": "states/others_share_city.json",
   "request": {
     "method": "POST",
     "path": "/share_knowledge",

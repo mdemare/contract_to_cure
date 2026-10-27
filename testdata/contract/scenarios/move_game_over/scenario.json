@@ -1,7 +1,7 @@
 {
   "name": "move_game_over",
   "description": "Game over (victory, phase still player_actions): 422 {status, message}, nothing changes",
-  "save_before": "states/game_over_victory.yaml",
+  "save_before": "states/game_over_victory.json",
   "request": {
     "method": "POST",
     "path": "/move",

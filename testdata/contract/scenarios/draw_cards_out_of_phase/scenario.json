@@ -1,7 +1,7 @@
 {
   "name": "draw_cards_out_of_phase",
   "description": "Wrong phase",
-  "save_before": "states/base.yaml",
+  "save_before": "states/base.json",
   "request": {
     "method": "POST",
     "path": "/draw_cards",

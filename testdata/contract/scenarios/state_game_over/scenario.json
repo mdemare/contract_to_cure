@@ -1,7 +1,7 @@
 {
   "name": "state_game_over",
   "description": "A finished game can still be read",
-  "save_before": "states/game_over_victory.yaml",
+  "save_before": "states/game_over_victory.json",
   "request": {
     "method": "GET",
     "path": "/game_state.json",

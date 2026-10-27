@@ -1,7 +1,7 @@
 {
   "name": "draw_cards",
   "description": "Draw two city cards",
-  "save_before": "states/draw_phase.yaml",
+  "save_before": "states/draw_phase.json",
   "request": {
     "method": "POST",
     "path": "/draw_cards",
@@ -248,5 +248,5 @@
       }
     }
   },
-  "save_after": "scenarios/draw_cards/after.yaml"
+  "save_after": "scenarios/draw_cards/after.json"
 }

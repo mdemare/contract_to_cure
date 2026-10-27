@@ -10,7 +10,7 @@ import (
 
 // TestParamsLikeRails pins how request params are read, coerced and
 // validated. Every row was recorded from the Rails app (GameRequestSchemas
-// with dry-schema Params) on states/base.yaml for cc-422.
+// with dry-schema Params) on states/base.json for cc-422.
 func TestParamsLikeRails(t *testing.T) {
 	const (
 		jsonCT  = "application/json"
@@ -81,7 +81,7 @@ func TestParamsLikeRails(t *testing.T) {
 		{"unexpected keys are ignored", "/move", jsonCT, `{"player_index":0,"destination":"Bangkok","extra":[1]}`, 200, moved},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
-			ts := newTestServer(t, readFixture(t, "states/base.yaml"))
+			ts := newTestServer(t, readFixture(t, "states/base.json"))
 			rec := ts.do(http.MethodPost, tc.path, tc.contentType, tc.body)
 			if rec.Code != tc.status {
 				t.Errorf("status %d, want %d: %s", rec.Code, tc.status, rec.Body)
@@ -98,7 +98,7 @@ func TestParamsLikeRails(t *testing.T) {
 
 // A form or query string that does not parse is a 400 with no body.
 func TestUnparsableQueryIsBadRequest(t *testing.T) {
-	ts := newTestServer(t, readFixture(t, "states/base.yaml"))
+	ts := newTestServer(t, readFixture(t, "states/base.json"))
 	rec := ts.do(http.MethodPost, "/move?player_index=%zz", "", "")
 	if rec.Code != http.StatusBadRequest || rec.Body.Len() != 0 {
 		t.Errorf("%d %q", rec.Code, rec.Body)

@@ -1,7 +1,7 @@
 {
   "name": "retrieve",
   "description": "Contingency Planner takes an event card from the discard pile",
-  "save_before": "states/contingency_planner.yaml",
+  "save_before": "states/contingency_planner.json",
   "request": {
     "method": "POST",
     "path": "/retrieve",
@@ -219,5 +219,5 @@
       }
     }
   },
-  "save_after": "scenarios/retrieve/after.yaml"
+  "save_after": "scenarios/retrieve/after.json"
 }

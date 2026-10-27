@@ -1,7 +1,7 @@
 {
   "name": "infect_cities_out_of_phase",
   "description": "Wrong phase",
-  "save_before": "states/draw_phase.yaml",
+  "save_before": "states/draw_phase.json",
   "request": {
     "method": "POST",
     "path": "/infect_cities",

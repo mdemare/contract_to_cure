@@ -1,7 +1,7 @@
 {
   "name": "move_card_mismatch",
   "description": "Card name matches neither city",
-  "save_before": "states/base.yaml",
+  "save_before": "states/base.json",
   "request": {
     "method": "POST",
     "path": "/move",

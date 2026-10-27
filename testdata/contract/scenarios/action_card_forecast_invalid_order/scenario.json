@@ -1,7 +1,7 @@
 {
   "name": "action_card_forecast_invalid_order",
   "description": "Not a permutation: 422 error",
-  "save_before": "states/forecast_active.yaml",
+  "save_before": "states/forecast_active.json",
   "request": {
     "method": "POST",
     "path": "/action_card",

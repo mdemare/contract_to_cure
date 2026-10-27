@@ -28,9 +28,9 @@ func TestLoadScenario(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	// Saves keep Ruby's symbol keys byte for byte.
-	if !bytes.Contains(save, []byte(":game_status:")) {
-		t.Errorf("%s has no :game_status: key", s.ConcurrentSave)
+	// Saves are versioned JSON, byte for byte as stored in Redis.
+	if !bytes.HasPrefix(save, []byte("{\n  \"version\": 2,\n  \"game_status\": {")) {
+		t.Errorf("%s is not a version 2 JSON save", s.ConcurrentSave)
 	}
 }
 

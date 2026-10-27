@@ -1,7 +1,7 @@
 {
   "name": "action_card_resolves_pending_discard",
   "description": "Playing an event card can resolve a pending discard",
-  "save_before": "states/pending_discard.yaml",
+  "save_before": "states/pending_discard.json",
   "request": {
     "method": "POST",
     "path": "/action_card",
@@ -247,5 +247,5 @@
       }
     }
   },
-  "save_after": "scenarios/action_card_resolves_pending_discard/after.yaml"
+  "save_after": "scenarios/action_card_resolves_pending_discard/after.json"
 }

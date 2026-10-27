@@ -1,7 +1,7 @@
 {
   "name": "build_research_station_already_exists",
   "description": "A station is already there",
-  "save_before": "states/base.yaml",
+  "save_before": "states/base.json",
   "request": {
     "method": "POST",
     "path": "/build_research_station",

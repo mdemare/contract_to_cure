@@ -1,7 +1,7 @@
 {
   "name": "retrieve_hand_limit",
   "description": "The Contingency Planner goes over seven cards: pending discard",
-  "save_before": "states/contingency_planner_hand_limit.yaml",
+  "save_before": "states/contingency_planner_hand_limit.json",
   "request": {
     "method": "POST",
     "path": "/retrieve",
@@ -240,5 +240,5 @@
       }
     }
   },
-  "save_after": "scenarios/retrieve_hand_limit/after.yaml"
+  "save_after": "scenarios/retrieve_hand_limit/after.json"
 }

@@ -171,6 +171,7 @@ var _ store.Persistable = (*GameState)(nil)
 
 // EncodeSave makes GameState a store.Persistable: Store.Save inside an
 // update encodes it at commit, so later changes are saved too, as in Rails.
+// The save is versioned JSON (cc-490).
 func (g *GameState) EncodeSave() ([]byte, error) {
 	return g.ToSave().EncodeSave()
 }

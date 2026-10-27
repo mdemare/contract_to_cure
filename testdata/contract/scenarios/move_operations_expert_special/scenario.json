@@ -1,7 +1,7 @@
 {
   "name": "move_operations_expert_special",
   "description": "Operations Expert special move",
-  "save_before": "states/operations_expert_at_station.yaml",
+  "save_before": "states/operations_expert_at_station.json",
   "request": {
     "method": "POST",
     "path": "/move",
@@ -215,5 +215,5 @@
       }
     }
   },
-  "save_after": "scenarios/move_operations_expert_special/after.yaml"
+  "save_after": "scenarios/move_operations_expert_special/after.json"
 }

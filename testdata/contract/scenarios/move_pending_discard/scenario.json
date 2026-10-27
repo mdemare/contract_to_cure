@@ -1,7 +1,7 @@
 {
   "name": "move_pending_discard",
   "description": "Actions are blocked while a hand-limit discard is pending",
-  "save_before": "states/pending_discard.yaml",
+  "save_before": "states/pending_discard.json",
   "request": {
     "method": "POST",
     "path": "/move",

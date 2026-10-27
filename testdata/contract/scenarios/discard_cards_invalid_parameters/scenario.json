@@ -1,7 +1,7 @@
 {
   "name": "discard_cards_invalid_parameters",
   "description": "Schema failure: card_names is not an array",
-  "save_before": "states/pending_discard.yaml",
+  "save_before": "states/pending_discard.json",
   "request": {
     "method": "POST",
     "path": "/discard_cards",

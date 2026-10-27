@@ -1,7 +1,7 @@
 {
   "name": "treat_no_cubes",
   "description": "action_unavailable with HTTP 422",
-  "save_before": "states/no_cubes_here.yaml",
+  "save_before": "states/no_cubes_here.json",
   "request": {
     "method": "POST",
     "path": "/treat",

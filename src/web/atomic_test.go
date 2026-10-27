@@ -20,7 +20,7 @@ func interleave(ts *testServer, stale, fresh func() *httptest.ResponseRecorder) 
 }
 
 func TestInterleavedMovesNeverLoseAnAcknowledgedUpdate(t *testing.T) {
-	ts := newTestServer(t, readFixture(t, "states/base.yaml"))
+	ts := newTestServer(t, readFixture(t, "states/base.json"))
 	stale, fresh := interleave(ts,
 		func() *httptest.ResponseRecorder {
 			return ts.postJSON("/move", `{"player_index":0,"destination":"Bangkok"}`)
@@ -58,7 +58,7 @@ func TestInterleavedMovesNeverLoseAnAcknowledgedUpdate(t *testing.T) {
 }
 
 func TestStaleRestartIsRejectedWithoutWriting(t *testing.T) {
-	ts := newTestServer(t, readFixture(t, "states/base.yaml"))
+	ts := newTestServer(t, readFixture(t, "states/base.json"))
 	stale, fresh := interleave(ts,
 		func() *httptest.ResponseRecorder { return ts.postJSON("/restart_game", `{}`) },
 		func() *httptest.ResponseRecorder {
@@ -75,7 +75,7 @@ func TestStaleRestartIsRejectedWithoutWriting(t *testing.T) {
 }
 
 func TestConcurrentDrawCardsProgressesTheTurnOnlyOnce(t *testing.T) {
-	ts := newTestServer(t, readFixture(t, "states/draw_phase.yaml"))
+	ts := newTestServer(t, readFixture(t, "states/draw_phase.json"))
 	deck := len(ts.savedGame().Decks.PlayerDeck)
 	stale, fresh := interleave(ts,
 		func() *httptest.ResponseRecorder { return ts.postJSON("/draw_cards", `{}`) },
@@ -95,7 +95,7 @@ func TestConcurrentDrawCardsProgressesTheTurnOnlyOnce(t *testing.T) {
 }
 
 func TestReadOnlyRequestDoesNotConflictWithConcurrentUpdate(t *testing.T) {
-	ts := newTestServer(t, readFixture(t, "states/base.yaml"))
+	ts := newTestServer(t, readFixture(t, "states/base.json"))
 	stale, fresh := interleave(ts,
 		func() *httptest.ResponseRecorder { return ts.do(http.MethodGet, "/game_state.json", "", "") },
 		func() *httptest.ResponseRecorder {
@@ -115,7 +115,7 @@ func TestReadOnlyRequestDoesNotConflictWithConcurrentUpdate(t *testing.T) {
 // created meanwhile; the client gets 409 with that game.
 func TestNewGameIsNotCommittedOverAConcurrentlyCreatedGame(t *testing.T) {
 	ts := newTestServer(t, nil)
-	concurrent := readFixture(t, "states/base.yaml")
+	concurrent := readFixture(t, "states/base.json")
 	ts.afterFirstGet(func() {
 		if err := ts.mr.Set(testKey, string(concurrent)); err != nil {
 			t.Error(err)
@@ -136,7 +136,7 @@ func TestNewGameIsNotCommittedOverAConcurrentlyCreatedGame(t *testing.T) {
 
 // When the game that won is not readable, the 409 has no game_state.
 func TestConflictWithoutReadableGameLeavesOutGameState(t *testing.T) {
-	ts := newTestServer(t, readFixture(t, "states/base.yaml"))
+	ts := newTestServer(t, readFixture(t, "states/base.json"))
 	ts.afterFirstGet(func() { ts.mr.Del(testKey) })
 
 	rec := ts.postJSON("/move", `{"player_index":0,"destination":"Bangkok"}`)

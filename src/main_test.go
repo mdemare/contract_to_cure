@@ -147,7 +147,7 @@ func TestSessionRoutesDoNotTouchTheGame(t *testing.T) {
 		"SUBDOMAIN":        "game",
 		"DOMAIN_NAME":      "example.com",
 	})
-	forecast, err := os.ReadFile("../testdata/contract/states/forecast_active.yaml")
+	forecast, err := os.ReadFile("../testdata/contract/states/forecast_active.json")
 	if err != nil {
 		t.Fatal(err)
 	}

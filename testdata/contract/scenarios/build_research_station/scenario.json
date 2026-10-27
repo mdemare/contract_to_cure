@@ -1,7 +1,7 @@
 {
   "name": "build_research_station",
   "description": "Build by discarding the city card",
-  "save_before": "states/scientist_in_beijing.yaml",
+  "save_before": "states/scientist_in_beijing.json",
   "request": {
     "method": "POST",
     "path": "/build_research_station",
@@ -210,5 +210,5 @@
       }
     }
   },
-  "save_after": "scenarios/build_research_station/after.yaml"
+  "save_after": "scenarios/build_research_station/after.json"
 }

@@ -1,7 +1,7 @@
 {
   "name": "infect_cities_too_many_outbreaks",
   "description": "Game over (too many outbreaks): end_turn_events has game_over and the events so far; the game over is saved",
-  "save_before": "states/infect_phase_outbreak_limit.yaml",
+  "save_before": "states/infect_phase_outbreak_limit.json",
   "request": {
     "method": "POST",
     "path": "/infect_cities",
@@ -229,5 +229,5 @@
       }
     }
   },
-  "save_after": "scenarios/infect_cities_too_many_outbreaks/after.yaml"
+  "save_after": "scenarios/infect_cities_too_many_outbreaks/after.json"
 }

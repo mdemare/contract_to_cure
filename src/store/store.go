@@ -1,5 +1,5 @@
-// Package store keeps the one shared game in Redis (cc-376), in the YAML
-// format Rails writes (it also reads versioned JSON saves, cc-487), and runs
+// Package store keeps the one shared game in Redis (cc-376), as a versioned
+// JSON save (it also reads the Ruby YAML that Rails wrote, cc-487), and runs
 // each request's read-modify-write of it as an atomic update (see atomic.go
 // and Q14-cc).
 package store

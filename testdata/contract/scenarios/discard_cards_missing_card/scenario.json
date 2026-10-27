@@ -1,7 +1,7 @@
 {
   "name": "discard_cards_missing_card",
   "description": "Card not in hand",
-  "save_before": "states/pending_discard.yaml",
+  "save_before": "states/pending_discard.json",
   "request": {
     "method": "POST",
     "path": "/discard_cards",

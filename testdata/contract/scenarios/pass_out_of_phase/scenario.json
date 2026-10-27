@@ -1,7 +1,7 @@
 {
   "name": "pass_out_of_phase",
   "description": "check_action error",
-  "save_before": "states/draw_phase.yaml",
+  "save_before": "states/draw_phase.json",
   "request": {
     "method": "POST",
     "path": "/pass",

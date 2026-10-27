@@ -1,7 +1,7 @@
 {
   "name": "action_card_forecast_apply",
   "description": "Forecast, step 2: reorder; success with game_state",
-  "save_before": "states/forecast_active.yaml",
+  "save_before": "states/forecast_active.json",
   "request": {
     "method": "POST",
     "path": "/action_card",
@@ -230,5 +230,5 @@
       }
     }
   },
-  "save_after": "scenarios/action_card_forecast_apply/after.yaml"
+  "save_after": "scenarios/action_card_forecast_apply/after.json"
 }

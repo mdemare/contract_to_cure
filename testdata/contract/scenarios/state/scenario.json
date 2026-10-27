@@ -1,7 +1,7 @@
 {
   "name": "state",
   "description": "Read the client JSON view",
-  "save_before": "states/base.yaml",
+  "save_before": "states/base.json",
   "request": {
     "method": "GET",
     "path": "/game_state.json",

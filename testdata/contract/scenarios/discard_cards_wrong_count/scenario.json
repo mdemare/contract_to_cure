@@ -1,7 +1,7 @@
 {
   "name": "discard_cards_wrong_count",
   "description": "Must discard exactly the excess",
-  "save_before": "states/pending_discard.yaml",
+  "save_before": "states/pending_discard.json",
   "request": {
     "method": "POST",
     "path": "/discard_cards",

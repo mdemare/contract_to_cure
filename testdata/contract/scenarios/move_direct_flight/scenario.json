@@ -1,7 +1,7 @@
 {
   "name": "move_direct_flight",
   "description": "Direct flight by discarding the destination card",
-  "save_before": "states/base.yaml",
+  "save_before": "states/base.json",
   "request": {
     "method": "POST",
     "path": "/move",
@@ -215,5 +215,5 @@
       }
     }
   },
-  "save_after": "scenarios/move_direct_flight/after.yaml"
+  "save_after": "scenarios/move_direct_flight/after.json"
 }

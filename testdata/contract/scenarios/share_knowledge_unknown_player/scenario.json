@@ -1,7 +1,7 @@
 {
   "name": "share_knowledge_unknown_player",
   "description": "Receiving index past the last player: 422 (cc-433)",
-  "save_before": "states/base.yaml",
+  "save_before": "states/base.json",
   "request": {
     "method": "POST",
     "path": "/share_knowledge",

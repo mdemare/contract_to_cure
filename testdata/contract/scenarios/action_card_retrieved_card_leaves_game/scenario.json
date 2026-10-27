@@ -1,7 +1,7 @@
 {
   "name": "action_card_retrieved_card_leaves_game",
   "description": "A retrieved event card is not discarded after use",
-  "save_before": "states/contingency_planner_retrieved.yaml",
+  "save_before": "states/contingency_planner_retrieved.json",
   "request": {
     "method": "POST",
     "path": "/action_card",
@@ -215,5 +215,5 @@
       }
     }
   },
-  "save_after": "scenarios/action_card_retrieved_card_leaves_game/after.yaml"
+  "save_after": "scenarios/action_card_retrieved_card_leaves_game/after.json"
 }

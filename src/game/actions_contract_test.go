@@ -17,7 +17,7 @@ const fixtureRoot = "../../testdata/contract"
 
 func fixtureStates(t *testing.T) []string {
 	t.Helper()
-	paths, err := filepath.Glob(filepath.Join(fixtureRoot, "states", "*.yaml"))
+	paths, err := filepath.Glob(filepath.Join(fixtureRoot, "states", "*.json"))
 	if err != nil || len(paths) == 0 {
 		t.Fatalf("no fixture states: %v", err)
 	}

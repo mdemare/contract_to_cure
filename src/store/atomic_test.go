@@ -81,7 +81,7 @@ func TestInterleavedMovesNeverLoseAnAcknowledgedUpdate(t *testing.T) {
 func TestStaleRestartIsRejectedWithoutWriting(t *testing.T) {
 	s, _ := newTestStore(t)
 	restart := func(ctx context.Context) error {
-		fresh, err := DecodeSave(readFixture(t, "states/event_cards.yaml"), "heroic")
+		fresh, err := DecodeSave(readFixture(t, "states/event_cards.json"), "heroic")
 		if err != nil {
 			return err
 		}
@@ -286,7 +286,7 @@ func TestNewGameIsNotCommittedOverAGameCreatedConcurrently(t *testing.T) {
 		if game != nil || err != nil {
 			t.Fatalf("expected no game, got %v %v", game, err)
 		}
-		fresh, _ := DecodeSave(readFixture(t, "states/base.yaml"), "heroic")
+		fresh, _ := DecodeSave(readFixture(t, "states/base.json"), "heroic")
 		s.Save(ctx, fresh)
 		mr.Set(testKey, "created elsewhere")
 		return nil
@@ -300,7 +300,7 @@ func TestNewGameIsNotCommittedOverAGameCreatedConcurrently(t *testing.T) {
 func TestNewGameIsCommittedWhenThereIsNoGame(t *testing.T) {
 	s, mr := newTestStore(t)
 	mr.Del(testKey)
-	base := string(readFixture(t, "states/base.yaml"))
+	base := string(readFixture(t, "states/base.json"))
 
 	err := s.AtomicUpdate(context.Background(), func(ctx context.Context) error {
 		if game, err := s.Load(ctx); game != nil || err != nil {
@@ -317,7 +317,7 @@ func TestNewGameIsCommittedWhenThereIsNoGame(t *testing.T) {
 func TestSaveWithoutLoadedBaselineIsRejected(t *testing.T) {
 	s, mr := newTestStore(t)
 	before := stored(t, mr)
-	fresh, _ := DecodeSave(readFixture(t, "states/event_cards.yaml"), "heroic")
+	fresh, _ := DecodeSave(readFixture(t, "states/event_cards.json"), "heroic")
 
 	err := s.AtomicUpdate(context.Background(), func(ctx context.Context) error {
 		return s.Save(ctx, fresh)

@@ -1,7 +1,7 @@
 {
   "name": "infect_cities",
   "description": "Infect two cities and start the next turn",
-  "save_before": "states/infect_phase.yaml",
+  "save_before": "states/infect_phase.json",
   "request": {
     "method": "POST",
     "path": "/infect_cities",
@@ -241,5 +241,5 @@
       }
     }
   },
-  "save_after": "scenarios/infect_cities/after.yaml"
+  "save_after": "scenarios/infect_cities/after.json"
 }

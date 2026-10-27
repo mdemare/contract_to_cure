@@ -1,7 +1,7 @@
 {
   "name": "discard_cards_retrieved_card_leaves_game",
   "description": "A retrieved event card discarded for the hand limit leaves the game",
-  "save_before": "states/contingency_planner_retrieved_pending_discard.yaml",
+  "save_before": "states/contingency_planner_retrieved_pending_discard.json",
   "request": {
     "method": "POST",
     "path": "/discard_cards",
@@ -228,5 +228,5 @@
       }
     }
   },
-  "save_after": "scenarios/discard_cards_retrieved_card_leaves_game/after.yaml"
+  "save_after": "scenarios/discard_cards_retrieved_card_leaves_game/after.json"
 }

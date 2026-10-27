@@ -60,13 +60,12 @@ func loadGame(ctx context.Context, t *testing.T, st *store.Store) *game.GameStat
 	return g
 }
 
-// Every fixture save, the starting states and each scenario's after.yaml,
-// survives decode -> GameState -> encode byte for byte, so Rails and Go keep
-// reading each other's saves. This extends store's
-// TestFixtureSavesRoundTripByteForByte through the model; it lives here
-// because store cannot import game.
+// Every JSON fixture save, the starting states and each scenario's
+// after.json, survives decode -> GameState -> encode byte for byte. This
+// extends store's TestFixtureSavesRoundTripByteForByte through the model; it
+// lives here because store cannot import game.
 func TestFixtureSavesRoundTripThroughGameState(t *testing.T) {
-	after, err := filepath.Glob(filepath.Join(fixtureRoot, "scenarios", "*", "after.yaml"))
+	after, err := filepath.Glob(filepath.Join(fixtureRoot, "scenarios", "*", "after.json"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -79,9 +78,6 @@ func TestFixtureSavesRoundTripThroughGameState(t *testing.T) {
 		t.Fatalf("found only %d fixture saves", len(names))
 	}
 	for _, name := range names {
-		if name == "states/legacy_save.yaml" {
-			continue // gains defaults; see TestLegacySaveLoadsWithDefaults
-		}
 		t.Run(name, func(t *testing.T) {
 			data := readFixture(t, name)
 			if got := encode(t, decodeFixture(t, data)); !bytes.Equal(got, data) {
@@ -93,7 +89,7 @@ func TestFixtureSavesRoundTripThroughGameState(t *testing.T) {
 
 // Saves from before forecast and difficulty were stored load with false/nil
 // defaults and difficulty heroic. Loading does not write them; the next
-// mutating request does.
+// mutating request does, as JSON.
 func TestLegacySaveLoadsWithDefaults(t *testing.T) {
 	legacy := readFixture(t, "states/legacy_save.yaml")
 	st, mr := newTestStore(t, legacy)
@@ -119,22 +115,22 @@ func TestLegacySaveLoadsWithDefaults(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	want := strings.Replace(string(readFixture(t, "states/base.yaml")),
-		":difficulty_level: normal", ":difficulty_level: heroic", 1)
+	want := strings.Replace(string(readFixture(t, "states/base.json")),
+		`"difficulty_level": "normal"`, `"difficulty_level": "heroic"`, 1)
 	if got, _ := mr.Get(testKey); got != want {
 		t.Fatalf("saved legacy game:\n%s", got)
 	}
 }
 
 func TestFromSaveRecomputesDerivedValues(t *testing.T) {
-	g := decodeFixture(t, readFixture(t, "states/base.yaml"))
+	g := decodeFixture(t, readFixture(t, "states/base.json"))
 	if g.PlayersCount() != len(g.Players) || g.CurrentPlayer() != &g.Players[g.CurrentPlayerIdx] {
 		t.Fatal("players count or current player does not follow the players")
 	}
 }
 
 func TestFromSaveRejectsIllegalCubes(t *testing.T) {
-	save, err := store.DecodeSave(readFixture(t, "states/base.yaml"), "heroic")
+	save, err := store.DecodeSave(readFixture(t, "states/base.json"), "heroic")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -148,7 +144,7 @@ func TestFromSaveRejectsIllegalCubes(t *testing.T) {
 // Players directly (cc-439).
 func TestFromSaveRejectsOutOfRangeCurrentPlayer(t *testing.T) {
 	for _, idx := range []int{-1, 4} {
-		save, err := store.DecodeSave(readFixture(t, "states/base.yaml"), "heroic")
+		save, err := store.DecodeSave(readFixture(t, "states/base.json"), "heroic")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -162,7 +158,7 @@ func TestFromSaveRejectsOutOfRangeCurrentPlayer(t *testing.T) {
 // The pending discard's player is indexed the same way (cc-444).
 func TestFromSaveRejectsOutOfRangePendingHandLimitPlayer(t *testing.T) {
 	for _, idx := range []int{-1, 4} {
-		save, err := store.DecodeSave(readFixture(t, "states/pending_discard.yaml"), "heroic")
+		save, err := store.DecodeSave(readFixture(t, "states/pending_discard.json"), "heroic")
 		if err != nil {
 			t.Fatal(err)
 		}
@@ -176,10 +172,10 @@ func TestFromSaveRejectsOutOfRangePendingHandLimitPlayer(t *testing.T) {
 // With no save, or one that cannot be decoded, Load deals a new game with the
 // configured players and difficulty, logs it and saves it at commit.
 func TestLoadStartsNewGame(t *testing.T) {
-	badPlayer := strings.Replace(string(readFixture(t, "states/base.yaml")),
-		":current_player_idx: 0", ":current_player_idx: 4", 1)
-	badPending := strings.Replace(string(readFixture(t, "states/pending_discard.yaml")),
-		":player_index: 1", ":player_index: 4", 1)
+	badPlayer := strings.Replace(string(readFixture(t, "states/base.json")),
+		`"current_player_idx": 0`, `"current_player_idx": 4`, 1)
+	badPending := strings.Replace(string(readFixture(t, "states/pending_discard.json")),
+		`"player_index": 1`, `"player_index": 4`, 1)
 	for name, save := range map[string][]byte{
 		"no save":                     nil,
 		"corrupt save":                []byte("--- [\n"),
@@ -217,7 +213,7 @@ func TestLoadStartsNewGame(t *testing.T) {
 }
 
 func TestLoadReturnsSavedGame(t *testing.T) {
-	data := readFixture(t, "states/draw_phase.yaml")
+	data := readFixture(t, "states/draw_phase.json")
 	st, _ := newTestStore(t, data)
 	logs := captureLogs(t)
 	g := loadGame(context.Background(), t, st)

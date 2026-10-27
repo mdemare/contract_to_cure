@@ -1,7 +1,7 @@
 {
   "name": "move_invalid_parameters",
   "description": "Schema failure: Invalid parameters",
-  "save_before": "states/base.yaml",
+  "save_before": "states/base.json",
   "request": {
     "method": "POST",
     "path": "/move",

@@ -1,7 +1,7 @@
 {
   "name": "discard_cards_game_over",
   "description": "Game over",
-  "save_before": "states/game_over_victory.yaml",
+  "save_before": "states/game_over_victory.json",
   "request": {
     "method": "POST",
     "path": "/discard_cards",
