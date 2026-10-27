@@ -1,7 +1,7 @@
 {
   "name": "move_card_required_flight_choice",
   "description": "Holding both the current and destination city cards: card_required with HTTP 200",
-  "save_before": "states/base.yaml",
+  "save_before": "states/base.json",
   "request": {
     "method": "POST",
     "path": "/move",

@@ -68,7 +68,7 @@ func ScenarioNames(root string) ([]string, error) {
 	return names, nil
 }
 
-// ReadSave returns a save exactly as Rails stores it in Redis.
+// ReadSave returns a save exactly as it is stored in Redis.
 func ReadSave(root, path string) ([]byte, error) {
 	return os.ReadFile(filepath.Join(root, path))
 }

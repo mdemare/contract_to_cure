@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"os"
 	"path/filepath"
+	"reflect"
 	"strings"
 	"testing"
 
@@ -13,29 +14,45 @@ import (
 
 const fixtureRoot = "../../testdata/contract"
 
-// fixtureSaves returns every save in the contract fixtures: the starting
-// states and each scenario's after.yaml.
+// fixtureSaves returns every JSON save in the contract fixtures: the starting
+// states and each scenario's after.json.
 func fixtureSaves(t *testing.T) map[string][]byte {
 	t.Helper()
-	paths, err := filepath.Glob(filepath.Join(fixtureRoot, "states", "*.yaml"))
-	if err != nil {
-		t.Fatal(err)
+	saves := globFixtures(t, "states/*.json", "scenarios/*/after.json")
+	if len(saves) < 40 {
+		t.Fatalf("found only %d fixture saves", len(saves))
 	}
-	after, err := filepath.Glob(filepath.Join(fixtureRoot, "scenarios", "*", "after.yaml"))
-	if err != nil {
-		t.Fatal(err)
+	return saves
+}
+
+// legacyFixtureSaves returns the YAML saves (version 1) that are kept to pin
+// that saves written before cc-490 still load. Each but legacy_save.yaml has
+// a JSON twin.
+func legacyFixtureSaves(t *testing.T) map[string][]byte {
+	t.Helper()
+	saves := globFixtures(t, "states/*.yaml")
+	if _, ok := saves["states/legacy_save.yaml"]; !ok || len(saves) < 2 {
+		t.Fatalf("legacy fixture saves missing: %d found", len(saves))
 	}
+	return saves
+}
+
+func globFixtures(t *testing.T, patterns ...string) map[string][]byte {
+	t.Helper()
 	saves := map[string][]byte{}
-	for _, p := range append(paths, after...) {
-		rel, _ := filepath.Rel(fixtureRoot, p)
-		data, err := contract.ReadSave(fixtureRoot, rel)
+	for _, pattern := range patterns {
+		paths, err := filepath.Glob(filepath.Join(fixtureRoot, pattern))
 		if err != nil {
 			t.Fatal(err)
 		}
-		saves[rel] = data
-	}
-	if len(saves) < 40 {
-		t.Fatalf("found only %d fixture saves", len(saves))
+		for _, p := range paths {
+			rel, _ := filepath.Rel(fixtureRoot, p)
+			data, err := contract.ReadSave(fixtureRoot, rel)
+			if err != nil {
+				t.Fatal(err)
+			}
+			saves[rel] = data
+		}
 	}
 	return saves
 }
@@ -44,9 +61,6 @@ func fixtureSaves(t *testing.T) map[string][]byte {
 // game model (cc-421).
 func TestFixtureSavesRoundTripByteForByte(t *testing.T) {
 	for name, data := range fixtureSaves(t) {
-		if name == "states/legacy_save.yaml" {
-			continue // gains defaults; see TestLegacySave
-		}
 		t.Run(name, func(t *testing.T) {
 			save, err := DecodeSave(data, "heroic")
 			if err != nil {
@@ -63,12 +77,39 @@ func TestFixtureSavesRoundTripByteForByte(t *testing.T) {
 	}
 }
 
+// A YAML save decodes to the same values as its JSON twin, so saving it again
+// writes the twin.
+func TestLegacyYAMLFixturesDecodeLikeTheirJSONTwins(t *testing.T) {
+	for name, data := range legacyFixtureSaves(t) {
+		if name == "states/legacy_save.yaml" {
+			continue // gains defaults; see TestLegacySaveGetsDefaults
+		}
+		t.Run(name, func(t *testing.T) {
+			twin := readFixture(t, strings.TrimSuffix(name, ".yaml")+".json")
+			fromYAML, err := DecodeSave(data, "heroic")
+			if err != nil {
+				t.Fatal(err)
+			}
+			fromJSON, err := DecodeSave(twin, "heroic")
+			if err != nil {
+				t.Fatal(err)
+			}
+			if !reflect.DeepEqual(fromYAML, fromJSON) {
+				t.Fatalf("YAML decodes differently:\n%+v\n%+v", fromYAML, fromJSON)
+			}
+			if got, _ := fromYAML.EncodeSave(); !bytes.Equal(got, twin) {
+				t.Fatalf("re-encoded YAML save differs from its twin:\n%s", firstDiff(string(twin), string(got)))
+			}
+		})
+	}
+}
+
 // legacy_save.yaml is base.yaml without forecast_active, forecast_cards,
 // operations_expert_move_used and difficulty_level. Saving it again adds them,
-// with the configured default difficulty (move_legacy_save).
+// with the configured default difficulty, and writes JSON (move_legacy_save).
 func TestLegacySaveGetsDefaults(t *testing.T) {
 	legacy := readFixture(t, "states/legacy_save.yaml")
-	base := readFixture(t, "states/base.yaml")
+	base := readFixture(t, "states/base.json")
 
 	save, err := DecodeSave(legacy, "heroic")
 	if err != nil {
@@ -78,7 +119,7 @@ func TestLegacySaveGetsDefaults(t *testing.T) {
 		t.Fatalf("legacy defaults not applied: %+v", save.Status)
 	}
 	got, _ := save.EncodeSave()
-	want := strings.Replace(string(base), ":difficulty_level: normal", ":difficulty_level: heroic", 1)
+	want := strings.Replace(string(base), `"difficulty_level": "normal"`, `"difficulty_level": "heroic"`, 1)
 	if string(got) != want {
 		t.Fatalf("legacy save re-encoded:\n%s", firstDiff(want, string(got)))
 	}
@@ -94,8 +135,8 @@ func TestLegacySaveGetsDefaults(t *testing.T) {
 }
 
 func TestInvalidDifficultyFallsBackToDefault(t *testing.T) {
-	data := strings.Replace(string(readFixture(t, "states/base.yaml")),
-		":difficulty_level: normal", ":difficulty_level: nightmare", 1)
+	data := strings.Replace(string(readFixture(t, "states/base.json")),
+		`"difficulty_level": "normal"`, `"difficulty_level": "nightmare"`, 1)
 	save, err := DecodeSave([]byte(data), "introductory")
 	if err != nil {
 		t.Fatal(err)
@@ -106,7 +147,7 @@ func TestInvalidDifficultyFallsBackToDefault(t *testing.T) {
 }
 
 func TestRetrievedFlag(t *testing.T) {
-	data := readFixture(t, "states/contingency_planner_retrieved.yaml")
+	data := readFixture(t, "states/contingency_planner_retrieved.json")
 	save, err := DecodeSave(data, "heroic")
 	if err != nil {
 		t.Fatal(err)
@@ -123,7 +164,7 @@ func TestRetrievedFlag(t *testing.T) {
 		t.Fatalf("retrieved cards = %d, want 1", retrieved)
 	}
 
-	bad := strings.Replace(string(data), ":retrieved: true", ":retrieved: yes please", 1)
+	bad := strings.Replace(string(data), `"retrieved": true`, `"retrieved": "yes please"`, 1)
 	if _, err := DecodeSave([]byte(bad), "heroic"); err == nil {
 		t.Fatal("a retrieved value other than true/false must not load")
 	}
@@ -131,9 +172,9 @@ func TestRetrievedFlag(t *testing.T) {
 
 // Rails ignores the saved "eradicated" and "available" values and recomputes them.
 func TestDerivedValuesAreRecomputed(t *testing.T) {
-	base := readFixture(t, "states/base.yaml")
-	tampered := strings.Replace(string(base), ":available: 5", ":available: 1", 1)
-	tampered = strings.Replace(tampered, ":eradicated: false", ":eradicated: true", 1)
+	base := readFixture(t, "states/base.json")
+	tampered := strings.Replace(string(base), `"available": 5`, `"available": 1`, 1)
+	tampered = strings.Replace(tampered, `"eradicated": false`, `"eradicated": true`, 1)
 	save, err := DecodeSave([]byte(tampered), "heroic")
 	if err != nil {
 		t.Fatal(err)
@@ -145,12 +186,16 @@ func TestDerivedValuesAreRecomputed(t *testing.T) {
 
 	save.DiseaseCubes[0] = DiseaseCubes{Color: "blue", Cured: true, InSupply: 24}
 	got, _ = save.EncodeSave()
-	if !strings.Contains(string(got), ":blue:\n    :cured: true\n    :eradicated: true\n") {
+	if !strings.Contains(string(got), `"blue": {
+      "cured": true,
+      "eradicated": true,`) {
 		t.Fatal("a cured color with all cubes in supply should be eradicated")
 	}
 }
 
-func TestUndecodableSavesAreErrors(t *testing.T) {
+// YAML saves are still read, so they are checked like JSON ones
+// (TestUndecodableJSONSavesAreErrors).
+func TestUndecodableYAMLSavesAreErrors(t *testing.T) {
 	base := string(readFixture(t, "states/base.yaml"))
 	pending := string(readFixture(t, "states/pending_discard.yaml"))
 	cases := map[string]string{
@@ -170,46 +215,6 @@ func TestUndecodableSavesAreErrors(t *testing.T) {
 	for name, data := range cases {
 		if _, err := DecodeSave([]byte(data), "heroic"); err == nil {
 			t.Errorf("%s: expected an error", name)
-		}
-	}
-}
-
-func TestStringQuoting(t *testing.T) {
-	// Expected values are what Ruby's Psych writes, except the multi-line
-	// string, which Psych writes as a literal block.
-	cases := map[string]string{
-		"Paris":          "Paris",
-		"St. Petersburg": "St. Petersburg",
-		"":               "''",
-		"true":           "'true'",
-		"no":             "'no'",
-		"y":              `"y"`,
-		"123":            "'123'",
-		"1_000":          "'1_000'",
-		"2026-10-13":     "'2026-10-13'",
-		":red":           `":red"`,
-		"a: b":           "'a: b'",
-		"a #b":           "'a #b'",
-		"x:":             "'x:'",
-		"it's":           "it's",
-		"- x":            `"- x"`,
-		" padded":        `" padded"`,
-		"line\nbreak":    `"line\nbreak"`,
-	}
-	for in, want := range cases {
-		if got := scalarText(stringValue(in)); got != want {
-			t.Errorf("%q: got %s, want %s", in, got, want)
-		}
-		// Whatever is emitted must read back as the same string.
-		v, err := parseRubyYAML([]byte("--- " + scalarText(stringValue(in)) + "\n"))
-		if err != nil || v.kind != kindString || v.s != in {
-			t.Errorf("%q does not read back as a string: %+v %v", in, v, err)
-		}
-	}
-	for _, sym := range []string{"no_player_cards", "two words"} {
-		v, err := parseRubyYAML([]byte("--- " + scalarText(symbolValue(sym)) + "\n"))
-		if err != nil || v.kind != kindSymbol || v.s != sym {
-			t.Errorf("symbol %q does not read back as a symbol: %+v %v", sym, v, err)
 		}
 	}
 }

@@ -1,7 +1,7 @@
 {
   "name": "treat",
   "description": "Treat one cube",
-  "save_before": "states/base.yaml",
+  "save_before": "states/base.json",
   "request": {
     "method": "POST",
     "path": "/treat",
@@ -211,5 +211,5 @@
       }
     }
   },
-  "save_after": "scenarios/treat/after.yaml"
+  "save_after": "scenarios/treat/after.json"
 }

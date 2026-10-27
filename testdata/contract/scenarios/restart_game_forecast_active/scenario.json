@@ -1,7 +1,7 @@
 {
   "name": "restart_game_forecast_active",
   "description": "Even restart is blocked by an unfinished Forecast",
-  "save_before": "states/forecast_active.yaml",
+  "save_before": "states/forecast_active.json",
   "request": {
     "method": "POST",
     "path": "/restart_game",

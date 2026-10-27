@@ -20,7 +20,7 @@ type eventCardRequest struct {
 }
 
 // checkSave compares the game after a request with the scenario's
-// save_after: the starting save when unchanged, else after.yaml.
+// save_after: the starting save when unchanged, else after.json.
 func checkSave(t *testing.T, sc *contract.Scenario, g *game.GameState, unchanged []byte, changed bool) {
 	t.Helper()
 	after := encode(t, g)
@@ -109,7 +109,7 @@ func TestEventCardScenarios(t *testing.T) {
 // before anything else runs.
 func TestForecastGuardScenarios(t *testing.T) {
 	scenarios := loadScenarios(t, func(sc *contract.Scenario) bool {
-		return sc.SaveBefore == "states/forecast_active.yaml" && sc.Request.Path != "/action_card"
+		return sc.SaveBefore == "states/forecast_active.json" && sc.Request.Path != "/action_card"
 	})
 	if len(scenarios) < 3 {
 		t.Fatalf("only %d Forecast guard scenarios", len(scenarios))

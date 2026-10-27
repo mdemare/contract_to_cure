@@ -102,8 +102,8 @@ type Decks struct {
 	InfectionDiscard []Card
 }
 
-// DecodeSave reads a save written by Rails, by EncodeSave or, as versioned
-// JSON, by EncodeJSONSave (cc-487). Older saves get
+// DecodeSave reads a versioned JSON save written by EncodeSave, or a Ruby
+// YAML save written by Rails or an earlier release (cc-487). Older saves get
 // the defaults Rails' load_state_from_hash applies (Q13-cc): forecast_active
 // and operations_expert_move_used default to false, cards without :retrieved
 // are not retrieved, and a missing or invalid difficulty becomes
@@ -124,15 +124,6 @@ func DecodeSave(data []byte, defaultDifficulty string) (*Save, error) {
 		return nil, d.err
 	}
 	return s, nil
-}
-
-// EncodeSave writes the save as Rails' serialized_state does, so Rails can
-// keep loading games that Go saved until Rails is removed.
-func (s *Save) EncodeSave() ([]byte, error) {
-	if len(s.DiseaseCubes) != len(Colors) {
-		return nil, fmt.Errorf("save has %d disease colors, want %d", len(s.DiseaseCubes), len(Colors))
-	}
-	return emitRubyYAML(s.value()), nil
 }
 
 func (s *Save) value() value {

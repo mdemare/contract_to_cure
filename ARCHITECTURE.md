@@ -24,7 +24,7 @@ This document describes the architecture of the Pandemic game implementation, a 
 ├─────────────────────────────────────────────────────────────┤
 │  HTTP Router │  Game Logic Modules │  Persistence          │
 │  ────────────┼───────────────────────┼────────────────────  │
-│  • Endpoints │  • Player Actions    │  • Redis (YAML save) │
+│  • Endpoints │  • Player Actions    │  • Redis (JSON save) │
 │  • Validation│  • End Turn Events   │  • Atomic updates    │
 │  • Responses │  • Action Cards      │  • Game State Load    │
 └─────────────────────────────────────────────────────────────┘
@@ -39,7 +39,7 @@ The backend is a single Go binary (`src/main.go`, built with `make build`) split
 | Package | Purpose | Key files |
 |---------|---------|-----------|
 | `src/game` | Game model and rules | `model.go` (GameState, City, Player, Card), `setup.go`, `actions.go` (player actions and guards), `events.go` (event cards), `endturn.go` (draw, infect, discard), `view.go` (JSON view), `save.go` (save format) |
-| `src/store` | Redis persistence | `store.go`, `save.go` (save codec), `rubyyaml.go` (YAML save), `jsonsave.go` (versioned JSON save), `atomic.go` (WATCH/MULTI optimistic updates) |
+| `src/store` | Redis persistence | `store.go`, `save.go` (save codec), `jsonsave.go` (versioned JSON save), `rubyyaml.go` (reads legacy YAML saves), `atomic.go` (WATCH/MULTI optimistic updates) |
 | `src/web` | HTTP layer | `server.go` (routes, index page, static files), `game.go` (per-route guards and handlers), `params.go` (request validation) |
 | `src/auth` | JWT authentication, sessions and CSRF | see AUTH.md |
 | `src/observe` | Sentry, request logging, panic recovery | `sentry.go`, `middleware.go` |
@@ -79,32 +79,29 @@ The full route table is in `src/web/server.go` (and `noca view Q45-cc`).
 ### State Management
 
 #### Persistence Strategy
-- **Redis**: The whole game is one YAML document under the key `contract-to-cure/current-game`
+- **Redis**: The whole game is one JSON document under the key `contract-to-cure/current-game`
 - **Reload per request**: Each request loads the game from Redis; nothing is kept in memory between requests
 - **Atomic saves**: A request saves only if the key did not change since it was read
 - **State Recovery**: A missing or undecodable save starts a new game; older saves load with defaults for fields they lack
-- **Format**: The save keeps the Ruby/Psych YAML format of the former Rails backend (symbol keys such as `:game_status:`), so existing games still load
-- **Format migration (cc-487)**: The save is moving to versioned JSON (`{"version": 2, ...}`, same fields and order). Reading JSON ships first, writes stay YAML, so a rollback keeps the live game; a later release switches writes to JSON
+- **Format**: The save is versioned JSON (`{"version": 2, ...}`), with the fields and order of the Ruby/Psych YAML the former Rails backend wrote. YAML saves (version 1, symbol keys such as `:game_status:`) are still read, and the next write turns them into JSON
+- **Format migration**: cc-487 shipped reading JSON while still writing YAML; cc-490 switched writes to JSON. Rolling back to a release before cc-487 cannot read the JSON save and starts a new game
 
 #### State Structure
-```yaml
-:game_status:
-  :actions_remaining: 4
-  :phase: :player_actions
-  :current_player_idx: 0
-  # ... other status fields
-
-:disease_cubes:
-  # ... cured flag and supply per color
-
-:cities:
-  # ... disease cubes and research station per city
-
-:players:
-  # ... role, location and hand per player
-
-:decks:
-  # ... player deck, infection deck and discard piles
+```jsonc
+{
+  "version": 2,
+  "game_status": {
+    "actions_remaining": 4,
+    "phase": "player_actions",
+    "current_player_idx": 0
+    // ... other status fields
+  },
+  "disease_cubes": { /* cured flag and supply per color */ },
+  "cities": { /* disease cubes and research station per city */ },
+  "research_stations": { /* available count and locations */ },
+  "players": [ /* role, location and hand per player */ ],
+  "decks": { /* player deck, infection deck and discard piles */ }
+}
 ```
 
 ## Frontend Architecture (JavaScript)
@@ -239,7 +236,7 @@ Client State ←→ Server State
 | **Go** | Programming language | Static binary, standard-library HTTP server, simple deployment |
 | **net/http** | Web server and routing | `ServeMux` method patterns cover the routes without a framework |
 | **Redis** (go-redis) | State persistence | Shared state with atomic WATCH/MULTI updates |
-| **YAML** | Save format | Compatible with saves written by the former Rails backend; versioned JSON saves are read too (cc-487) |
+| **JSON** | Save format | Versioned (`"version": 2`); YAML saves written by the former Rails backend are still read (cc-487, cc-490) |
 | **JWT** (golang-jwt) | Authentication | Tokens issued by an external auth service |
 | **JSON** | API communication | Standard web API format |
 

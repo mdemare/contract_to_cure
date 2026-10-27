@@ -1,7 +1,7 @@
 {
   "name": "infect_cities_pending_discard",
   "description": "Pending hand-limit discard",
-  "save_before": "states/pending_discard.yaml",
+  "save_before": "states/pending_discard.json",
   "request": {
     "method": "POST",
     "path": "/infect_cities",

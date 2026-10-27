@@ -1,7 +1,7 @@
 {
   "name": "draw_cards_hand_limit",
   "description": "The second draw goes over the hand limit: pending discard",
-  "save_before": "states/draw_phase_hand_limit.yaml",
+  "save_before": "states/draw_phase_hand_limit.json",
   "request": {
     "method": "POST",
     "path": "/draw_cards",
@@ -269,5 +269,5 @@
       }
     }
   },
-  "save_after": "scenarios/draw_cards_hand_limit/after.yaml"
+  "save_after": "scenarios/draw_cards_hand_limit/after.json"
 }

@@ -1,7 +1,7 @@
 {
   "name": "infect_cities_game_over",
   "description": "Game over (too many outbreaks, phase still infect_cities): no further infection",
-  "save_before": "states/game_over_infect_phase.yaml",
+  "save_before": "states/game_over_infect_phase.json",
   "request": {
     "method": "POST",
     "path": "/infect_cities",

@@ -1,7 +1,7 @@
 {
   "name": "action_card_airlift_missing_player",
   "description": "Airlift without player_index: 422 (cc-435)",
-  "save_before": "states/event_cards.yaml",
+  "save_before": "states/event_cards.json",
   "request": {
     "method": "POST",
     "path": "/action_card",

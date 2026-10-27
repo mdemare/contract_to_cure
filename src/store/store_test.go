@@ -14,13 +14,13 @@ import (
 
 const testKey = "contract-to-cure/test-game"
 
-// newTestStore returns a store on a fresh miniredis holding base.yaml.
+// newTestStore returns a store on a fresh miniredis holding base.json.
 func newTestStore(t *testing.T) (*Store, *miniredis.Miniredis) {
 	t.Helper()
 	mr := miniredis.RunT(t)
 	client := redis.NewClient(&redis.Options{Addr: mr.Addr()})
 	t.Cleanup(func() { client.Close() })
-	if err := mr.Set(testKey, string(readFixture(t, "states/base.yaml"))); err != nil {
+	if err := mr.Set(testKey, string(readFixture(t, "states/base.json"))); err != nil {
 		t.Fatal(err)
 	}
 	return NewWithClient(client, testKey, "heroic"), mr
@@ -154,7 +154,7 @@ func TestSaveOutsideAnUpdateWritesImmediately(t *testing.T) {
 	if got := load(t, s).Players[0].Location; got != "Paris" {
 		t.Fatalf("location = %s", got)
 	}
-	if !strings.Contains(stored(t, mr), ":location: Paris") {
+	if !strings.Contains(stored(t, mr), `"location": "Paris"`) {
 		t.Fatal("save not written")
 	}
 }
@@ -184,7 +184,7 @@ func TestLegacySaveIsOnlyRewrittenByAWrite(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if got := stored(t, mr); !strings.Contains(got, ":forecast_active: false\n") || !strings.Contains(got, ":difficulty_level: heroic\n") {
+	if got := stored(t, mr); !strings.Contains(got, `"forecast_active": false,`) || !strings.Contains(got, `"difficulty_level": "heroic"`) {
 		t.Fatalf("defaults not written:\n%s", got[:400])
 	}
 }

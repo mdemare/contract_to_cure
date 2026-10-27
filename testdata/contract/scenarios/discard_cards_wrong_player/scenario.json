@@ -1,7 +1,7 @@
 {
   "name": "discard_cards_wrong_player",
   "description": "Only the player over the limit may discard",
-  "save_before": "states/pending_discard.yaml",
+  "save_before": "states/pending_discard.json",
   "request": {
     "method": "POST",
     "path": "/discard_cards",

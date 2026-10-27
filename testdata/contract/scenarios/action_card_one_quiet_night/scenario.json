@@ -1,7 +1,7 @@
 {
   "name": "action_card_one_quiet_night",
   "description": "Sets quiet_night (saved, not in the JSON view)",
-  "save_before": "states/event_cards.yaml",
+  "save_before": "states/event_cards.json",
   "request": {
     "method": "POST",
     "path": "/action_card",
@@ -237,5 +237,5 @@
       }
     }
   },
-  "save_after": "scenarios/action_card_one_quiet_night/after.yaml"
+  "save_after": "scenarios/action_card_one_quiet_night/after.json"
 }

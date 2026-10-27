@@ -15,7 +15,7 @@ var updateGolden = flag.Bool("update", false, "rewrite testdata/base.v2.json")
 const jsonGolden = "testdata/base.v2.json"
 
 // yamlToJSON converts a YAML save to a JSON save node by node, without going
-// through Save, so tests can feed DecodeSave JSON that EncodeJSONSave would
+// through Save, so tests can feed DecodeSave JSON that EncodeSave would
 // never write (missing fields, bad values).
 func yamlToJSON(t *testing.T, yaml string) []byte {
 	t.Helper()
@@ -31,43 +31,15 @@ func yamlToJSON(t *testing.T, yaml string) []byte {
 	return buf.Bytes()
 }
 
-// Every fixture save survives YAML -> JSON -> YAML unchanged.
-func TestFixtureSavesRoundTripThroughJSON(t *testing.T) {
-	for name, data := range fixtureSaves(t) {
-		t.Run(name, func(t *testing.T) {
-			fromYAML, err := DecodeSave(data, "heroic")
-			if err != nil {
-				t.Fatal(err)
-			}
-			encoded, err := fromYAML.EncodeJSONSave()
-			if err != nil {
-				t.Fatal(err)
-			}
-			fromJSON, err := DecodeSave(encoded, "introductory")
-			if err != nil {
-				t.Fatalf("%v\n%s", err, encoded)
-			}
-			if !reflect.DeepEqual(fromJSON, fromYAML) {
-				t.Fatalf("JSON decodes differently:\n%+v\n%+v", fromJSON, fromYAML)
-			}
-			want, _ := fromYAML.EncodeSave()
-			got, _ := fromJSON.EncodeSave()
-			if !bytes.Equal(got, want) {
-				t.Fatalf("YAML after JSON differs:\n%s", firstDiff(string(want), string(got)))
-			}
-		})
-	}
-}
-
-// The JSON format is pinned before anything writes it, so the release that
-// starts writing it writes what this release reads. Run with -update to
-// regenerate after an intended change.
+// The JSON format is pinned: a YAML save (version 1) is written as this JSON.
+// Every release since cc-487 reads it, so changing it needs a new version.
+// Run with -update to regenerate after an intended change.
 func TestJSONSaveFormat(t *testing.T) {
 	save, err := DecodeSave(readFixture(t, "states/base.yaml"), "heroic")
 	if err != nil {
 		t.Fatal(err)
 	}
-	got, err := save.EncodeJSONSave()
+	got, err := save.EncodeSave()
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -139,18 +111,17 @@ func TestUndecodableJSONSavesAreErrors(t *testing.T) {
 	}
 }
 
-// Until the release that writes JSON, a JSON save is read and the next write
-// turns it back into YAML.
-func TestStoreLoadsJSONSaveAndWritesYAML(t *testing.T) {
+// A YAML save is read, and the next write turns it into JSON.
+func TestStoreLoadsYAMLSaveAndWritesJSON(t *testing.T) {
 	s, mr := newTestStore(t)
-	base := readFixture(t, "states/base.yaml")
-	mr.Set(testKey, string(yamlToJSON(t, string(base))))
+	mr.Set(testKey, string(readFixture(t, "states/base.yaml")))
 
 	game := load(t, s)
 	if err := s.Save(context.Background(), game); err != nil {
 		t.Fatal(err)
 	}
-	if got := stored(t, mr); got != string(base) {
-		t.Fatalf("stored save is not the YAML:\n%s", firstDiff(string(base), got))
+	want := string(readFixture(t, "states/base.json"))
+	if got := stored(t, mr); got != want {
+		t.Fatalf("stored save is not the JSON:\n%s", firstDiff(want, got))
 	}
 }

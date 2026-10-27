@@ -1,7 +1,7 @@
 {
   "name": "share_knowledge_not_same_city",
   "description": "Players are in different cities",
-  "save_before": "states/base.yaml",
+  "save_before": "states/base.json",
   "request": {
     "method": "POST",
     "path": "/share_knowledge",

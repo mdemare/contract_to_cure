@@ -1,7 +1,7 @@
 {
   "name": "move_operations_expert_card_required",
   "description": "Operations Expert special move needs a card: card_required",
-  "save_before": "states/operations_expert_at_station.yaml",
+  "save_before": "states/operations_expert_at_station.json",
   "request": {
     "method": "POST",
     "path": "/move",

@@ -1,0 +1,845 @@
+{
+  "version": 2,
+  "game_status": {
+    "actions_remaining": 4,
+    "phase": "player_actions",
+    "pending_hand_limit": null,
+    "turn": 1,
+    "game_over": false,
+    "game_over_reason": null,
+    "outbreaks": 0,
+    "infection_rate": 2,
+    "infection_rate_position": 0,
+    "current_player_idx": 0,
+    "quiet_night": null,
+    "forecast_active": false,
+    "forecast_cards": null,
+    "operations_expert_move_used": false,
+    "difficulty_level": "normal"
+  },
+  "disease_cubes": {
+    "blue": {
+      "cured": false,
+      "eradicated": false,
+      "in_supply": 21
+    },
+    "yellow": {
+      "cured": false,
+      "eradicated": false,
+      "in_supply": 23
+    },
+    "black": {
+      "cured": false,
+      "eradicated": false,
+      "in_supply": 22
+    },
+    "red": {
+      "cured": false,
+      "eradicated": false,
+      "in_supply": 21
+    }
+  },
+  "cities": {
+    "Houston": {
+      "name": "Houston",
+      "color": "blue",
+      "connections": [
+        "Chicago",
+        "Washington",
+        "Havana"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Chicago": {
+      "name": "Chicago",
+      "color": "blue",
+      "connections": [
+        "San Francisco",
+        "Los Angeles",
+        "Mexico City",
+        "Houston",
+        "Montreal"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Montreal": {
+      "name": "Montreal",
+      "color": "blue",
+      "connections": [
+        "Chicago",
+        "New York",
+        "Washington"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "New York": {
+      "name": "New York",
+      "color": "blue",
+      "connections": [
+        "Montreal",
+        "Washington",
+        "London",
+        "Barcelona"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Washington": {
+      "name": "Washington",
+      "color": "blue",
+      "connections": [
+        "Houston",
+        "New York",
+        "Montreal",
+        "Havana"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "London": {
+      "name": "London",
+      "color": "blue",
+      "connections": [
+        "New York",
+        "Barcelona",
+        "Stockholm",
+        "Paris"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Barcelona": {
+      "name": "Barcelona",
+      "color": "blue",
+      "connections": [
+        "London",
+        "New York",
+        "Paris",
+        "Sao Paulo",
+        "Casablanca"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Paris": {
+      "name": "Paris",
+      "color": "blue",
+      "connections": [
+        "London",
+        "Casablanca",
+        "Stockholm",
+        "Barcelona",
+        "Rome"
+      ],
+      "disease_cubes": 3,
+      "has_research_station": false
+    },
+    "Stockholm": {
+      "name": "Stockholm",
+      "color": "blue",
+      "connections": [
+        "London",
+        "Paris",
+        "Rome",
+        "Moscow"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Rome": {
+      "name": "Rome",
+      "color": "blue",
+      "connections": [
+        "Stockholm",
+        "Paris",
+        "Istanbul"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Moscow": {
+      "name": "Moscow",
+      "color": "blue",
+      "connections": [
+        "Stockholm",
+        "Istanbul",
+        "Kyiv"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "San Francisco": {
+      "name": "San Francisco",
+      "color": "blue",
+      "connections": [
+        "Los Angeles",
+        "Chicago",
+        "Tokyo",
+        "Manila"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Los Angeles": {
+      "name": "Los Angeles",
+      "color": "yellow",
+      "connections": [
+        "San Francisco",
+        "Chicago",
+        "Mexico City",
+        "Sydney"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Mexico City": {
+      "name": "Mexico City",
+      "color": "yellow",
+      "connections": [
+        "Los Angeles",
+        "Chicago",
+        "Havana",
+        "Paramaribo",
+        "Lima"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Havana": {
+      "name": "Havana",
+      "color": "yellow",
+      "connections": [
+        "Houston",
+        "Mexico City",
+        "Washington",
+        "Paramaribo"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Paramaribo": {
+      "name": "Paramaribo",
+      "color": "yellow",
+      "connections": [
+        "Mexico City",
+        "Havana",
+        "Lima",
+        "Sao Paulo",
+        "Buenos Aires"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Lima": {
+      "name": "Lima",
+      "color": "yellow",
+      "connections": [
+        "Mexico City",
+        "Paramaribo",
+        "Santiago"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Santiago": {
+      "name": "Santiago",
+      "color": "yellow",
+      "connections": [
+        "Lima"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Buenos Aires": {
+      "name": "Buenos Aires",
+      "color": "yellow",
+      "connections": [
+        "Paramaribo",
+        "Sao Paulo"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Sao Paulo": {
+      "name": "Sao Paulo",
+      "color": "yellow",
+      "connections": [
+        "Paramaribo",
+        "Buenos Aires",
+        "Barcelona",
+        "Lagos"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Lagos": {
+      "name": "Lagos",
+      "color": "yellow",
+      "connections": [
+        "Sao Paulo",
+        "Nairobi",
+        "Kinshasa"
+      ],
+      "disease_cubes": 1,
+      "has_research_station": false
+    },
+    "Nairobi": {
+      "name": "Nairobi",
+      "color": "yellow",
+      "connections": [
+        "Lagos",
+        "Kinshasa",
+        "Cape Town",
+        "Cairo"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Kinshasa": {
+      "name": "Kinshasa",
+      "color": "yellow",
+      "connections": [
+        "Lagos",
+        "Nairobi",
+        "Cape Town"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Cape Town": {
+      "name": "Cape Town",
+      "color": "yellow",
+      "connections": [
+        "Kinshasa",
+        "Nairobi"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Casablanca": {
+      "name": "Casablanca",
+      "color": "black",
+      "connections": [
+        "Barcelona",
+        "Paris",
+        "Istanbul",
+        "Cairo"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Istanbul": {
+      "name": "Istanbul",
+      "color": "black",
+      "connections": [
+        "Rome",
+        "Casablanca",
+        "Moscow",
+        "Cairo",
+        "Baghdad",
+        "Kyiv"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Cairo": {
+      "name": "Cairo",
+      "color": "black",
+      "connections": [
+        "Casablanca",
+        "Istanbul",
+        "Baghdad",
+        "Nairobi",
+        "Riyadh"
+      ],
+      "disease_cubes": 2,
+      "has_research_station": false
+    },
+    "Kyiv": {
+      "name": "Kyiv",
+      "color": "black",
+      "connections": [
+        "Moscow",
+        "Istanbul",
+        "Tehran"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Baghdad": {
+      "name": "Baghdad",
+      "color": "black",
+      "connections": [
+        "Istanbul",
+        "Cairo",
+        "Riyadh",
+        "Kabul",
+        "Tehran"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Riyadh": {
+      "name": "Riyadh",
+      "color": "black",
+      "connections": [
+        "Cairo",
+        "Baghdad",
+        "Kabul"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Tehran": {
+      "name": "Tehran",
+      "color": "black",
+      "connections": [
+        "Kyiv",
+        "Baghdad",
+        "Kabul",
+        "Delhi"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Kabul": {
+      "name": "Kabul",
+      "color": "black",
+      "connections": [
+        "Tehran",
+        "Baghdad",
+        "Riyadh",
+        "Mumbai",
+        "Delhi"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Delhi": {
+      "name": "Delhi",
+      "color": "black",
+      "connections": [
+        "Tehran",
+        "Kabul",
+        "Mumbai",
+        "Chennai",
+        "Kolkata"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Mumbai": {
+      "name": "Mumbai",
+      "color": "black",
+      "connections": [
+        "Kabul",
+        "Delhi",
+        "Chennai"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Chennai": {
+      "name": "Chennai",
+      "color": "black",
+      "connections": [
+        "Mumbai",
+        "Delhi",
+        "Kolkata",
+        "Bangkok",
+        "Jakarta"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Kolkata": {
+      "name": "Kolkata",
+      "color": "black",
+      "connections": [
+        "Delhi",
+        "Chennai",
+        "Bangkok",
+        "Wuhan"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Bangkok": {
+      "name": "Bangkok",
+      "color": "red",
+      "connections": [
+        "Kolkata",
+        "Chennai",
+        "Jakarta",
+        "Hong Kong",
+        "Wuhan"
+      ],
+      "disease_cubes": 1,
+      "has_research_station": false
+    },
+    "Jakarta": {
+      "name": "Jakarta",
+      "color": "red",
+      "connections": [
+        "Chennai",
+        "Bangkok",
+        "Hong Kong",
+        "Sydney"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Hong Kong": {
+      "name": "Hong Kong",
+      "color": "red",
+      "connections": [
+        "Jakarta",
+        "Bangkok",
+        "Wuhan",
+        "Manila"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Wuhan": {
+      "name": "Wuhan",
+      "color": "red",
+      "connections": [
+        "Kolkata",
+        "Bangkok",
+        "Hong Kong",
+        "Shanghai",
+        "Manila",
+        "Taipei"
+      ],
+      "disease_cubes": 2,
+      "has_research_station": true
+    },
+    "Shanghai": {
+      "name": "Shanghai",
+      "color": "red",
+      "connections": [
+        "Beijing",
+        "Seoul",
+        "Tokyo",
+        "Taipei",
+        "Wuhan"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Beijing": {
+      "name": "Beijing",
+      "color": "red",
+      "connections": [
+        "Shanghai",
+        "Seoul"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Seoul": {
+      "name": "Seoul",
+      "color": "red",
+      "connections": [
+        "Beijing",
+        "Shanghai",
+        "Tokyo"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Tokyo": {
+      "name": "Tokyo",
+      "color": "red",
+      "connections": [
+        "Seoul",
+        "Shanghai",
+        "Kyoto",
+        "San Francisco"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Kyoto": {
+      "name": "Kyoto",
+      "color": "red",
+      "connections": [
+        "Taipei",
+        "Tokyo"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Taipei": {
+      "name": "Taipei",
+      "color": "red",
+      "connections": [
+        "Kyoto",
+        "Wuhan",
+        "Shanghai",
+        "Manila"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Manila": {
+      "name": "Manila",
+      "color": "red",
+      "connections": [
+        "Taipei",
+        "Wuhan",
+        "Hong Kong",
+        "San Francisco",
+        "Sydney"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    },
+    "Sydney": {
+      "name": "Sydney",
+      "color": "red",
+      "connections": [
+        "Jakarta",
+        "Manila",
+        "Los Angeles"
+      ],
+      "disease_cubes": 0,
+      "has_research_station": false
+    }
+  },
+  "research_stations": {
+    "available": 5,
+    "locations": [
+      "Wuhan"
+    ]
+  },
+  "players": [
+    {
+      "role": "contingency_planner",
+      "index": 0,
+      "location": "Wuhan",
+      "hand": [
+        {
+          "type": "city",
+          "name": "Wuhan",
+          "color": "red"
+        },
+        {
+          "type": "city",
+          "name": "Beijing",
+          "color": "red"
+        },
+        {
+          "type": "city",
+          "name": "Shanghai",
+          "color": "red"
+        },
+        {
+          "type": "city",
+          "name": "Seoul",
+          "color": "red"
+        },
+        {
+          "type": "city",
+          "name": "Paris",
+          "color": "blue"
+        },
+        {
+          "type": "city",
+          "name": "Kyoto",
+          "color": "red"
+        },
+        {
+          "type": "city",
+          "name": "Manila",
+          "color": "red"
+        }
+      ]
+    },
+    {
+      "role": "medic",
+      "index": 1,
+      "location": "Wuhan",
+      "hand": [
+        {
+          "type": "city",
+          "name": "Lagos",
+          "color": "yellow"
+        },
+        {
+          "type": "city",
+          "name": "Cairo",
+          "color": "black"
+        }
+      ]
+    },
+    {
+      "role": "dispatcher",
+      "index": 2,
+      "location": "London",
+      "hand": [
+        {
+          "type": "city",
+          "name": "London",
+          "color": "blue"
+        },
+        {
+          "type": "city",
+          "name": "Lima",
+          "color": "yellow"
+        }
+      ]
+    },
+    {
+      "role": "operations_expert",
+      "index": 3,
+      "location": "Paris",
+      "hand": [
+        {
+          "type": "city",
+          "name": "Tokyo",
+          "color": "red"
+        },
+        {
+          "type": "city",
+          "name": "Kyiv",
+          "color": "black"
+        }
+      ]
+    }
+  ],
+  "decks": {
+    "player_deck": [
+      {
+        "type": "city",
+        "name": "Santiago",
+        "color": "yellow"
+      },
+      {
+        "type": "city",
+        "name": "Sydney",
+        "color": "red"
+      },
+      {
+        "type": "city",
+        "name": "Moscow",
+        "color": "blue"
+      },
+      {
+        "type": "city",
+        "name": "Rome",
+        "color": "blue"
+      },
+      {
+        "type": "city",
+        "name": "Kinshasa",
+        "color": "yellow"
+      },
+      {
+        "type": "city",
+        "name": "Delhi",
+        "color": "black"
+      },
+      {
+        "type": "city",
+        "name": "Istanbul",
+        "color": "black"
+      }
+    ],
+    "player_discard": [
+      {
+        "type": "city",
+        "name": "Havana",
+        "color": "yellow"
+      },
+      {
+        "type": "action",
+        "name": "Airlift",
+        "color": null
+      }
+    ],
+    "infection_deck": [
+      {
+        "type": "city",
+        "name": "Montreal",
+        "color": "blue"
+      },
+      {
+        "type": "city",
+        "name": "Chicago",
+        "color": "blue"
+      },
+      {
+        "type": "city",
+        "name": "Houston",
+        "color": "blue"
+      },
+      {
+        "type": "city",
+        "name": "Tehran",
+        "color": "black"
+      },
+      {
+        "type": "city",
+        "name": "Kabul",
+        "color": "black"
+      },
+      {
+        "type": "city",
+        "name": "Mumbai",
+        "color": "black"
+      },
+      {
+        "type": "city",
+        "name": "Jakarta",
+        "color": "red"
+      },
+      {
+        "type": "city",
+        "name": "Sao Paulo",
+        "color": "yellow"
+      },
+      {
+        "type": "city",
+        "name": "Nairobi",
+        "color": "yellow"
+      },
+      {
+        "type": "city",
+        "name": "Stockholm",
+        "color": "blue"
+      }
+    ],
+    "infection_discard": [
+      {
+        "type": "city",
+        "name": "Wuhan",
+        "color": "red"
+      },
+      {
+        "type": "city",
+        "name": "Bangkok",
+        "color": "red"
+      },
+      {
+        "type": "city",
+        "name": "Paris",
+        "color": "blue"
+      },
+      {
+        "type": "city",
+        "name": "Lagos",
+        "color": "yellow"
+      },
+      {
+        "type": "city",
+        "name": "Cairo",
+        "color": "black"
+      }
+    ]
+  }
+}

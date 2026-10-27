@@ -1,7 +1,7 @@
 {
   "name": "discard_cards_not_pending",
   "description": "No discard is pending",
-  "save_before": "states/base.yaml",
+  "save_before": "states/base.json",
   "request": {
     "method": "POST",
     "path": "/discard_cards",

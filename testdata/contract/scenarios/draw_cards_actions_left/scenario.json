@@ -1,7 +1,7 @@
 {
   "name": "draw_cards_actions_left",
   "description": "Draw phase with actions left: 422 \"Actions remaining\", nothing changes",
-  "save_before": "states/draw_phase_actions_left.yaml",
+  "save_before": "states/draw_phase_actions_left.json",
   "request": {
     "method": "POST",
     "path": "/draw_cards",

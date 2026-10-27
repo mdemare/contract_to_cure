@@ -1,7 +1,7 @@
 {
   "name": "move_out_of_phase",
   "description": "check_action error (success: false, 422)",
-  "save_before": "states/draw_phase.yaml",
+  "save_before": "states/draw_phase.json",
   "request": {
     "method": "POST",
     "path": "/move",

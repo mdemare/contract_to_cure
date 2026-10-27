@@ -1,7 +1,7 @@
 {
   "name": "cure_disease_repeated_card_names",
   "description": "One card named four times does not cure",
-  "save_before": "states/base.yaml",
+  "save_before": "states/base.json",
   "request": {
     "method": "POST",
     "path": "/cure_disease",

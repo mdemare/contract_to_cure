@@ -1,7 +1,7 @@
 {
   "name": "action_card_airlift",
   "description": "Airlift another player",
-  "save_before": "states/event_cards.yaml",
+  "save_before": "states/event_cards.json",
   "request": {
     "method": "POST",
     "path": "/action_card",
@@ -239,5 +239,5 @@
       }
     }
   },
-  "save_after": "scenarios/action_card_airlift/after.yaml"
+  "save_after": "scenarios/action_card_airlift/after.json"
 }

@@ -1,20 +1,19 @@
 package store
 
 import (
-	"bytes"
 	"fmt"
-	"regexp"
 	"strconv"
 	"strings"
 
 	"go.yaml.in/yaml/v3"
 )
 
-// The saves are written by Ruby's Psych (Hash#to_yaml), so they use Ruby
+// Saves before cc-490 were Ruby/Psych YAML (Hash#to_yaml), with Ruby
 // symbols for keys and some values: ":game_status:" and ":city". This file
 // decodes that subset of YAML into a small tree that keeps symbols apart from
-// strings, and emits a tree the way Psych does, so Rails and Go can read each
-// other's saves byte for byte (cc-376).
+// strings, so those saves still load (cc-376). Saves are now written as
+// versioned JSON (jsonsave.go), which is parsed into the same tree. The
+// parser can go once no YAML save needs reading.
 
 type kind int
 
@@ -133,147 +132,4 @@ func convertScalar(n *yaml.Node) (value, error) {
 		return intValue(int(i)), nil
 	}
 	return value{}, fmt.Errorf("line %d: unsupported YAML tag %s", n.Line, n.Tag)
-}
-
-// emitRubyYAML writes v the way Psych's Hash#to_yaml does: a "---" header,
-// two-space indentation, sequences at the same indentation as their key, and
-// empty values left blank.
-func emitRubyYAML(v value) []byte {
-	var buf bytes.Buffer
-	buf.WriteString("---")
-	switch {
-	case v.kind == kindMap && len(v.pairs) > 0, v.kind == kindSeq && len(v.items) > 0:
-		buf.WriteByte('\n')
-		emitBlock(&buf, v, 0, false)
-	default:
-		buf.WriteByte(' ')
-		buf.WriteString(scalarText(v))
-		buf.WriteByte('\n')
-	}
-	return buf.Bytes()
-}
-
-// emitBlock writes a non-empty mapping or sequence at indent. With inline set,
-// the first line continues the current one (a mapping right after "- ").
-func emitBlock(buf *bytes.Buffer, v value, indent int, inline bool) {
-	pad := strings.Repeat(" ", indent)
-	if v.kind == kindMap {
-		for i, p := range v.pairs {
-			if i > 0 || !inline {
-				buf.WriteString(pad)
-			}
-			buf.WriteString(scalarText(p.key))
-			buf.WriteByte(':')
-			emitValue(buf, p.val, indent, true)
-		}
-		return
-	}
-	for _, item := range v.items {
-		buf.WriteString(pad)
-		buf.WriteByte('-')
-		emitValue(buf, item, indent, false)
-	}
-}
-
-// emitValue writes what follows "key:" or "-". Mapping values nest two spaces
-// deeper, except sequences, which Psych keeps at the key's indentation.
-// Sequence items that are mappings start on the dash's line. Nil is blank.
-func emitValue(buf *bytes.Buffer, v value, indent int, inMap bool) {
-	switch {
-	case v.kind == kindNil:
-		buf.WriteByte('\n')
-	case v.kind == kindMap && len(v.pairs) > 0 && inMap:
-		buf.WriteByte('\n')
-		emitBlock(buf, v, indent+2, false)
-	case v.kind == kindMap && len(v.pairs) > 0:
-		buf.WriteByte(' ')
-		emitBlock(buf, v, indent+2, true)
-	case v.kind == kindSeq && len(v.items) > 0 && inMap:
-		buf.WriteByte('\n')
-		emitBlock(buf, v, indent, false)
-	case v.kind == kindSeq && len(v.items) > 0:
-		buf.WriteByte('\n')
-		emitBlock(buf, v, indent+2, false)
-	default:
-		buf.WriteByte(' ')
-		buf.WriteString(scalarText(v))
-		buf.WriteByte('\n')
-	}
-}
-
-func scalarText(v value) string {
-	switch v.kind {
-	case kindNil:
-		return ""
-	case kindBool:
-		return strconv.FormatBool(v.b)
-	case kindInt:
-		return strconv.Itoa(v.i)
-	case kindSymbol:
-		if plainSymbol.MatchString(v.s) {
-			return ":" + v.s
-		}
-		// A quoted ":name" would read back as a string, so use the explicit tag.
-		return "!ruby/symbol " + quoteString(v.s, false)
-	case kindString:
-		return stringText(v.s)
-	case kindMap:
-		return "{}"
-	case kindSeq:
-		return "[]"
-	}
-	return ""
-}
-
-var (
-	plainSymbol = regexp.MustCompile(`^[A-Za-z_][A-Za-z0-9_]*[?!]?$`)
-	// Plain scalars that YAML 1.1 (Psych) would read as something other than a
-	// string: booleans, null, numbers, times and symbols.
-	nonStringScalar = regexp.MustCompile(`^(?i:y|n|yes|no|true|false|on|off|null|~)$|` +
-		`^[-+]?[0-9][0-9_,.:eE+-]*$|^[-+]?\.(?i:inf|nan)$|^\.(?i:nan)$|^[0-9]{4}-[0-9]{1,2}-[0-9]{1,2}|^:`)
-)
-
-// stringText follows Psych's choice of style (Psych::Visitors::YAMLTree
-// #visit_String): "y" and "n", and strings that start with a non-word
-// character, are double-quoted; strings that would read back as another type
-// are single-quoted; anything libyaml cannot write plain is quoted too.
-// Multi-line strings are double-quoted where Psych writes a literal block;
-// both read back the same.
-func stringText(s string) string {
-	switch {
-	case strings.Contains(strings.TrimSuffix(s, "\n"), "\n"):
-		return quoteString(s, true)
-	case s == "y" || s == "Y" || s == "n" || s == "N":
-		return quoteString(s, true)
-	case startsWithNonWord.MatchString(s) && !strings.Contains(s, `"`):
-		return quoteString(s, true)
-	case s == "" || nonStringScalar.MatchString(s) || !plainSafe(s):
-		return quoteString(s, false)
-	}
-	return s
-}
-
-var startsWithNonWord = regexp.MustCompile(`^[^\p{L}\p{M}\p{Nd}\p{Pc}]`)
-
-// plainSafe reports whether libyaml can write s as a plain scalar.
-func plainSafe(s string) bool {
-	if strings.TrimSpace(s) != s || strings.ContainsAny(s[:1], "-?:,[]{}#&*!|>'\"%@`") {
-		return false
-	}
-	if strings.Contains(s, ": ") || strings.Contains(s, " #") || strings.HasSuffix(s, ":") {
-		return false
-	}
-	for _, r := range s {
-		if r < 0x20 || r == 0x7f {
-			return false
-		}
-	}
-	return true
-}
-
-func quoteString(s string, double bool) string {
-	if double || strings.ContainsFunc(s, func(r rune) bool { return r < 0x20 || r == 0x7f }) {
-		return strconv.Quote(s)
-	}
-	return "'" + strings.ReplaceAll(s, "'", "''") + "'"
 }

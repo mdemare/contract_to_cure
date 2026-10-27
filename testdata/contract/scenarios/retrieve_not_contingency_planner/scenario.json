@@ -1,7 +1,7 @@
 {
   "name": "retrieve_not_contingency_planner",
   "description": "Only the Contingency Planner can retrieve",
-  "save_before": "states/base.yaml",
+  "save_before": "states/base.json",
   "request": {
     "method": "POST",
     "path": "/retrieve",

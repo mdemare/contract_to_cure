@@ -1,7 +1,7 @@
 {
   "name": "restart_game",
-  "description": "New random game, same difficulty (after.yaml depends on the Ruby RNG)",
-  "save_before": "states/base.yaml",
+  "description": "New random game, same difficulty (after.json depends on the Ruby RNG)",
+  "save_before": "states/base.json",
   "request": {
     "method": "POST",
     "path": "/restart_game",
@@ -211,5 +211,5 @@
       }
     }
   },
-  "save_after": "scenarios/restart_game/after.yaml"
+  "save_after": "scenarios/restart_game/after.json"
 }

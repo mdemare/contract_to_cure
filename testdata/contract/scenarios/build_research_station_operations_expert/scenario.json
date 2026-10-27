@@ -1,7 +1,7 @@
 {
   "name": "build_research_station_operations_expert",
   "description": "Operations Expert builds without a card",
-  "save_before": "states/operations_expert_away.yaml",
+  "save_before": "states/operations_expert_away.json",
   "request": {
     "method": "POST",
     "path": "/build_research_station",
@@ -211,5 +211,5 @@
       }
     }
   },
-  "save_after": "scenarios/build_research_station_operations_expert/after.yaml"
+  "save_after": "scenarios/build_research_station_operations_expert/after.json"
 }

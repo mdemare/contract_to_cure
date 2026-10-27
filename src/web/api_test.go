@@ -25,7 +25,7 @@ func (fixedCSRF) Protect(next http.Handler) http.Handler          { return next 
 // (recorded from the Rails app for cc-422).
 
 func TestRootRendersIndex(t *testing.T) {
-	ts := newTestServer(t, readFixture(t, "states/base.yaml"), func(c *web.Config) {
+	ts := newTestServer(t, readFixture(t, "states/base.json"), func(c *web.Config) {
 		c.CSRF = fixedCSRF{}
 	})
 	rec := ts.do(http.MethodGet, "/", "", "")
@@ -56,7 +56,7 @@ func TestRootRendersIndex(t *testing.T) {
 
 // From the former Rails test_menu.rb and test_disease_status_layout.rb.
 func TestIndexHasMenuAndDiseaseStatus(t *testing.T) {
-	ts := newTestServer(t, readFixture(t, "states/base.yaml"))
+	ts := newTestServer(t, readFixture(t, "states/base.json"))
 	page := ts.do(http.MethodGet, "/", "", "").Body.String()
 	want := []string{
 		`<div class="menu-container">`,
@@ -102,7 +102,7 @@ func TestIndexHasMenuAndDiseaseStatus(t *testing.T) {
 }
 
 func TestIndexShowsGitHashAndSentryInProduction(t *testing.T) {
-	ts := newTestServer(t, readFixture(t, "states/base.yaml"), func(c *web.Config) {
+	ts := newTestServer(t, readFixture(t, "states/base.json"), func(c *web.Config) {
 		c.Sentry = observe.Config{DSN: "https://key@example.com/1", Environment: "production"}
 		c.GitHash = "abc123"
 	})
@@ -172,7 +172,7 @@ func TestRedisErrorIs500(t *testing.T) {
 }
 
 func TestNestedUpdateIs500(t *testing.T) {
-	ts := newTestServer(t, readFixture(t, "states/base.yaml"))
+	ts := newTestServer(t, readFixture(t, "states/base.json"))
 	err := ts.store.AtomicUpdate(context.Background(), func(ctx context.Context) error {
 		req := httptest.NewRequestWithContext(ctx, http.MethodGet, "/game_state.json", nil)
 		w := httptest.NewRecorder()
@@ -189,7 +189,7 @@ func TestNestedUpdateIs500(t *testing.T) {
 }
 
 func TestStaticFiles(t *testing.T) {
-	ts := newTestServer(t, readFixture(t, "states/base.yaml"))
+	ts := newTestServer(t, readFixture(t, "states/base.json"))
 	for _, tc := range []struct {
 		method, path string
 		status       int
@@ -215,7 +215,7 @@ func TestStaticFiles(t *testing.T) {
 }
 
 func TestGameStateIncludesCurrentUser(t *testing.T) {
-	ts := newTestServer(t, readFixture(t, "states/base.yaml"), func(c *web.Config) {
+	ts := newTestServer(t, readFixture(t, "states/base.json"), func(c *web.Config) {
 		c.CurrentUser = func(*http.Request) any {
 			return map[string]string{"uid": "7", "email": "a@example.com", "name": "A"}
 		}
@@ -266,7 +266,7 @@ func TestGuardsRunBeforePhaseChecksAndParams(t *testing.T) {
 	posts := []string{"/move", "/treat", "/cure_disease", "/retrieve", "/share_knowledge", "/pass",
 		"/draw_cards", "/infect_cities", "/build_research_station", "/discard_cards", "/action_card", "/restart_game"}
 	for _, path := range posts {
-		ts := newTestServer(t, readFixture(t, "states/forecast_active.yaml"))
+		ts := newTestServer(t, readFixture(t, "states/forecast_active.json"))
 		rec := ts.postJSON(path, "invalid json")
 		if path == "/action_card" {
 			checkError(t, rec, http.StatusBadRequest, "Invalid JSON")
@@ -274,7 +274,7 @@ func TestGuardsRunBeforePhaseChecksAndParams(t *testing.T) {
 			checkError(t, rec, http.StatusUnprocessableEntity, forecast)
 		}
 
-		ts = newTestServer(t, readFixture(t, "states/game_over_draw_phase.yaml"))
+		ts = newTestServer(t, readFixture(t, "states/game_over_draw_phase.json"))
 		rec = ts.postJSON(path, "invalid json")
 		if path == "/restart_game" {
 			checkError(t, rec, http.StatusBadRequest, "Invalid JSON")
@@ -282,7 +282,7 @@ func TestGuardsRunBeforePhaseChecksAndParams(t *testing.T) {
 			checkError(t, rec, http.StatusUnprocessableEntity, "The game is over")
 		}
 	}
-	ts := newTestServer(t, readFixture(t, "states/forecast_active.yaml"))
+	ts := newTestServer(t, readFixture(t, "states/forecast_active.json"))
 	if rec := ts.do(http.MethodGet, "/", "", ""); rec.Code != http.StatusOK {
 		t.Errorf("index during a Forecast: %d", rec.Code)
 	}
@@ -290,7 +290,7 @@ func TestGuardsRunBeforePhaseChecksAndParams(t *testing.T) {
 
 // A Forecast started by one request is finished by the next.
 func TestForecastPersistsAcrossRequests(t *testing.T) {
-	ts := newTestServer(t, readFixture(t, "states/event_cards.yaml"))
+	ts := newTestServer(t, readFixture(t, "states/event_cards.json"))
 	rec := ts.postJSON("/action_card", `{"card":"Forecast"}`)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("forecast: %d %s", rec.Code, rec.Body)
@@ -322,7 +322,7 @@ func TestForecastPersistsAcrossRequests(t *testing.T) {
 // An undecodable save (here a current player out of range, cc-439) starts a
 // new game.
 func TestUndecodableSaveStartsNewGame(t *testing.T) {
-	bad := strings.Replace(string(readFixture(t, "states/base.yaml")), ":current_player_idx: 0", ":current_player_idx: 9", 1)
+	bad := strings.Replace(string(readFixture(t, "states/base.json")), `"current_player_idx": 0`, `"current_player_idx": 9`, 1)
 	ts := newTestServer(t, []byte(bad))
 	if rec := ts.do(http.MethodGet, "/game_state.json", "", ""); rec.Code != http.StatusOK {
 		t.Fatalf("%d %s", rec.Code, rec.Body)
@@ -343,7 +343,7 @@ func TestPlayerActionsOutsideTheirPhase(t *testing.T) {
 		"/build_research_station": ``,
 	}
 	for path, body := range requests {
-		before := readFixture(t, "states/draw_phase.yaml")
+		before := readFixture(t, "states/draw_phase.json")
 		ts := newTestServer(t, before)
 		rec := ts.postJSON(path, body)
 		if want := `{"success":false,"status":"error","message":"No more actions allowed"}`; rec.Code != http.StatusUnprocessableEntity || compactJSON(t, rec.Body.Bytes()) != want {
@@ -372,7 +372,7 @@ func TestMutatingEndpointsRejectedAfterGameOver(t *testing.T) {
 		"/action_card":            `{"card":"One Quiet Night"}`,
 	}
 	for _, state := range []string{"game_over_victory", "game_over_draw_phase", "game_over_infect_phase"} {
-		before := readFixture(t, "states/"+state+".yaml")
+		before := readFixture(t, "states/"+state+".json")
 		ts := newTestServer(t, before)
 		for path, body := range requests {
 			rec := ts.postJSON(path, body)
@@ -398,11 +398,11 @@ func TestRestartGameDifficulty(t *testing.T) {
 		{`{"difficulty_level":"introductory"}`, game.Introductory, 4},
 		{`{"difficulty_level":"normal"}`, game.Normal, 5},
 		{`{"difficulty_level":"heroic"}`, game.Heroic, 6},
-		{`{}`, game.Normal, 5}, // base.yaml is normal
+		{`{}`, game.Normal, 5}, // base.json is normal
 	}
 	for _, tt := range tests {
 		t.Run(tt.body, func(t *testing.T) {
-			ts := newTestServer(t, readFixture(t, "states/base.yaml"))
+			ts := newTestServer(t, readFixture(t, "states/base.json"))
 			rec := ts.postJSON("/restart_game", tt.body)
 			if rec.Code != http.StatusOK {
 				t.Fatalf("restart: %d %s", rec.Code, rec.Body)
@@ -435,7 +435,7 @@ func TestRestartGameDifficulty(t *testing.T) {
 
 // restart_game returns the new game, so the client need not fetch it (cc-488).
 func TestRestartGameReturnsGameState(t *testing.T) {
-	ts := newTestServer(t, readFixture(t, "states/game_over_victory.yaml"))
+	ts := newTestServer(t, readFixture(t, "states/game_over_victory.json"))
 	rec := ts.postJSON("/restart_game", `{}`)
 	if rec.Code != http.StatusOK {
 		t.Fatalf("restart: %d %s", rec.Code, rec.Body)

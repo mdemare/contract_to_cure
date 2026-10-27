@@ -9,12 +9,13 @@ import (
 	"strconv"
 )
 
-// The save is moving from Ruby/Psych YAML (version 1, no stamp) to versioned
-// JSON (cc-487): {"version": 2, "game_status": {...}, ...}, with the same
-// fields and layout as the YAML, in the same order. The move is expand, then
-// contract: this release reads both formats but still writes YAML, so a
-// rollback to the previous release keeps the live game. Writing JSON comes in
-// a later release, once every running release can read it.
+// The save is versioned JSON (cc-487): {"version": 2, "game_status": {...},
+// ...}, with the same fields and layout as the Ruby/Psych YAML it replaced
+// (version 1, no stamp), in the same order. The move was expand, then
+// contract: cc-487 shipped reading JSON while still writing YAML, and cc-490
+// switched writes to JSON. YAML saves are still read, so a game saved before
+// cc-490 survives the deploy; a rollback to a release before cc-487 cannot
+// read JSON and starts a new game.
 //
 // A JSON save is parsed into the same value tree as the YAML and decoded by
 // the same decoder, so both formats get the same defaults and checks. JSON has
@@ -106,9 +107,9 @@ func convertJSON(dec *json.Decoder, depth int) (value, error) {
 	return value{}, fmt.Errorf("unexpected JSON token %v", tok)
 }
 
-// EncodeJSONSave writes the save as versioned JSON, indented by two spaces.
-// Nothing writes it to Redis yet (see the top of this file).
-func (s *Save) EncodeJSONSave() ([]byte, error) {
+// EncodeSave writes the save as versioned JSON, indented by two spaces. The
+// format is pinned by testdata/base.v2.json (TestJSONSaveFormat).
+func (s *Save) EncodeSave() ([]byte, error) {
 	if len(s.DiseaseCubes) != len(Colors) {
 		return nil, fmt.Errorf("save has %d disease colors, want %d", len(s.DiseaseCubes), len(Colors))
 	}

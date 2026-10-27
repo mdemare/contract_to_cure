@@ -1,7 +1,7 @@
 {
   "name": "discard_cards",
   "description": "Resolve the pending discard",
-  "save_before": "states/pending_discard.yaml",
+  "save_before": "states/pending_discard.json",
   "request": {
     "method": "POST",
     "path": "/discard_cards",
@@ -250,5 +250,5 @@
       }
     }
   },
-  "save_after": "scenarios/discard_cards/after.yaml"
+  "save_after": "scenarios/discard_cards/after.json"
 }

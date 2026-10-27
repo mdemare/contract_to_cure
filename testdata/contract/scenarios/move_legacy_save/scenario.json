@@ -215,5 +215,5 @@
       }
     }
   },
-  "save_after": "scenarios/move_legacy_save/after.yaml"
+  "save_after": "scenarios/move_legacy_save/after.json"
 }

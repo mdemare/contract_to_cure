@@ -1,7 +1,7 @@
 {
   "name": "treat_out_of_phase",
   "description": "check_action error",
-  "save_before": "states/infect_phase.yaml",
+  "save_before": "states/infect_phase.json",
   "request": {
     "method": "POST",
     "path": "/treat",

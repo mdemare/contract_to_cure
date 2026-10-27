@@ -10,7 +10,7 @@ import (
 	"github.com/mdemare/contract_to_cure/src/game"
 )
 
-// randomRestarts are the successful restart_game scenarios. Their after.yaml
+// randomRestarts are the successful restart_game scenarios. Their after.json
 // is a game dealt by Ruby's RNG, so the save is compared by shape (Q41-cc).
 var randomRestarts = map[string]bool{
 	"restart_game":                 true,

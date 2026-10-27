@@ -1,7 +1,7 @@
 {
   "name": "retrieve_missing_parameters",
   "description": "Schema failure",
-  "save_before": "states/contingency_planner.yaml",
+  "save_before": "states/contingency_planner.json",
   "request": {
     "method": "POST",
     "path": "/retrieve",

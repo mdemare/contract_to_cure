@@ -1,7 +1,7 @@
 {
   "name": "move_unknown_destination",
   "description": "Unknown city: game-logic error with success false",
-  "save_before": "states/base.yaml",
+  "save_before": "states/base.json",
   "request": {
     "method": "POST",
     "path": "/move",

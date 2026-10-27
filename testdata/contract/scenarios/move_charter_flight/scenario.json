@@ -1,7 +1,7 @@
 {
   "name": "move_charter_flight",
   "description": "Charter flight by discarding the current city card",
-  "save_before": "states/base.yaml",
+  "save_before": "states/base.json",
   "request": {
     "method": "POST",
     "path": "/move",
@@ -215,5 +215,5 @@
       }
     }
   },
-  "save_after": "scenarios/move_charter_flight/after.yaml"
+  "save_after": "scenarios/move_charter_flight/after.json"
 }

@@ -1,7 +1,7 @@
 {
   "name": "action_card_forecast",
   "description": "Forecast, step 1: shows the top six cards of the infection draw pile, next card first",
-  "save_before": "states/event_cards.yaml",
+  "save_before": "states/event_cards.json",
   "request": {
     "method": "POST",
     "path": "/action_card",
@@ -48,5 +48,5 @@
       ]
     }
   },
-  "save_after": "scenarios/action_card_forecast/after.yaml"
+  "save_after": "scenarios/action_card_forecast/after.json"
 }

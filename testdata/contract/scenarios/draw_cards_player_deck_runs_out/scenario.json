@@ -1,7 +1,7 @@
 {
   "name": "draw_cards_player_deck_runs_out",
   "description": "Game over (no player cards): end_turn_events has game_over, reason no_player_cards and the draw event; the phase stays draw_cards",
-  "save_before": "states/draw_phase_last_player_card.yaml",
+  "save_before": "states/draw_phase_last_player_card.json",
   "request": {
     "method": "POST",
     "path": "/draw_cards",
@@ -231,5 +231,5 @@
       }
     }
   },
-  "save_after": "scenarios/draw_cards_player_deck_runs_out/after.yaml"
+  "save_after": "scenarios/draw_cards_player_deck_runs_out/after.json"
 }

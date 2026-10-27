@@ -1,7 +1,7 @@
 {
   "name": "draw_cards_forecast_active",
   "description": "Blocked by an unfinished Forecast",
-  "save_before": "states/forecast_active.yaml",
+  "save_before": "states/forecast_active.json",
   "request": {
     "method": "POST",
     "path": "/draw_cards",
