@@ -31,6 +31,17 @@ var gitHash string
 // SIGTERM.
 const shutdownTimeout = 25 * time.Second
 
+// Connection timeouts (cc-483), so slow clients cannot hold connections open
+// when they reach the server without nginx. writeTimeout stays above the
+// Redis pool timeout plus the Sentry flush, and below nginx's 90s proxy
+// timeouts.
+const (
+	readHeaderTimeout = 5 * time.Second
+	readTimeout       = 15 * time.Second
+	writeTimeout      = 30 * time.Second
+	idleTimeout       = 120 * time.Second
+)
+
 func main() {
 	slog.SetDefault(slog.New(slog.NewJSONHandler(os.Stdout, nil)))
 
@@ -72,7 +83,7 @@ func main() {
 		Sentry:  sentryConfig,
 		GitHash: gitHash,
 	}, sentry.CurrentHub())
-	srv := &http.Server{Addr: ":" + port, Handler: handler}
+	srv := newServer(":"+port, handler)
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGTERM, os.Interrupt)
 	defer stop()
@@ -94,6 +105,18 @@ func main() {
 		os.Exit(1)
 	}
 	<-stopped
+}
+
+// newServer serves handler on addr with the connection timeouts.
+func newServer(addr string, handler http.Handler) *http.Server {
+	return &http.Server{
+		Addr:              addr,
+		Handler:           handler,
+		ReadHeaderTimeout: readHeaderTimeout,
+		ReadTimeout:       readTimeout,
+		WriteTimeout:      writeTimeout,
+		IdleTimeout:       idleTimeout,
+	}
 }
 
 // newHandler is the app as main serves it: cfg with authentication and CSRF

@@ -1,7 +1,10 @@
 package web_test
 
 import (
+	"bytes"
+	"mime/multipart"
 	"net/http"
+	"strings"
 	"testing"
 )
 
@@ -99,5 +102,60 @@ func TestUnparsableQueryIsBadRequest(t *testing.T) {
 	rec := ts.do(http.MethodPost, "/move?player_index=%zz", "", "")
 	if rec.Code != http.StatusBadRequest || rec.Body.Len() != 0 {
 		t.Errorf("%d %q", rec.Code, rec.Body)
+	}
+}
+
+// A body over 64 KB is a 413 with the usual error JSON, and the action does
+// not run (cc-483).
+func TestOversizedBodyIs413(t *testing.T) {
+	const limit = 64 << 10
+	padding := strings.Repeat("x", limit)
+	multipartBody := func(value string) (string, string) {
+		var buf bytes.Buffer
+		mw := multipart.NewWriter(&buf)
+		mw.WriteField("player_index", "0")
+		mw.WriteField("destination", value)
+		mw.Close()
+		return mw.FormDataContentType(), buf.String()
+	}
+	bigMultipartCT, bigMultipart := multipartBody("Bangkok" + padding)
+	smallMultipartCT, smallMultipart := multipartBody("Bangkok")
+	jsonWithPad := func(pad string) string {
+		return `{"player_index":0,"destination":"Bangkok","pad":"` + pad + `"}`
+	}
+	atLimit := jsonWithPad(padding[:limit-len(jsonWithPad(""))])
+	for _, tc := range []struct {
+		name, contentType, body string
+		status                  int
+	}{
+		{"JSON", "application/json", jsonWithPad(padding), 413},
+		{"JSON one byte over the limit", "application/json", atLimit + " ", 413},
+		{"form", "application/x-www-form-urlencoded", "player_index=0&destination=Bangkok&pad=" + padding, 413},
+		{"no content type", "", "player_index=0&destination=Bangkok&pad=" + padding, 413},
+		{"multipart", bigMultipartCT, bigMultipart, 413},
+		{"JSON at the limit", "application/json", atLimit, 200},
+		{"multipart under the limit", smallMultipartCT, smallMultipart, 200},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			ts := newTestServer(t, readFixture(t, "states/base.yaml"))
+			before := ts.saved()
+			rec := ts.do(http.MethodPost, "/move", tc.contentType, tc.body)
+			if rec.Code != tc.status {
+				t.Fatalf("status %d, want %d: %.200s", rec.Code, tc.status, rec.Body)
+			}
+			if tc.status == 200 {
+				if bytes.Equal(ts.saved(), before) {
+					t.Error("the move was not saved")
+				}
+				return
+			}
+			body := decodeBody(t, rec)
+			if body["status"] != "error" || body["message"] != "Request body too large" {
+				t.Errorf("body %v", body)
+			}
+			if !bytes.Equal(ts.saved(), before) {
+				t.Error("the game was saved")
+			}
+		})
 	}
 }

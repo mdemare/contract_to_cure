@@ -51,10 +51,15 @@ type call struct {
 
 // validate reads the request's params and checks them against sc
 // (validate_request). On failure it returns the reply to render instead:
-// 400 for a body that does not parse, 422 for a schema failure.
+// 400 for a body that does not parse, 413 for a body over maxBodyBytes,
+// 422 for a schema failure.
 func (c *call) validate(sc schema) (values, *reply) {
-	params, err := readParams(c.r)
+	params, err := readParams(c.w, c.r)
+	var tooLarge *http.MaxBytesError
 	switch {
+	case errors.As(err, &tooLarge):
+		rep := jsonReply(http.StatusRequestEntityTooLarge, errorBody("Request body too large"))
+		return nil, &rep
 	case errors.Is(err, errInvalidJSON):
 		rep := jsonReply(http.StatusBadRequest, errorBody("Invalid JSON"))
 		return nil, &rep
