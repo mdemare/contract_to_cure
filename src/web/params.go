@@ -22,6 +22,10 @@ const (
 	msgInvalidParameters = "Invalid parameters"
 )
 
+// maxBodyBytes limits a request body. The largest valid game request is a
+// few hundred bytes; a larger body is answered with 413 (cc-483).
+const maxBodyBytes = 64 << 10
+
 // errInvalidJSON is a JSON request body that does not parse. Like Rails,
 // which parses the body only when an action reads its params, endpoints
 // without parameters never see it.
@@ -239,8 +243,10 @@ func rubyInteger(s string) (int, bool) {
 // body (JSON, or a form), overridden by the query string. In a form or query
 // string, key[] collects an array; other bracketed keys are nested and never
 // valid for these schemas. JSON nulls inside arrays are dropped (deep_munge),
-// and a JSON body that is not an object adds no params.
-func readParams(r *http.Request) (map[string]any, error) {
+// and a JSON body that is not an object adds no params. A body over
+// maxBodyBytes is an *http.MaxBytesError.
+func readParams(w http.ResponseWriter, r *http.Request) (map[string]any, error) {
+	r.Body = http.MaxBytesReader(w, r.Body, maxBodyBytes)
 	params := map[string]any{}
 	mediaType, _, _ := mime.ParseMediaType(r.Header.Get("Content-Type"))
 	switch mediaType {
@@ -263,7 +269,10 @@ func readParams(r *http.Request) (map[string]any, error) {
 		}
 		mergeForm(params, form)
 	case "multipart/form-data":
-		if err := r.ParseMultipartForm(32 << 20); err != nil {
+		if err := r.ParseMultipartForm(maxBodyBytes); err != nil {
+			if tooLarge := new(http.MaxBytesError); errors.As(err, &tooLarge) {
+				return nil, err
+			}
 			return nil, errBadRequest
 		}
 		mergeForm(params, r.MultipartForm.Value)

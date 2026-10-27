@@ -173,3 +173,26 @@ func TestSessionRoutesDoNotTouchTheGame(t *testing.T) {
 	mr.Close()
 	check("with Redis down")
 }
+
+// The server closes slow and idle connections (cc-483). The write timeout
+// leaves room for a Redis pool wait plus the Sentry flush, and nginx's 90s
+// proxy timeouts stay longer.
+func TestServerTimeouts(t *testing.T) {
+	srv := newServer(":0", http.NotFoundHandler())
+	for name, got := range map[string]time.Duration{
+		"ReadHeaderTimeout": srv.ReadHeaderTimeout,
+		"ReadTimeout":       srv.ReadTimeout,
+		"WriteTimeout":      srv.WriteTimeout,
+		"IdleTimeout":       srv.IdleTimeout,
+	} {
+		if got <= 0 {
+			t.Errorf("%s is not set", name)
+		}
+	}
+	if srv.ReadHeaderTimeout > srv.ReadTimeout {
+		t.Errorf("ReadHeaderTimeout %v exceeds ReadTimeout %v", srv.ReadHeaderTimeout, srv.ReadTimeout)
+	}
+	if min := store.DefaultPoolTimeout + 2*time.Second; srv.WriteTimeout <= min || srv.WriteTimeout >= 90*time.Second {
+		t.Errorf("WriteTimeout %v, want between %v and 90s", srv.WriteTimeout, min)
+	}
+}
