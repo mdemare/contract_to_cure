@@ -1,6 +1,6 @@
 {{define "sentry"}}{{if .DSN}}
   <meta name="sentry-dsn" content="{{.DSN}}">
   <meta name="sentry-environment" content="{{.Environment}}">
-  <script src="https://browser.sentry-cdn.com/11.8.0/bundle.min.js" crossorigin="anonymous"></script>
+  <script src="https://browser.sentry-cdn.com/11.9.0/bundle.min.js" crossorigin="anonymous"></script>
   <script type="module" src="/js/error_reporting.js"></script>
 {{end}}{{end}}
