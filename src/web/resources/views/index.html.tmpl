@@ -110,12 +110,12 @@
                   <span id="{{.Color}}-cure" class="cure-label">Not cured</span>
                 </div>
                 <div class="cube-supply">
-                  <span id="{{.Color}}-cubes" class="cube-count">24 of 24 cubes</span>
+                  <span id="{{.Color}}-cubes" class="cube-count">{{$.DiseaseCubeCapacity}} of {{$.DiseaseCubeCapacity}} cubes</span>
                   <span class="supply-warning" aria-hidden="true"></span>
                 </div>
                 <div id="{{.Color}}-cube-meter" class="cube-meter" role="progressbar"
-                     aria-label="24 of 24 {{.Color}} disease cubes remaining"
-                     aria-valuemin="0" aria-valuemax="24" aria-valuenow="24">
+                     aria-label="{{$.DiseaseCubeCapacity}} of {{$.DiseaseCubeCapacity}} {{.Color}} disease cubes remaining"
+                     aria-valuemin="0" aria-valuemax="{{$.DiseaseCubeCapacity}}" aria-valuenow="{{$.DiseaseCubeCapacity}}">
                   <span class="cube-meter-fill"></span>
                 </div>
               </article>

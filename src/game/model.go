@@ -4,6 +4,8 @@ import (
 	"cmp"
 	"fmt"
 	"slices"
+
+	"github.com/mdemare/contract_to_cure/src/disease"
 )
 
 // GameState is the whole game. The status fields, DiseaseCubes, Cities,
@@ -50,7 +52,7 @@ type DiseaseCubes struct {
 
 // Eradicated is cured with every cube of the color back in the supply.
 func (d DiseaseCubes) Eradicated() bool {
-	return d.Cured && d.InSupply == MaxDiseaseCubesPerColor
+	return disease.Eradicated(d.Cured, d.InSupply)
 }
 
 // Decks are ordered bottom to top: draws pop from the end, and an epidemic

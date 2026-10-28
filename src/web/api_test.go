@@ -3,11 +3,13 @@ package web_test
 import (
 	"bytes"
 	"context"
+	"fmt"
 	"net/http"
 	"net/http/httptest"
 	"strings"
 	"testing"
 
+	"github.com/mdemare/contract_to_cure/src/disease"
 	"github.com/mdemare/contract_to_cure/src/game"
 	"github.com/mdemare/contract_to_cure/src/observe"
 	"github.com/mdemare/contract_to_cure/src/store"
@@ -76,10 +78,13 @@ func TestIndexHasMenuAndDiseaseStatus(t *testing.T) {
 		`<dd id="difficulty-status">`,
 	}
 	for _, color := range []string{"blue", "yellow", "black", "red"} {
+		capacity := disease.MaxCubesPerColor
 		want = append(want,
 			"cure-item "+color,
 			color+"-cure",
-			`<span id="`+color+`-cubes" class="cube-count">`)
+			fmt.Sprintf(`<span id="%s-cubes" class="cube-count">%d of %d cubes</span>`, color, capacity, capacity),
+			fmt.Sprintf(`aria-label="%d of %d %s disease cubes remaining"`, capacity, capacity, color),
+			fmt.Sprintf(`aria-valuemin="0" aria-valuemax="%d" aria-valuenow="%d"`, capacity, capacity))
 	}
 	for _, w := range want {
 		if !strings.Contains(page, w) {

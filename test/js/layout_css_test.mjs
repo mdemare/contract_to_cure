@@ -104,9 +104,9 @@ test('actions and outbreaks have visual and exact status', () => {
 test('disease rows expose name, state, supply and meter', () => {
   assert.match(view, /class="disease-name"/);
   assert.match(view, /class="cure-label">Not cured/);
-  assert.match(view, /class="cube-count">24 of 24 cubes/);
+  assert.match(view, /class="cube-count">{{\$\.DiseaseCubeCapacity}} of {{\$\.DiseaseCubeCapacity}} cubes/);
   assert.match(view, /class="cube-meter" role="progressbar"/);
-  assert.match(view, /aria-label="24 of 24 .* disease cubes remaining"/);
+  assert.match(view, /aria-label="{{\$\.DiseaseCubeCapacity}} of {{\$\.DiseaseCubeCapacity}} .* disease cubes remaining"/);
 });
 
 test('HUD uses text and patterns in addition to warning color', () => {
