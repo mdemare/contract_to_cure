@@ -491,14 +491,6 @@
   }
 }
 
-/* Styling for the cards in the infection discard selection modal */
-.infection-selection-container {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
-  gap: 15px;
-  margin: 20px 0;
-}
-
 .selectable-card.infection-card {
   width: 100%;
   height: 120px;
@@ -619,36 +611,6 @@
     opacity: 0.6;
     transform: scale(1);
   }
-}
-
-/* Modified modal for infection selection */
-.modal-content.resilient-population-modal {
-  background-color: var(--panel-bg);
-  border: 3px solid #ff8c42;
-  max-width: 700px;
-}
-
-.resilient-population-modal h3 {
-  color: #ff8c42;
-  border-bottom: 1px solid rgba(255, 140, 66, 0.3);
-}
-
-.resilient-population-modal .modal-instructions {
-  color: #333;
-  font-weight: 500;
-}
-
-/* Special confirm button for resilient population */
-.resilient-population-modal .confirm-btn {
-  background-color: #ff8c42;
-}
-
-.resilient-population-modal .confirm-btn:hover:not(.disabled) {
-  background-color: #ff7e29;
-}
-
-.resilient-population-modal .confirm-btn.disabled {
-  background-color: #ffbb8c;
 }
 
 /* Wait Infect Card Styling */
