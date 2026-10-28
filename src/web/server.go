@@ -15,6 +15,7 @@ import (
 
 	"github.com/getsentry/sentry-go"
 
+	"github.com/mdemare/contract_to_cure/src/disease"
 	"github.com/mdemare/contract_to_cure/src/game"
 	"github.com/mdemare/contract_to_cure/src/observe"
 	"github.com/mdemare/contract_to_cure/src/store"
@@ -161,11 +162,12 @@ var diseaseColors = []struct{ Color, Name string }{
 // loads the game, so it deals and saves one when there is none.
 func (c *call) index() reply {
 	data := map[string]any{
-		"CSRFToken":  c.s.cfg.CSRF.Token(c.w, c.r),
-		"Sentry":     c.s.cfg.Sentry,
-		"Production": c.s.cfg.Sentry.Environment == "production",
-		"GitHash":    c.s.cfg.GitHash,
-		"Colors":     diseaseColors,
+		"CSRFToken":           c.s.cfg.CSRF.Token(c.w, c.r),
+		"Sentry":              c.s.cfg.Sentry,
+		"Production":          c.s.cfg.Sentry.Environment == "production",
+		"GitHash":             c.s.cfg.GitHash,
+		"Colors":              diseaseColors,
+		"DiseaseCubeCapacity": disease.MaxCubesPerColor,
 	}
 	var buf bytes.Buffer
 	if err := indexPage.ExecuteTemplate(&buf, "index.html.tmpl", data); err != nil {

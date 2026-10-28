@@ -137,3 +137,48 @@ func TestViewEradicated(t *testing.T) {
 		t.Errorf("diseaseCubes: %s", got)
 	}
 }
+
+func TestEradicationAgreesInViewAndEncodedSave(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		cured  bool
+		supply int
+		want   bool
+	}{
+		{"uncured full supply", false, 24, false},
+		{"cured below capacity", true, 23, false},
+		{"cured full supply", true, 24, true},
+		{"cured above capacity", true, 25, false},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			g := testGame(t)
+			d := g.Disease(game.Blue)
+			d.Cured, d.InSupply = tc.cured, tc.supply
+			if got := d.Eradicated(); got != tc.want {
+				t.Errorf("live eradicated = %v, want %v", got, tc.want)
+			}
+			var view struct {
+				DiseaseCubes map[string]struct{ Eradicated bool } `json:"diseaseCubes"`
+			}
+			if err := json.Unmarshal(marshal(t, g), &view); err != nil {
+				t.Fatal(err)
+			}
+			if got := view.DiseaseCubes["blue"].Eradicated; got != tc.want {
+				t.Errorf("view eradicated = %v, want %v", got, tc.want)
+			}
+			encoded, err := g.EncodeSave()
+			if err != nil {
+				t.Fatal(err)
+			}
+			var saved struct {
+				DiseaseCubes map[string]struct{ Eradicated bool } `json:"disease_cubes"`
+			}
+			if err := json.Unmarshal(encoded, &saved); err != nil {
+				t.Fatal(err)
+			}
+			if got := saved.DiseaseCubes["blue"].Eradicated; got != tc.want {
+				t.Errorf("encoded eradicated = %v, want %v", got, tc.want)
+			}
+		})
+	}
+}

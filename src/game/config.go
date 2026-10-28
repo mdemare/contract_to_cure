@@ -4,10 +4,12 @@
 // plain mapping (save.go, cc-421). HTTP lives elsewhere.
 package game
 
+import "github.com/mdemare/contract_to_cure/src/disease"
+
 // Constants of the former Rails GameStateConfig.
 const (
 	MaxOutbreaks            = 8
-	MaxDiseaseCubesPerColor = 24
+	MaxDiseaseCubesPerColor = disease.MaxCubesPerColor
 	InitialResearchStations = 1
 	MaxResearchStations     = 6
 	HandLimit               = 7

@@ -2,7 +2,6 @@ import { difficultyLabel, gameDifficulty } from './difficulty.js';
 
 const MAX_ACTIONS = 4;
 const MAX_OUTBREAKS = 8;
-const MAX_CUBES = 24;
 
 const DISEASE_COLORS = ['blue', 'yellow', 'black', 'red'];
 
@@ -87,6 +86,8 @@ function updateDisease(color, diseaseInfo) {
   const cure = document.getElementById(`${color}-cure`);
   const cubes = document.getElementById(`${color}-cubes`);
   const meter = document.getElementById(`${color}-cube-meter`);
+  // The server renders the authoritative capacity as the meter's upper bound.
+  const maxCubes = Number(meter?.getAttribute('aria-valuemax'));
   const cubeCount = Math.max(0, Number(diseaseInfo.inSupply ?? 0));
   const risk = supplyRisk(cubeCount);
   const cureStatus = diseaseInfo.eradicated ? 'Eradicated' : diseaseInfo.cured ? 'Cured' : 'Not cured';
@@ -101,11 +102,11 @@ function updateDisease(color, diseaseInfo) {
     cure.classList.toggle('cured', Boolean(diseaseInfo.cured));
     cure.classList.toggle('eradicated', Boolean(diseaseInfo.eradicated));
   }
-  if (cubes) cubes.textContent = `${cubeCount} of ${MAX_CUBES} cubes`;
+  if (cubes) cubes.textContent = `${cubeCount} of ${maxCubes} cubes`;
   if (meter) {
     meter.setAttribute('aria-valuenow', cubeCount);
-    meter.setAttribute('aria-label', `${cubeCount} of ${MAX_CUBES} ${color} disease cubes remaining, ${riskLabel(risk).toLowerCase()}`);
-    meter.style.setProperty('--meter-value', `${Math.min(cubeCount / MAX_CUBES, 1) * 100}%`);
+    meter.setAttribute('aria-label', `${cubeCount} of ${maxCubes} ${color} disease cubes remaining, ${riskLabel(risk).toLowerCase()}`);
+    meter.style.setProperty('--meter-value', `${Math.min(cubeCount / maxCubes, 1) * 100}%`);
   }
 }
 

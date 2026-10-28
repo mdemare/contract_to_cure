@@ -3,6 +3,8 @@ package store
 import (
 	"fmt"
 	"slices"
+
+	"github.com/mdemare/contract_to_cure/src/disease"
 )
 
 // Colors is the order in which Rails wrote :disease_cubes (the former
@@ -14,9 +16,8 @@ var Colors = []string{"blue", "yellow", "black", "red"}
 var DifficultyLevels = []string{"introductory", "normal", "heroic"}
 
 const (
-	maxDiseaseCubesPerColor = 24
-	maxResearchStations     = 6
-	fallbackDifficulty      = "heroic"
+	maxResearchStations = 6
+	fallbackDifficulty  = "heroic"
 )
 
 // Save is the persisted game, field for field as GameState#serialized_state
@@ -66,7 +67,7 @@ type DiseaseCubes struct {
 
 // Eradicated is cured with every cube of the color back in the supply.
 func (d DiseaseCubes) Eradicated() bool {
-	return d.Cured && d.InSupply == maxDiseaseCubesPerColor
+	return disease.Eradicated(d.Cured, d.InSupply)
 }
 
 // City is one entry of :cities. Key is the hash key, which Rails keeps
