@@ -1,4 +1,4 @@
-import { reportNotification } from './error_reporting.js';
+import { showNotification } from './transient_notification.js';
 
 // share_knowledge.js
 import { getCurrentGameState } from './game_state.js';
@@ -357,29 +357,9 @@ function createCardElement(card, players) {
 
 // Display notifications to the user
 function showSuccessMessage(message) {
-  showNotification(message, 'success');
+  showNotification(message, 'success', 'share-notification');
 }
 
 function showErrorMessage(message) {
-  showNotification(`Action failed: ${message}`, 'error');
-}
-
-function showNotification(message, type = 'info') {
-  reportNotification(message, type);
-
-  // Create notification element
-  const notification = createSimpleElement('div', ['share-notification', type], message);
-
-  // Append to body
-  document.body.appendChild(notification);
-
-  // Remove after 3 seconds
-  setTimeout(() => {
-    notification.classList.add('fade-out');
-
-    // Remove from DOM after fade animation
-    setTimeout(() => {
-      notification.remove();
-    }, 500);
-  }, 3000);
+  showNotification(`Action failed: ${message}`, 'error', 'share-notification');
 }

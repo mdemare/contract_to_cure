@@ -1,4 +1,4 @@
-import { reportNotification } from './error_reporting.js';
+import { showNotification } from './transient_notification.js';
 
 // game_over.js
 import { createSimpleElement } from './dom.js';
@@ -272,25 +272,4 @@ function createVictoryAnimation() {
 
     container.appendChild(particle);
   }
-}
-
-// Display a notification
-function showNotification(message, type = 'info') {
-  reportNotification(message, type);
-
-  // Create notification element
-  const notification = createSimpleElement('div', ['game-notification', type], message);
-
-  // Append to body
-  document.body.appendChild(notification);
-
-  // Remove after 3 seconds
-  setTimeout(() => {
-    notification.classList.add('fade-out');
-
-    // Remove from DOM after fade animation
-    setTimeout(() => {
-      notification.remove();
-    }, 500);
-  }, 3000);
 }
