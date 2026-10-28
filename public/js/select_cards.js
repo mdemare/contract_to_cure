@@ -1,4 +1,5 @@
 // Import dependencies
+import { showNotification } from './transient_notification.js';
 import { getCurrentGameState, loadGameState } from './game_state.js';
 import { createSimpleElement } from './dom.js';
 import { completeForecast } from './action_card_requests.js';
@@ -387,16 +388,7 @@ export function handleHandLimitCheck(playerIndex, discardCount, completionCallba
       await submitHandLimitDiscard(playerIndex, selectedCardNames);
 
       // Show success message
-      const notification = createSimpleElement('div', ['game-notification', 'success'],
-        `${playerName} discarded ${discardCount} card${discardCount > 1 ? 's' : ''}`);
-      document.body.appendChild(notification);
-
-      setTimeout(() => {
-        notification.classList.add('fade-out');
-        setTimeout(() => {
-          notification.remove();
-        }, 500);
-      }, 3000);
+      showNotification(`${playerName} discarded ${discardCount} card${discardCount > 1 ? 's' : ''}`, 'success');
     } catch (error) {
       if (!(error instanceof GameConflictError)) {
         console.error('Error discarding cards:', error);

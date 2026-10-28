@@ -208,3 +208,101 @@ test('mandatory discard stays open for retry when the refreshed discard is uncha
   assert.equal(completed, 0);
   assert.deepEqual(cardNames(openDialogs()[0]), eightCards.map(card => card.name));
 });
+
+function assertNotificationLifecycle(t, message, type, cssClass = 'game-notification') {
+  const notifications = document.body.children.filter(element => element.classList.contains(cssClass));
+  assert.equal(notifications.length, 1);
+  const notification = notifications[0];
+  assert.equal(notification.textContent, message);
+  assert.equal(notification.tagName, 'DIV');
+  assert.equal(notification.classList.contains(type), true);
+  assert.equal(notification.children.length, 0);
+  t.mock.timers.tick(2999);
+  assert.equal(notification.classList.contains('fade-out'), false);
+  assert.equal(notification.isConnected, true);
+  t.mock.timers.tick(1);
+  assert.equal(notification.classList.contains('fade-out'), true);
+  t.mock.timers.tick(499);
+  assert.equal(notification.isConnected, true);
+  t.mock.timers.tick(1);
+  assert.equal(notification.isConnected, false);
+}
+
+test('action message helpers preserve text, severity, reporting and lifetime', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const errors = t.mock.method(console, 'error');
+  const warnings = t.mock.method(console, 'warn');
+  const { showErrorMessage, showInvalidActionMessage, showSuccessMessage } =
+    await import('../../public/js/player_action_utils.js');
+  for (const [show, message, type] of [
+    [showErrorMessage, 'Action failed: <b>Rejected</b>', 'error'],
+    [showInvalidActionMessage, '<b>Rejected</b>', 'warning'],
+    [showSuccessMessage, '<b>Rejected</b>', 'success']
+  ]) {
+    await reset(resolvedState);
+    show('<b>Rejected</b>');
+    assertNotificationLifecycle(t, message, type);
+  }
+  assert.deepEqual(errors.mock.calls.map(call => call.arguments), [['Action failed: <b>Rejected</b>']]);
+  assert.deepEqual(warnings.mock.calls.map(call => call.arguments), [['<b>Rejected</b>']]);
+});
+
+test('game-over restart failure preserves its notification and reporting', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const errors = t.mock.method(console, 'error');
+  await reset(resolvedState);
+  globalThis.fetch = async () => jsonResponse(500, {});
+  const { restartGame } = await import('../../public/js/game_over.js');
+  await restartGame();
+  const message = 'Failed to restart game: Failed to restart game';
+  assertNotificationLifecycle(t, message, 'error');
+  assert.equal(errors.mock.calls.filter(call => call.arguments[0] === message).length, 1);
+  assert.equal(errors.mock.calls[0].arguments[0], 'Error restarting game:');
+  assert.equal(errors.mock.calls.length, 2);
+});
+
+test('successful mandatory discard preserves singular/plural success text and lifetime without reporting', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const errors = t.mock.method(console, 'error');
+  const warnings = t.mock.method(console, 'warn');
+  for (const count of [1, 2]) {
+    await reset(pendingState([...eightCards, city('Essen')], count));
+    globalThis.fetch = async url => jsonResponse(200, url === '/game_state.json' ? resolvedState : {});
+    let completed = 0;
+    selectCards.handleHandLimitCheck(0, count, () => { completed++; });
+    const dialog = openDialogs()[0];
+    clickCard(dialog, 'Paris');
+    if (count === 2) {
+      clickCard(dialog, 'Essen');
+      dialog.descendants().find(element => element.classList.contains('confirm-btn')).click();
+    }
+    await settle();
+    assert.equal(completed, 1);
+    assert.equal(openDialogs().length, 0);
+    assertNotificationLifecycle(t, `medic discarded ${count} card${count > 1 ? 's' : ''}`, 'success');
+  }
+  assert.equal(errors.mock.calls.length, 0);
+  assert.equal(warnings.mock.calls.length, 0);
+});
+
+test('share-knowledge workflow errors preserve their separate CSS class and reporting', async t => {
+  t.mock.timers.enable({ apis: ['setTimeout'] });
+  const errors = t.mock.method(console, 'error');
+  await reset(resolvedState);
+  globalThis.fetch = async url => jsonResponse(200,
+    url === '/cities.json' ? { Paris: { color: 'blue' } } :
+      { status: 'success', game_state: resolvedState, message: 'Shared Paris' });
+  await gameState.loadCities();
+  const { showShareKnowledgeModal } = await import('../../public/js/share_knowledge.js');
+  errors.mock.resetCalls();
+  // A failure notifying listeners after a successful share reaches the share-specific catch.
+  t.mock.method(document, 'dispatchEvent', event => {
+    if (event.type === 'actionModeReset') throw new Error('<b>Listener failed</b>');
+  });
+  showShareKnowledgeModal([{ cardName: 'Paris', action: 'give' }], [{ index: 1, role: 'scientist' }]);
+  openDialogs()[0].descendants().find(element => element.classList.contains('share-btn')).click();
+  await settle();
+  const message = 'Action failed: Failed to share knowledge: <b>Listener failed</b>';
+  assertNotificationLifecycle(t, message, 'error', 'share-notification');
+  assert.deepEqual(errors.mock.calls.map(call => call.arguments), [[message]]);
+});

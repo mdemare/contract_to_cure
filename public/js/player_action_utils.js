@@ -1,4 +1,4 @@
-import { reportNotification } from './error_reporting.js';
+import { showNotification } from './transient_notification.js';
 
 // player_action_utils.js
 
@@ -184,29 +184,6 @@ export function getCityColor(cityName) {
   }
   console.error("No color found for "+cityName)
   return null;
-}
-
-// Display a notification to the user
-function showNotification(message, type = 'info') {
-  reportNotification(message, type);
-
-  // Create notification element
-  const notification = document.createElement('div');
-  notification.classList.add('game-notification', type);
-  notification.textContent = message;
-
-  // Append to body
-  document.body.appendChild(notification);
-
-  // Remove after 3 seconds
-  setTimeout(() => {
-    notification.classList.add('fade-out');
-
-    // Remove from DOM after fade animation
-    setTimeout(() => {
-      notification.remove();
-    }, 500);
-  }, 3000);
 }
 
 // Display a success message to the user
