@@ -1,5 +1,5 @@
 // game_state.js
-import { updateAuthUI } from './auth.js';
+import { updateAuthFromResponse } from './auth.js';
 import { promptHandLimit } from './hand_limit_prompt.js';
 import { checkGameOver } from './game_over.js';
 
@@ -124,12 +124,7 @@ export async function loadGameState(providedGameState = null, { promptPendingHan
     normalizeGameStatusKeys(gameState);
     currentGameState = gameState;
     
-    // Update authentication UI
-    if (gameState.current_user) {
-      updateAuthUI(gameState.current_user);
-    } else {
-      updateAuthUI(null);
-    }
+    updateAuthFromResponse(gameState);
 
     document.dispatchEvent(new CustomEvent('gameStateLoaded', {
       detail: { gameState }
