@@ -65,6 +65,10 @@ func loadGame(ctx context.Context, t *testing.T, st *store.Store) *game.GameStat
 // extends store's TestFixtureSavesRoundTripByteForByte through the model; it
 // lives here because store cannot import game.
 func TestFixtureSavesRoundTripThroughGameState(t *testing.T) {
+	if testing.Short() {
+		t.Skip("slow integration test; run make full-check")
+	}
+
 	after, err := filepath.Glob(filepath.Join(fixtureRoot, "scenarios", "*", "after.json"))
 	if err != nil {
 		t.Fatal(err)

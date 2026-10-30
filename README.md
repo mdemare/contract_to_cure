@@ -27,8 +27,12 @@ question with an answer that is checked against the code. Show one with
 > **Q37-cc: How are tests organized, and which checks should run for backend, frontend, or cross-layer changes?**
 >
 > Run `make check` from the repository root. It runs the JavaScript tests in
-> `test/js/*.mjs`, then `go vet` and `go test` for the backend. Tests use an
-> in-memory Redis (miniredis), so no Redis server is needed.
+> `test/js/*.mjs`, then `go vet` and `go test -short` for the backend. This is the per-ticket
+> gate; slow integration, stress and bulk fixture tests skip in short mode.
+> Run `make full-check` for the complete suite, daily after at least ten new
+> commits since the last successful full check. It reruns all Go tests without
+> cached results or a timeout. Both targets fail if any stage fails. Tests use
+> an in-memory Redis (miniredis), so no Redis server is needed.
 
 ## More questions
 

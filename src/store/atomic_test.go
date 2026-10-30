@@ -101,6 +101,10 @@ func TestStaleRestartIsRejectedWithoutWriting(t *testing.T) {
 // Real goroutines racing on one key: every acknowledged update is kept, and
 // with retries on conflict every update eventually lands exactly once.
 func TestConcurrentUpdatesApplyExactlyOnce(t *testing.T) {
+	if testing.Short() {
+		t.Skip("slow integration test; run make full-check")
+	}
+
 	s, _ := newTestStore(t)
 	const workers = 20
 	startTurn := load(t, s).Status.Turn

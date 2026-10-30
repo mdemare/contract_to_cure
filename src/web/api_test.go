@@ -149,6 +149,10 @@ func TestHealthChecksDoNotTouchRedis(t *testing.T) {
 // A Redis error is a 500 with the generic message; the dial error goes to
 // Sentry only (cc-493).
 func TestRedisErrorIs500(t *testing.T) {
+	if testing.Short() {
+		t.Skip("slow integration test; run make full-check")
+	}
+
 	ts := newTestServer(t, nil)
 	events := ts.withSentry()
 	ts.mr.Close()

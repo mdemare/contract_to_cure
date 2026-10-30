@@ -137,6 +137,10 @@ func TestLoadCorruptSaveIsLoggedAndReturnsNil(t *testing.T) {
 }
 
 func TestLoadReportsRedisErrors(t *testing.T) {
+	if testing.Short() {
+		t.Skip("slow integration test; run make full-check")
+	}
+
 	s, mr := newTestStore(t)
 	mr.Close()
 	if _, err := s.Load(context.Background()); err == nil {
