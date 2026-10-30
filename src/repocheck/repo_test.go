@@ -217,13 +217,15 @@ func TestComposeFilesRunTheBinaryWithAWgetHealthcheck(t *testing.T) {
 // make check must fail when a stage fails. Each probe copies the Makefile
 // into a temporary directory and stubs the other stage's command.
 
-func runCheck(t *testing.T, stub string, files map[string]string) (string, error) {
+func runCheck(t *testing.T, target, stub string, files map[string]string) (string, error) {
 	t.Helper()
 	dir := t.TempDir()
 	files["Makefile"] = read(t, "Makefile")
 	files["bin/"+stub] = "#!/bin/sh\nexit 0\n"
-	// A file named check must not stop make from running the target.
-	files["check"] = ""
+	// Files named after targets must not stop make from running them.
+	for _, name := range []string{"check", "full-check", "js-test", "go-test", "go-full-test", "go-vet"} {
+		files[name] = ""
+	}
 	for name, content := range files {
 		path := filepath.Join(dir, name)
 		if err := os.MkdirAll(filepath.Dir(path), 0o755); err != nil {
@@ -233,7 +235,7 @@ func runCheck(t *testing.T, stub string, files map[string]string) (string, error
 			t.Fatal(err)
 		}
 	}
-	cmd := exec.Command("make", "check")
+	cmd := exec.Command("make", target)
 	cmd.Dir = dir
 	cmd.Env = append(os.Environ(), "PATH="+filepath.Join(dir, "bin")+string(os.PathListSeparator)+os.Getenv("PATH"))
 	out, err := cmd.CombinedOutput()
@@ -248,31 +250,115 @@ test('JavaScript check probe', () => { ` + assertion + ` });
 }
 
 func TestCheckRunsJavaScript(t *testing.T) {
-	out, err := runCheck(t, "go", jsProbe("assert.ok(true)"))
-	if err != nil || !strings.Contains(out, "JavaScript check probe") {
-		t.Errorf("make check: %v\n%s", err, out)
+	if testing.Short() {
+		t.Skip("slow integration test; run make full-check")
+	}
+
+	for _, target := range []string{"check", "full-check"} {
+		t.Run(target, func(t *testing.T) {
+			out, err := runCheck(t, target, "go", jsProbe("assert.ok(true)"))
+			if err != nil || !strings.Contains(out, "JavaScript check probe") {
+				t.Errorf("make %s: %v\n%s", target, err, out)
+			}
+		})
 	}
 }
 
 func TestCheckPropagatesJavaScriptFailures(t *testing.T) {
-	out, err := runCheck(t, "go", jsProbe(`assert.fail("JavaScript failure sentinel")`))
-	if err == nil || !strings.Contains(out, "JavaScript failure sentinel") {
-		t.Errorf("make check: %v\n%s", err, out)
+	if testing.Short() {
+		t.Skip("slow integration test; run make full-check")
+	}
+
+	for _, target := range []string{"check", "full-check"} {
+		t.Run(target, func(t *testing.T) {
+			out, err := runCheck(t, target, "go", jsProbe(`assert.fail("JavaScript failure sentinel")`))
+			if err == nil || !strings.Contains(out, "JavaScript failure sentinel") {
+				t.Errorf("make %s: %v\n%s", target, err, out)
+			}
+		})
 	}
 }
 
 func TestCheckPropagatesGoFailures(t *testing.T) {
-	out, err := runCheck(t, "node", map[string]string{
-		"go.mod": read(t, "go.mod"),
-		"src/probe_test.go": `package probe
+	if testing.Short() {
+		t.Skip("slow integration test; run make full-check")
+	}
+
+	for _, target := range []string{"check", "full-check"} {
+		t.Run(target, func(t *testing.T) {
+			out, err := runCheck(t, target, "node", map[string]string{
+				"go.mod": read(t, "go.mod"),
+				"src/probe_test.go": `package probe
 
 import "testing"
 
 func TestProbe(t *testing.T) { t.Fatal("Go failure sentinel") }
 `,
-	})
-	if err == nil || !strings.Contains(out, "Go failure sentinel") {
-		t.Errorf("make check: %v\n%s", err, out)
+			})
+			if err == nil || !strings.Contains(out, "Go failure sentinel") {
+				t.Errorf("make %s: %v\n%s", target, err, out)
+			}
+		})
+	}
+}
+
+func TestFullCheckIncludesSlowTests(t *testing.T) {
+	if testing.Short() {
+		t.Skip("slow integration test; run make full-check")
+	}
+	for _, target := range []string{"check", "full-check"} {
+		t.Run(target, func(t *testing.T) {
+			out, err := runCheck(t, target, "node", map[string]string{
+				"go.mod": read(t, "go.mod"),
+				"src/probe_test.go": `package probe
+
+import "testing"
+
+func TestSlowProbe(t *testing.T) {
+	if testing.Short() { t.Skip("slow probe") }
+	t.Fatal("slow failure sentinel")
+}
+`,
+			})
+			if target == "check" {
+				if err != nil || strings.Contains(out, "slow failure sentinel") {
+					t.Fatalf("short check ran slow test: %v\n%s", err, out)
+				}
+			} else if err == nil || !strings.Contains(out, "slow failure sentinel") {
+				t.Fatalf("full check did not propagate slow failure: %v\n%s", err, out)
+			}
+		})
+	}
+}
+
+// Verify stage selection and every failure path without compiling nested Go
+// suites. runCheck also creates files named after targets to verify .PHONY.
+func TestCheckTargetsSelectStagesAndPropagateFailures(t *testing.T) {
+	for _, target := range []string{"check", "full-check"} {
+		for _, failing := range []string{"", "node", "vet", "test"} {
+			t.Run(target+"/fail="+failing, func(t *testing.T) {
+				goArgs := "test -short ./..."
+				if target == "full-check" {
+					goArgs = "test -count=1 -timeout=0 ./..."
+				}
+				out, err := runCheck(t, target, "unused", map[string]string{
+					"bin/node": "#!/bin/sh\necho NODE_STAGE\n" +
+						"[ '" + failing + "' != node ]\n",
+					"bin/go": "#!/bin/sh\necho GO_STAGE \"$@\"\n" +
+						"[ \"$1\" != '" + failing + "' ]\n",
+				})
+				if (err != nil) != (failing != "") {
+					t.Fatalf("make %s (failure %q): %v\n%s", target, failing, err, out)
+				}
+				if failing == "" {
+					for _, stage := range []string{"NODE_STAGE", "GO_STAGE vet ./...", "GO_STAGE " + goArgs} {
+						if !strings.Contains(out, stage) {
+							t.Errorf("make %s missing %q:\n%s", target, stage, out)
+						}
+					}
+				}
+			})
+		}
 	}
 }
 

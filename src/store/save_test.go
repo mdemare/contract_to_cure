@@ -60,6 +60,10 @@ func globFixtures(t *testing.T, patterns ...string) map[string][]byte {
 // game's TestFixtureSavesRoundTripThroughGameState repeats this through the
 // game model (cc-421).
 func TestFixtureSavesRoundTripByteForByte(t *testing.T) {
+	if testing.Short() {
+		t.Skip("slow integration test; run make full-check")
+	}
+
 	for name, data := range fixtureSaves(t) {
 		t.Run(name, func(t *testing.T) {
 			save, err := DecodeSave(data, "heroic")

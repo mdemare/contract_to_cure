@@ -113,6 +113,10 @@ func marshal(t *testing.T, v any) []byte {
 // game_state included, HTTP status) and the save afterwards. Parameter validation and conflicts are
 // left to the HTTP layer (cc-422).
 func TestPlayerActionScenarios(t *testing.T) {
+	if testing.Short() {
+		t.Skip("slow integration test; run make full-check")
+	}
+
 	names, err := contract.ScenarioNames(fixtureRoot)
 	if err != nil {
 		t.Fatal(err)

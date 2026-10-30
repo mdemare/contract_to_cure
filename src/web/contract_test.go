@@ -22,6 +22,10 @@ var randomRestarts = map[string]bool{
 // HTTP server (Q41-cc): the status, content type and body byte for byte
 // (key order and nulls included), then the save in Redis.
 func TestContractScenarios(t *testing.T) {
+	if testing.Short() {
+		t.Skip("slow integration test; run make full-check")
+	}
+
 	names, err := contract.ScenarioNames(fixtureRoot)
 	if err != nil {
 		t.Fatal(err)
