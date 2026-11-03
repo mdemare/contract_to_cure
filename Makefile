@@ -13,7 +13,7 @@ full-check: js-test
 	@$(MAKE) --no-print-directory go-vet go-full-test
 
 js-test:
-	node --experimental-default-type=module --test test/js/*.mjs
+	node --test test/js/*.mjs
 
 # Static binary that the Docker image copies. gitHash is the short SHA of the
 # checked-out commit (the deploy scripts reset to the deployed SHA first);

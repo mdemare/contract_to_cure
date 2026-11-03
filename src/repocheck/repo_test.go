@@ -249,6 +249,18 @@ test('JavaScript check probe', () => { ` + assertion + ` });
 `}
 }
 
+// Exercise the actual command and syntax detection for browser .js modules
+// without package.json, on whichever supported Node version runs the suite.
+func TestJSTestLoadsJavaScriptModules(t *testing.T) {
+	files := jsProbe(`assert.equal(answer, 42)`)
+	files["test/js/probe.mjs"] = "import { answer } from '../../public/js/probe.js';\n" + files["test/js/probe.mjs"]
+	files["public/js/probe.js"] = "export const answer = 42;\n"
+	out, err := runCheck(t, "js-test", "go", files)
+	if err != nil || !strings.Contains(out, "JavaScript check probe") {
+		t.Fatalf("make js-test must load .js ES modules: %v\n%s", err, out)
+	}
+}
+
 func TestCheckRunsJavaScript(t *testing.T) {
 	if testing.Short() {
 		t.Skip("slow integration test; run make full-check")
