@@ -1,6 +1,6 @@
 # Runtime image for the Go binary. `make` builds ./main on the host
 # (CGO_ENABLED=0, so it is static) before docker compose builds this image.
-FROM alpine:3.24
+FROM alpine:3.24.3
 
 ARG UID=1000
 ARG GID=1000
