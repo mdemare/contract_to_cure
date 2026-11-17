@@ -43,6 +43,8 @@ func (t *recordingTransport) sent() []*sentry.Event {
 
 func newHub(t *testing.T, cfg Config) (*sentry.Hub, *recordingTransport) {
 	t.Helper()
+	// sentry-go falls back to SENTRY_DSN when cfg.DSN is empty.
+	t.Setenv("SENTRY_DSN", "")
 	transport := &recordingTransport{}
 	opts := cfg.ClientOptions()
 	opts.Transport = transport
@@ -190,6 +192,7 @@ func TestBackendSmokeTestWithoutDSNReturnsNullEventID(t *testing.T) {
 }
 
 func TestInitDoesNotRequireADSN(t *testing.T) {
+	t.Setenv("SENTRY_DSN", "")
 	cfg := ConfigFromEnv(func(string) string { return "" }, filepath.Join(t.TempDir(), ".version"))
 	if cfg.DSN != "" {
 		t.Fatalf("DSN %q", cfg.DSN)
