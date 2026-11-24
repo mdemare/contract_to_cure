@@ -5,7 +5,7 @@ import (
 	"strconv"
 	"strings"
 
-	"go.yaml.in/yaml/v3"
+	"go.yaml.in/yaml/v4"
 )
 
 // Saves before cc-490 were Ruby/Psych YAML (Hash#to_yaml), with Ruby
